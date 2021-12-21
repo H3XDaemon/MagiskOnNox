@@ -39,7 +39,7 @@ Lưu ý: `/sdcard` có thể khó hiểu nhưng đó là đường dẫn đến 
 
 ## Cập nhật Magisk
 
-Vì Nox và các giả lập thường không có đĩa ảnh boo nên bạn không thể cập nhật trực tiếp, vui lòng thay thế `magisk.apk` bằng phiên bản mới hơn của` magisk.apk` rồi chạy tập lệnh trình cài đặt!
+Vì Nox và các giả lập thường không có đĩa ảnh boot nên bạn không thể cập nhật trực tiếp, vui lòng thay thế `magisk.apk` bằng phiên bản mới hơn của` magisk.apk` rồi chạy tập lệnh trình cài đặt!
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android
