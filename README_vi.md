@@ -2,6 +2,8 @@
 ## Giới thiệu
 Triển khai root Magisk trên giả lập Nox
 
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png"/>
+
 ## Tính năng
 - Đem các tính năng Magisk/Zygisk  lên giả lập Nox
 - MagiskHide / MagiskDenyList để ẩn root
