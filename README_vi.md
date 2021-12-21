@@ -12,7 +12,7 @@ Triển khai root Magisk trên giả lập Nox
 - Các giả lập khác cũng có thể cài được
 
 ## Download
-Tải về trong tag **Releases**
+Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases/tag) 
 
 ## Cài đặt
 
