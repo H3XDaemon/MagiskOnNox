@@ -1,4 +1,7 @@
 # Magisk On Nox
+
+Nếu không hiểu Tiếng Anh: [ **Tiếng Việt** ](https://github.com/HuskyDG/MagiskOnNox/blob/main/README_vi.md) 
+
 ## About
 Integrate Magisk root into Nox emulator
 
