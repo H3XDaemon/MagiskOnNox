@@ -5,7 +5,7 @@ Integrate Magisk root into Nox emulator
 ## Features
 - Bring Magisk/Zygisk to Knox
 - MagiskHide / MagiskDenyList for hiding root
-- Magisk modules
+- Magisk/Zygisk modules
 
 ## Requirements
 - Nox Emulator with Android 64-bit
@@ -37,7 +37,11 @@ Note: `/sdcard` might be confusing but it is path to your internal storage, not 
 
 6. Reboot the emulator.
 
+## Update
+
+Since Nox/Emulator doesn't have boot image, you cannot update directly, please replace `magisk.apk` with newer version of `magisk.apk` then run the installer script!
+
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android
-- [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA): For Magisk on WSA script
+- [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA): For Magisk on WSA script, how to integrate Magisk on Emulator
