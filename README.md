@@ -35,3 +35,4 @@ Note: `/sdcard` might be confusing but it is path to your internal storage, not 
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android
+- [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA): For Magisk on WSA script
