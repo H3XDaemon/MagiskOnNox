@@ -1,20 +1,20 @@
 # Magisk On Nox
-## About
+## Giới thiệu
 Triển khai root Magisk trên giả lập Nox
 
-## Features
+## Tính năng
 - Đem các tính năng Magisk/Zygisk  lên giả lập Nox
 - MagiskHide / MagiskDenyList để ẩn root
 - Magisk/Zygisk mô-đun
 
-## Requirements
+## Các yêu cầu
 - Giả lập Nox: Android 64-bit
 - Các giả lập khác cũng có thể cài được
 
 ## Download
 Tải về trong tag **Releases**
 
-## Installation
+## Cài đặt
 
 1. Mở cài đặt giả lập, bật root sau đó khởi động lại
 2. Cài đặt ứng dụng **Terminal Emulator** nếu chưa có
