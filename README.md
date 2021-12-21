@@ -15,7 +15,7 @@ Integrate Magisk root into Nox emulator
 - Other emulator can install
 
 ## Download
-Download from **Releases** tag
+Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/tag/v1.0) 
 
 ## Installation
 
