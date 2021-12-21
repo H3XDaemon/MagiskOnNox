@@ -16,7 +16,7 @@ Tải về trong tag **Releases**
 
 ## Cài đặt
 
-1. Mở cài đặt giả lập, bật root sau đó khởi động lại
+1. Mở cài đặt giả lập, bật root có sẵn sau đó khởi động lại
 2. Cài đặt ứng dụng **Terminal Emulator** nếu chưa có
 3. Tải magisk-on-nox.zip vào giả lập
 4. Giải nén nó vào:
@@ -35,7 +35,7 @@ sh /sdcard/Download/magisk-on-nox/install.sh
 
 Lưu ý: `/sdcard` có thể khó hiểu nhưng đó là đường dẫn đến bộ nhớ trong chứ không phải bộ nhớ ngoài (khe cắm thẻ nhớ microSD)
 
-6. Khởi động lại giả lập.
+6. Mở cài đặt giả lập, tắt root có sẵn sau đó khởi động lại.
 
 ## Cập nhật Magisk
 
