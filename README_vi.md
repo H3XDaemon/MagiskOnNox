@@ -35,6 +35,8 @@ su
 sh /sdcard/Download/magisk-on-nox/install.sh
 ```
 
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(5).png"/> 
+
 Lưu ý: `/sdcard` có thể khó hiểu nhưng đó là đường dẫn đến bộ nhớ trong chứ không phải bộ nhớ ngoài (khe cắm thẻ nhớ microSD)
 
 6. Mở cài đặt giả lập, tắt root có sẵn sau đó khởi động lại.
