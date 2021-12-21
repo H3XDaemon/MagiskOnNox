@@ -2,6 +2,11 @@
 ## About
 Integrate Magisk root into Nox emulator
 
+## Features
+- Bring Magisk/Zygisk to Knox
+- MagiskHide / MagiskDenyList for hiding root
+- Magisk modules
+
 ## Requirements
 - Nox Emulator with Android 64-bit
 - Other emulator can install
