@@ -5,6 +5,8 @@ Nếu không hiểu Tiếng Anh: [ **Tiếng Việt** ](https://github.com/Husky
 ## About
 Integrate Magisk root into Nox emulator
 
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png" />
+
 ## Features
 - Bring Magisk/Zygisk to Nox
 - MagiskHide / MagiskDenyList for hiding root
@@ -35,6 +37,8 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 su
 sh /sdcard/Download/magisk-on-nox/install.sh
 ```
+
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(5).png"/> 
 
 Note: `/sdcard` might be confusing but it is path to your internal storage, not your secondary external storage (microSD card slot)
 
