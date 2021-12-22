@@ -13,7 +13,7 @@ Integrate Magisk root into Nox emulator
 - Magisk/Zygisk modules
 
 ## Requirements
-- Nox Emulator with Android 64-bit
+- Nox Emulator with Android 9 64-bit
 - Other emulator can install
 
 ## Download
