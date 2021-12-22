@@ -1,19 +1,22 @@
 # Magisk On Nox
 ## Giới thiệu
-Triển khai root Magisk trên giả lập Nox
+Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA))
+
 
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png"/>
 
 ## Tính năng
 - Đem các tính năng Magisk/Zygisk  lên giả lập Nox
 - MagiskHide / MagiskDenyList để ẩn root
-- Magisk/Zygisk mô-đun
+- Magisk/Zygisk mô-đun hoạt động chính xác.
+
+*Lưu ý: Android 7.1 trên Nox/LDPlayer không dùng được Zygisk và mô-đun vì môi trường không ổn định*
 
 ## Các yêu cầu
-- Giả lập Nox: Android 9 64-bit
-- Các giả lập 64-bit khác cũng có thể cài được
+- Khuyến nghị: Giả lập Nox Android 9 64-bit
+- Các giả lập Android 7.1+ 64-bit khác cũng có thể cài được
+(based on [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA))
 
-*Lưu ý: Android 7.1 Nox không thể chạy Zygisk*
 
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
