@@ -15,8 +15,6 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 ## Các yêu cầu
 - Khuyến nghị: Giả lập Nox Android 9 64-bit
 - Các giả lập Android 7.1+ 64-bit khác cũng có thể cài được
-(based on [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA))
-
 
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
