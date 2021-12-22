@@ -51,7 +51,15 @@ mnt_bind "$PAYDIR" "$FOLDER"
 #______________
 ) }
 
-overlay /sbin
+mount -o rw,remount /
+rm -rf /root
+mkdir /root
+ln /sbin/* /root
+mount -o ro,remount /
+
+mnt_tmpfs /sbin
+clone /root /sbin
+
 chcon u:r:rootfs:s0 /sbin
 cd /system/etc/magisk
 MAGISKTMP=/sbin
