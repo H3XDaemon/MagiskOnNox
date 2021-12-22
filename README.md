@@ -16,10 +16,14 @@ Integrate Magisk root into Nox emulator
 
 ## Requirements
 - Nox Emulator with Android 9 64-bit
-- Other emulator can install
+- Other 64-bit emulator install
 
 ## Download
 Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
+
+• For Android 9.0 64-bit Nox, download `magisk-on-nox.zip` 
+
+• For Android 7.1 64-bit Nox/LDPlayer, download `magisk-on-nox_android_7_64.zip`
 
 ## Installation
 
