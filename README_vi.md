@@ -13,6 +13,8 @@ Triển khai root Magisk trên giả lập Nox
 - Giả lập Nox: Android 9 64-bit
 - Các giả lập khác cũng có thể cài được
 
+*Lưu ý: Android 7.1 Nox không thể chạy Zygisk*
+
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
 
