@@ -376,7 +376,7 @@ MAGISK_VER=""
 MAGISK_VER_CODE=""
 [ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
 . $TMPDIR/util_functions.sh
-echo "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
+pd green "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
 
 api_level_arch_detect
@@ -407,11 +407,11 @@ rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
 echo "$magiskloader" >"$MAGISK_MIRROR/system/etc/init/magisk.rc"
 rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
+echo "- Mount system read-only..."
+mount_ro_system
 echo "- Install Magisk App..."
 pm uninstall com.topjohnwu.magisk &>/dev/null
 pm install "$APKFILE" &>/dev/null || echo "* Please install Magisk app by yourself"
-echo "- Mount system read-only..."
-mount_ro_system
 mkdir -p "/sdcard/Magisk"
 rm -rf "/sdcard/Magisk/Magisk.apk"
 cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
@@ -434,6 +434,8 @@ done
 echo "- Mount system read-only..."
 mount_ro_system
 echo "- Done!"
+pd yellow "Press Enter to come back to menu"
+read
 }
 
 
@@ -518,17 +520,19 @@ case $option in
     install_option
     ;;
 2)
-    echo "Do you want to uninstall Magisk? <Y/n>"
+    p none "Do you want to uninstall Magisk? <Y/n> "
     read uni
     if [ "$uni" == "y" -o "$uni" == "Y" ]; then
     clear
     ( uninstall_magisk )
-    read
     fi
     ;;
 3)
-    pm install "$MYPATH/libmm.so" &>/dev/null && pd light_green "Install success!" || pd light_red "Cannot install or this app is adready installed"
-    sleep 3
+   rm -rf "$DLPATH/fmm.apk"
+   cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
+    pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "Install success!" || pd light_red "Cannot install or this app is adready installed"
+    pd yellow "Press Enter to come back to menu"
+    read
     ;;
 *)
     exit 0

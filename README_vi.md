@@ -12,11 +12,15 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 - MagiskHide / MagiskDenyList để ẩn root
 - Magisk/Zygisk mô-đun hoạt động chính xác.
 
-*Lưu ý: Android 7.1 trên Nox/LDPlayer không dùng được Zygisk và mô-đun vì môi trường không ổn định*
 
 ## Các yêu cầu
-- Khuyến nghị: Nox / Bluestacks Emulator với Android 9 64-bit
+- Khuyến nghị: NoxPlayer với Android 9 64-bit
 - Bất kỳ trình giả lập nào chạy Android 7.1 trở lên, 64bit, Trình giả lập được xác nhận: Bluestacks, Nox, LDPlayer
+
+## Một vài hạn chế
+
+- Lưu ý: Android 7.1 trên Nox/LDPlayer không dùng được Magisk Alpha / Canary và mô-đun không thể cài đặt vì môi trường không ổn định
+- Bluestacks Android 9 không thể tải Zygisk và các mô-đun ngay cả khi bạn có thể cài đặt nó
 
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
