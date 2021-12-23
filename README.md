@@ -22,48 +22,21 @@ Integrate Magisk root into Nox emulator (based on [MagiskOnWSA](https://github.c
 ## Download
 Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
 
-• Just created a new app **Magisk On Nox** that makes installation simpler!
-
-• For Android 9.0 64-bit Nox, download `magisk-on-nox.zip` 
-
-• For Android 7.1 64-bit Nox/LDPlayer, download `magisk-on-nox_android_7_64.zip`
-
 
 ## Installation
 
-There are two method to install Magisk into Nox:
-
-### Simple method
 
 1. Go to emulator settings, enable built-in Root and reboot
-2. Download and install **Magisk On Nox**. Grant root access to **Magisk on Nox** app
-3. Do follow the menu to install Magisk
+2. Download and install **Magisk On Nox**. Open and grant root access to **Magisk on Nox** app
+3. Do follow the menu to install Magisk. Here are 3 versions of Magisk that you can install: Canary, Alpha and Stable.
+
+- Android 9: It's recommended to install Magisk Canary / Alpha if you want modules
+
+- Android 7: Install Magisk Canary / Alpha on Android 7.1 will cause Magisk not to work, please install Magisk Stable v23, however you will not able to install Magisk modules
+
 4. Go to emulator settings, disable built-in Root and reboot
 
-### Manual installation
 
-1. Go to emulator settings, enable built-in Root and reboot
-2. Install **Terminal Emulator** if you don't have it installed
-3. Download magisk-on-nox.zip to your emulator
-4. Extract it to:
-
- `[Internal Storage]/Download/magisk-on-nox`
-
-*Make sure you have extracted all files from zip*
-
-*You can replace `magisk.apk` with another `magisk.apk`*
-
-5. Open **Terminal Emulator**, run these command:
-```
-su
-sh /sdcard/Download/magisk-on-nox/install.sh
-```
-
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(5).png"/> 
-
-Note: `/sdcard` might be confusing but it is path to your internal storage, not your secondary external storage (microSD card slot)
-
-6. Go to emulator settings, disable built-in Root and reboot
 
 ## Update
 

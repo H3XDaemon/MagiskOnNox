@@ -19,50 +19,21 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
 
-• Vừa tạo một ứng dụng **Magisk On Nox** để làm việc cài đặt dễ dàng hơn.
-
-• Đối với Android 9.0 64-bit Nox, tải `magisk-on-nox.zip` 
-
-• Đối với Android 7.1 64-bit Nox/LDPlayer, tải `magisk-on-nox_android_7_64.zip`
 ## Cài đặt
 
-Có 2 cách để cài đặt Magisk vào Nox:
+1. Đi tới cài đặt giả lập, bật Root tích hợp sẵn và khởi động lại
+ 2. Tải xuống và cài đặt ** Magisk On Nox **.  Mở và cấp quyền truy cập root cho ứng dụng **Magisk On Nox**
+ 3. Làm theo menu để cài đặt Magisk. Đây là 3 bản Magisk mà bạn có thể cài đặt: Canary, Alpha và Stable
 
-### Cách đơn giản
+ - Android 9: Bạn nên cài đặt Magisk Canary / Alpha nếu bạn muốn có mô-đun
 
-1. Vào cài đặt giả lập, bật Root tích hợp sẵn và khởi động lại
-2. Tải xuống và cài đặt **Magisk On Nox**.  Cấp quyền truy cập root cho ứng dụng **Magisk on Nox**
-3. Làm theo menu để cài đặt Magisk
-4. Vào cài đặt giả lập, vô hiệu hóa Root tích hợp và khởi động lại
+ - Android 7: Cài đặt Magisk Canary / Alpha trên Android 7.1 sẽ khiến Magisk không hoạt động, vui lòng cài đặt Magisk Stable v23, tuy nhiên bạn sẽ không thể cài đặt mô-đun Magisk
 
-### Cài đặt thủ công
-
-1. Mở cài đặt giả lập, bật root có sẵn sau đó khởi động lại
-2. Cài đặt ứng dụng **Terminal Emulator** nếu chưa có
-3. Tải magisk-on-nox.zip vào giả lập
-4. Giải nén nó vào:
-
- `[Bộ nhớ trong]/Download/magisk-on-nox`
-
-*Chắc chắn là bạn đã giải nén hết tất cả tệp*
-
-*Bạn có thể thay thế `magisk.apk` với các phiên bản khác của `magisk.apk`*
-
-5. Mở **Terminal Emulator**, và chạy những dòng lệnh sau:
-```
-su
-sh /sdcard/Download/magisk-on-nox/install.sh
-```
-
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(5).png"/> 
-
-Lưu ý: `/sdcard` có thể khó hiểu nhưng đó là đường dẫn đến bộ nhớ trong chứ không phải bộ nhớ ngoài (khe cắm thẻ nhớ microSD)
-
-6. Mở cài đặt giả lập, tắt root có sẵn sau đó khởi động lại.
+ 4. Vào cài đặt giả lập, vô hiệu hóa Root tích hợp và khởi động lại
 
 ## Cập nhật Magisk
 
-Vì Nox và các giả lập thường không có đĩa ảnh boot nên bạn không thể cập nhật trực tiếp, vui lòng thay thế `magisk.apk` bằng phiên bản mới hơn của` magisk.apk` rồi chạy tập lệnh trình cài đặt!
+Vì Nox và các giả lập thường không có đĩa ảnh boot nên bạn không thể cập nhật trực tiếp, vui lòng cập nhật Magisk bằng **Magisk on Nox**
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android

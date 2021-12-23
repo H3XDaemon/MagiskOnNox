@@ -1,13 +1,200 @@
 #!/system/bin/sh
 
-export PATH=/sbin:/system/bin:/system/xbin
+AGVARR="$@"
+SCRIPT="$0"
+AGV1="$1" AGV2="$2"
+MYSCRIPT="$(realpath "$0")"
+MYPATH="${MYSCRIPT%/*}"
+PATH="$MYPATH:$PATH"
+
+
+
+mount_rw_system(){
+if mount | grep -q rootfs; then
+# legacy rootfs
+mount -o rw,remount "$SYSTEMDIR"
+else
+# system-as-root, mount "/"
+mount -o rw,remount "$SYSTEMROOTDIR"
+fi
+}
+
+mount_ro_system(){
+if mount | grep -q rootfs; then
+# legacy rootfs
+mount -o ro,remount "$SYSTEMDIR"
+else
+# system-as-root, mount "/"
+mount -o ro,remount "$SYSTEMROOTDIR"
+fi
+}
+
+
+mkshrc(){
+# Copyright (c) 2010, 2012, 2013, 2014
+#	Thorsten Glaser <tg@mirbsd.org>
+# This file is provided under the same terms as mksh.
+#-
+# Minimal /system/etc/mkshrc for Android
+#
+# Support: https://launchpad.net/mksh
+
+set +o nohup
+
+if (( USER_ID )); then export PS1='$'; else export PS1='#'; fi
+export PS4='[$EPOCHREALTIME] '; export PS1='${|
+	local e=$?
+   HOSTNAME="HuskyDG"
+	(( e )) && REPLY+="$e|"
+
+	return $e
+}$HOSTNAME:${PWD:-?} '"$PS1 "
+}
+
+p(){
+COLOR=$1;TEXT="$2";escape="$1"
+[ "$COLOR" == "black" ] && escape="0;30"
+[ "$COLOR" == "red" ] && escape="0;31"
+[ "$COLOR" == "green" ] && escape="0;32"
+[ "$COLOR" == "orange" ] && escape="0;33"
+[ "$COLOR" == "blue" ] && escape="0;34"
+[ "$COLOR" == "purple" ] && escape="0;35"
+[ "$COLOR" == "cyan" ] && escape="0;36"
+[ "$COLOR" == "light_gray" ] && escape="0;37"
+[ "$COLOR" == "gray" ] && escape="1;30"
+[ "$COLOR" == "light_red" ] && escape="1;31"
+[ "$COLOR" == "light_green" ] && escape="1;32"
+[ "$COLOR" == "yellow" ] && escape="1;33"
+[ "$COLOR" == "light_blue" ] && escape="1;34"
+[ "$COLOR" == "light_purple" ] && escape="1;35"
+[ "$COLOR" == "light_cyan" ] && escape="1;36"
+[ "$COLOR" == "white" ] && escape="1;37"
+[ "$COLOR" == "none" ] && escape="0"
+code="\033[${escape}m"
+end_code="\033[0m"
+echo -en "$code$TEXT$end_code"
+}
+
+random(){
+VALUE=$1; TYPE=$2; PICK="$3"; PICKC="$4"
+TMPR=""
+HEX="0123456789abcdef"; HEXC=16
+CHAR="qwertyuiopasdfghjklzxcvbnm"; CHARC=26
+NUM="0123456789"; NUMC=10
+COUNT=$(seq 1 1 $VALUE)
+list_pick=$HEX; C=$HEXC
+[ "$TYPE" == "char" ] &&  list_pick=$CHAR && C=$CHARC 
+[ "$TYPE" == "number" ] && list_pick=$NUM && C=$NUMC 
+[ "$TYPE" == "custom" ] && list_pick="$PICK" && C=$PICKC 
+      for i in $COUNT; do
+          random_pick=$(( $RANDOM % $C))
+          echo -n ${list_pick:$random_pick:1}
+      done
+
+}
+
+
+
+md5code_get(){
+FILE=$1
+if [ -x "$tbox" ]; then
+rawcode=`$tbox md5sum $FILE`
+else
+rawcode=`/system/xbin/busybox md5sum $FILE`
+fi
+for e in $rawcode; do
+echo $e; break
+done
+}
+
+mod_prop(){
+NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
+if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
+touch $FILE 2>/dev/null
+echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>/dev/null
+fi
+}
+
+
+
+del_prop(){
+NAME=$1; FILE="$2"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
+noneprop="$NAME="
+nonepropn="$noneprop\n"
+if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
+sed -i "/${nonepropn}/d" $FILE 2>/dev/null
+sed -i "/${noneprop}/d" $FILE 2>/dev/null
+fi
+}
+
+
+pd(){
+p "$1" "$2"; echo
+}
+
+
+
+abortc(){
+pd "$1" "$2"; pd yellow "Process exit with error - Enter to exit"; read; exit 1
+}
+
+
+if [ "$USER_ID" != "0" ]; then
+pd yellow "Obtain root access..."
+( su -c "$SCRIPT" || /system/xbin/su -c "$SCRIPT" || /system/bin/su -c "$SCRIPT" || /sbin/su -c "$SCRIPT" ) 2>/dev/null
+ERR_CODE="$?"
+if [ "$ERR_CODE" != 0 ]; then
+clear
+abortc "light_red" "Failed to obtain root access"
+read
+fi
+exit
+fi
+
+SDK="$(getprop ro.build.version.sdk)"
+
+MAGISK_TMP="$(magisk --path)"
+MAGISKDIR="$MAGISK_TMP/.magisk"
+[ "$MAGISK_TMP" ] && MAGISK_MIRROR="$MAGISKDIR/mirror"
+SYSTEMDIR="$MAGISK_MIRROR/system"
+SYSTEMROOTDIR="$MAGISK_MIRROR/system_root"
+
+
+priv_dir=/data/data/io.github.huskydg.magiskonnox
+cd "$priv_dir"
+DLPATH="$priv_dir/magisk"
+
+if [ ! -d "$DLPATH" ]; then
+rm -rf "$DLPATH" 2>/dev/null
+mkdir -p "$DLPATH" 2>/dev/null
+fi
+
+stable_magisk_link="https://cdn.jsdelivr.net/gh/topjohnwu/magisk-files@23.0/app-release.apk"
+canary_magisk_link="https://github.com/topjohnwu/magisk-files/blob/canary/app-debug.apk?raw=true"
+alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-release.apk?raw=true"
 
 # This script is write by HuskyDG
 ARG1="$1"
+JOBPWD="${0%/*}"
+bb=/data/local/tmp/busybox
+TMPDIR=/dev/tmp
+APKFILE="$JOBPWD/magisk.apk"
+MAGISKCORE="$MAGISK_MIRROR/system/etc/magisk"
+
 
 abort(){
 echo "$1" ; exit 1
 }
+
+link(){ (
+agv1="$1"; agv2="$2"
+[ ! -f "$DLPATH/$agv2" ] && rm -rf "$DLPATH/$agv2" 2>/dev/null
+ln -s "$(which "$agv1")" "$DLPATH/$agv2" 2>/dev/null
+) }
+
+link "libapp.so" "magisk.apk"
+link "libbusybox.so" "busybox"
+bb="$DLPATH/busybox"
 
 install_magisk(){
 echo "******************************"
@@ -117,8 +304,7 @@ fi
 
 touch /dev/.overlay_unblock"
 
-cd "${0%/*}"
-JOBPWD="${0%/*}"
+cd "$JOBPWD"
 shloadpolicy="#!/system/bin/sh
           for module in \$(ls /data/adb/modules); do
               if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
@@ -169,30 +355,32 @@ magiskloader="on post-fs-data
               seclabel u:r:magisk:s0
               oneshot"
 
-bb=/data/local/tmp/busybox
-TMPDIR=/dev/tmp
-APKFILE="$JOBPWD/magisk.apk"
-MAGISKCORE=/system/etc/magisk
+
 
 [ "$(whoami)" == "root" ] || abort "! Run script as root only"
 
 echo "- Mount system read-write..."
-mount -o rw,remount /system || abort "! Failed to mount system"
+mount_rw_system || abort "! Failed to mount system"
 
 echo "- Set up Magisk core..."
-mkdir -p $MAGISKCORE
+[ ! -d "$MAGISKCORE" ] && rm -rf "$MAGISKCORE"
+mkdir -p "$MAGISKCORE"
+chown root:root "$MAGISKCORE"
+chmod 750 "$MAGISKCORE"
 
-rm -rf $bb
-cp ./busybox $bb
 chmod 777 $bb
 mkdir $TMPDIR
 
 $bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR"
+MAGISK_VER=""
+MAGISK_VER_CODE=""
+[ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
 . $TMPDIR/util_functions.sh
+echo "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
+
 
 api_level_arch_detect
 
-mkdir -p /system/etc/magisk
 
 $bb unzip -oj "$APKFILE" "lib/$ABI/*" "lib/$ABI32/libmagisk32.so" -x "lib/$ABI/busybox.so" -d "$TMPDIR"
 
@@ -200,7 +388,7 @@ $bb unzip -oj "$APKFILE" "lib/$ABI/*" "lib/$ABI32/libmagisk32.so" -x "lib/$ABI/b
 ( cd "$TMPDIR"
 for file in lib*.so; do
   chmod 755 $file
-  mv "$file" "/system/etc/magisk/${file:3:${#file}-6}"
+  mv "$file" "$MAGISKCORE/${file:3:${#file}-6}"
 done
 )
 
@@ -214,17 +402,23 @@ mkdir $SERVICED 2>/dev/null
 
 echo "- Install Magisk loader..."
 rm -rf $MAGISKCORE/overlay.sh
-echo "$overlay_loader" >$MAGISKCORE/overlay.sh
-rm -rf /system/etc/init/magisk.rc
-echo "$magiskloader" >/system/etc/init/magisk.rc
-rm -rf /system/etc/magisk/loadpolicy.sh
-echo "$shloadpolicy" >/system/etc/magisk/loadpolicy.sh
+echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
+rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
+echo "$magiskloader" >"$MAGISK_MIRROR/system/etc/init/magisk.rc"
+rm -rf "$MAGISKCORE/loadpolicy.sh"
+echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- Install Magisk App..."
 pm uninstall com.topjohnwu.magisk &>/dev/null
-pm install magisk.apk &>/dev/null || echo "* Please install Magisk app by yourself"
+pm install "$APKFILE" &>/dev/null || echo "* Please install Magisk app by yourself"
 echo "- Mount system read-only..."
-mount -o ro,remount /system
+mount_ro_system
+mkdir -p "/sdcard/Magisk"
+rm -rf "/sdcard/Magisk/Magisk.apk"
+cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
+echo "- Saved Magisk APK to /sdcard/Magisk/Magisk.apk"
 echo "- Done!"
+pd yellow "Press Enter to come back to menu"
+read
 }
 
 uninstall_magisk(){
@@ -232,19 +426,116 @@ echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
 echo "- Mount system read-write..."
-mount -o rw,remount /system || abort "! Failed to mount system"
+mount_rw_system || abort "! Failed to mount system"
 echo "- Remove Magisk..."
 for fun in /system/etc/magisk /system/etc/init/magisk.rc; do
-rm -rf $fun
+rm -rf "$MAGISK_MIRROR/$fun"
 done
 echo "- Mount system read-only..."
-mount -o ro,remount /system
+mount_ro_system
 echo "- Done!"
 }
 
 
-if [ "$ARG1" == "uninstall" ]; then
-uninstall_magisk 2>/dev/null
-else
-install_magisk 2>/dev/null
+
+
+install_option(){
+clear
+pd gray "=============================================="
+echo "   Install/Update Magisk"
+pd gray "=============================================="
+echo "  1 - Lastest Canary"
+echo "  2 - Lastest Alpha"
+echo "  3 - Stable v23 - Not recommended"
+echo "  4 - Offline (Alpha 23016)"
+pd green "* You will download magisk.apk and install Magisk"
+p none "[CHOICE]: "
+read build
+install_magisk=true
+install_offline=false
+case $build in
+1)
+    URL="$canary_magisk_link"
+    ;;
+2)
+    URL="$alpha_magisk_link"
+    ;;
+3)
+    URL="$stable_magisk_link"
+    ;;
+4)
+    install_offline=true
+    ;;
+*)
+    install_magisk=false
+    ;;
+esac
+
+if [ "$install_magisk" == "true" ]; then
+    if [ "$install_offline" == "true" ]; then
+    APKFILE="$DLPATH/magisk.apk"
+    clear
+    ( install_magisk ) 2>/dev/null
+    else
+    ( clear
+    echo "- Downloading Magisk APK..."
+    rm -rf "$DLPATH/app.tmp"
+    rm -rf "$DLPATH/app.apk"
+    $bb wget -O "$DLPATH/app.tmp" "$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
+    APKFILE="$DLPATH/app.apk"
+    install_magisk
+    )
+    fi
 fi
+
+    
+
+
+}
+
+
+
+main(){
+clear
+pd gray  "=============================================="
+echo "   Magisk on Nox - Installer Script"
+echo "   by Husky DG (deadboltsx303@gmail.com)"
+p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  Recommend: NoxPlayer Android 9" || pd light_green "$SDK"
+pd gray "=============================================="
+
+echo "  1 - Install/Update Magisk"
+pd gray "      Integrate Magisk root into Nox emulator"
+echo "  2 - Uninstall Magisk"
+pd gray "      Remove Magisk, this will not remove modules"
+echo "  3 - Install Magisk Modules Manager"
+pd gray "      Module manager for Magisk"
+p none "[CHOICE]: "
+read option
+case $option in
+1)
+    install_option
+    ;;
+2)
+    echo "Do you want to uninstall Magisk? <Y/n>"
+    read uni
+    if [ "$uni" == "y" -o "$uni" == "Y" ]; then
+    clear
+    ( uninstall_magisk )
+    read
+    fi
+    ;;
+3)
+    pm install "$MYPATH/libmm.so" &>/dev/null && pd light_green "Install success!" || pd light_red "Cannot install or this app is adready installed"
+    sleep 3
+    ;;
+*)
+    exit 0
+    ;;
+esac
+}
+
+
+while true; do main; done
+true
