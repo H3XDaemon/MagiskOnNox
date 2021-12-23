@@ -5,6 +5,8 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png"/>
 
+[Video: Hướng dẫn cài đặt Magisk và LSPosed lên giả lập Nox Player]( https://youtu.be/ZtZQPfZjFuU)
+
 ## Tính năng
 - Đem các tính năng Magisk/Zygisk  lên giả lập Nox
 - MagiskHide / MagiskDenyList để ẩn root

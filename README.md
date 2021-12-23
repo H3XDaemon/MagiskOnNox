@@ -7,6 +7,8 @@ Integrate Magisk root into Nox Player and other emulators (based on [MagiskOnWSA
 
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png" />
 
+[Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
+
 ## Features
 
 - Bring Magisk / Zygisk to Nox
