@@ -19,10 +19,23 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
 
-Đối với Android 9.0 64-bit Nox, tải `magisk-on-nox.zip` 
+• Vừa tạo một ứng dụng **Magisk On Nox** để làm việc cài đặt dễ dàng hơn.
 
-Đối với Android 7.1 64-bit Nox/LDPlayer, tải `magisk-on-nox_android_7_64.zip`
+• Đối với Android 9.0 64-bit Nox, tải `magisk-on-nox.zip` 
+
+• Đối với Android 7.1 64-bit Nox/LDPlayer, tải `magisk-on-nox_android_7_64.zip`
 ## Cài đặt
+
+Có 2 cách để cài đặt Magisk vào Nox:
+
+### Cách đơn giản
+
+1. Vào cài đặt giả lập, bật Root tích hợp sẵn và khởi động lại
+2. Tải xuống và cài đặt **Magisk On Nox**.  Cấp quyền truy cập root cho ứng dụng **Magisk on Nox**
+3. Làm theo menu để cài đặt Magisk
+4. Vào cài đặt giả lập, vô hiệu hóa Root tích hợp và khởi động lại
+
+### Cài đặt thủ công
 
 1. Mở cài đặt giả lập, bật root có sẵn sau đó khởi động lại
 2. Cài đặt ứng dụng **Terminal Emulator** nếu chưa có
