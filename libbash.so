@@ -23,6 +23,8 @@ text_install_app_sug="Please install Magisk app by yourself"
 text_install="Install"
 text_setup="Initialize Magisk Core"
 text_rm_magisk_files="Removing Magisk files"
+text_extract_magisk_apk="Extract Magisk APK"
+
 
 warn_reboot(){
 echo " The device will reboot after a few seconds"
@@ -81,7 +83,7 @@ text_install_app_sug="Vui lòng cài đặt ứng dụng Magisk thủ công"
 text_install="Cài đặt"
 text_setup="Thiết lập lõi Magisk"
 text_rm_magisk_files="Loại bỏ các tập tin Magisk"
-
+text_extract_magisk_apk="Giải nén Magisk APK"
 
 warn_reboot(){
 echo " Thiết bị sẽ khởi động trong vài giây nữa"
@@ -506,7 +508,7 @@ MAGISK_VER=""
 MAGISK_VER_CODE=""
 [ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
 . $TMPDIR/util_functions.sh
-pd green "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
+pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
 
 api_level_arch_detect
@@ -517,12 +519,12 @@ echo "- $text_extract_magisk_apk"
 mkdir -p "$TMPDIR/magisk"
 
 
-$bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk"
+$bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk" &>/dev/null
 chmod -R 777 "$TMPDIR/magisk"
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
 
 if [ "$IS64BIT" == "true" ]; then
-$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk32"
+$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk32" &>/dev/null
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
 chmod -R 777 "$TMPDIR/magisk32"
 fi
@@ -556,13 +558,13 @@ fi
 
 
 mkdir -p $MAGISKBIN 2>/dev/null
-$bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN
+$bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
 mkdir $NVBASE/modules 2>/dev/null
 mkdir $POSTFSDATAD 2>/dev/null
 mkdir $SERVICED 2>/dev/null
 
 
-echo "- Install Magisk loader..."
+echo "- $text_install Magisk loader..."
 rm -rf $MAGISKCORE/overlay.sh
 echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
 rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
