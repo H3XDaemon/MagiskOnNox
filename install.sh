@@ -431,8 +431,23 @@ echo "- Remove Magisk..."
 for fun in /system/etc/magisk /system/etc/init/magisk.rc; do
 rm -rf "$MAGISK_MIRROR/$fun"
 done
+ADDOND=/system/addon.d/99-magisk.sh
+if [ -f $ADDOND ]; then
+  rm -f "$MAGISK_MIRROR/$ADDOND"
+fi
 echo "- Mount system read-only..."
 mount_ro_system
+echo "- Removing Magisk files"
+rm -rf \
+/cache/*magisk* /cache/unblock /data/*magisk* /data/cache/*magisk* /data/property/*magisk* \
+/data/Magisk.apk /data/busybox /data/custom_ramdisk_patch.sh /data/adb/*magisk* \
+/data/adb/post-fs-data.d /data/adb/service.d /data/adb/modules* \
+/data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk
+cd /
+  echo "********************************************"
+  echo " The device will reboot after a few seconds"
+  echo "********************************************"
+(sleep 8; /system/bin/reboot)&
 echo "- Done!"
 pd yellow "Press Enter to come back to menu"
 read
@@ -510,7 +525,7 @@ pd gray "=============================================="
 echo "  1 - Install/Update Magisk"
 pd gray "      Integrate Magisk root into Nox emulator"
 echo "  2 - Uninstall Magisk"
-pd gray "      Remove Magisk, this will not remove modules"
+pd gray "      Remove Magisk and its modules"
 echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
 p none "[CHOICE]: "
