@@ -7,6 +7,130 @@ MYSCRIPT="$(realpath "$0")"
 MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
 
+text_press_enter_menu="Press Enter to come back to menu"
+text_cannot_mm="Cannot install or this app is adready installed"
+text_success_mm="Install success!"
+text_warn_uninstall_magisk="Do you want to uninstall Magisk?"
+text_done="Done!"
+text_saved_magisk_apk_to="Saved Magisk APK to"
+text_mount_rw_system="Mount system partition (Read-write)"
+text_mount_ro_system="Mount system partition (Read-only)"
+text_obtain_root="Obtain ROOT access..."
+text_obtain_root_failed="Cannot obtain ROOT access"
+text_recommend="Recommended"
+text_install_app="Install Magisk app"
+text_install_app_sug="Please install Magisk app by yourself"
+text_install="Install"
+text_setup="Initialize Magisk Core"
+text_rm_magisk_files="Removing Magisk files"
+
+warn_reboot(){
+echo " The device will reboot after a few seconds"
+  pd yellow " IF THE EMULATOR FREEZES, SIMPLY JUST REBOOT IT"
+}
+
+print_menu(){
+pd gray  "=============================================="
+echo "   Magisk on Nox - Installer Script"
+echo "   by HuskyDG"
+# please don't change this or use "by HuskyDG + your name" for credits :((
+p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommended}: NoxPlayer Android 9" || pd light_green "$SDK"
+pd gray "=============================================="
+
+echo "  1 - Install/Update Magisk"
+pd gray "      Integrate Magisk root into Nox emulator"
+echo "  2 - Uninstall Magisk"
+pd gray "      Remove Magisk and its modules"
+echo "  3 - Install Magisk Modules Manager"
+pd gray "      Module manager for Magisk"
+p none "[CHOICE]: "
+}
+
+print_menu_install(){
+
+pd gray "=============================================="
+echo "   Install/Update Magisk"
+pd gray "=============================================="
+echo "  1 - Lastest Canary"
+echo "  2 - Lastest Alpha"
+echo "  3 - Stable v23 - Not recommended"
+echo "  4 - Offline (Alpha 23016)"
+pd green "* You will download magisk.apk and install Magisk"
+p none "[CHOICE]: "
+
+}
+
+
+
+language_vn(){
+
+text_press_enter_menu="Nhấn Enter để trở về menu"
+text_cannot_mm="Không thể cài đặt hoặc ứng dụng đã được cài đặt"
+text_success_mm="Cài đặt thành công!"
+text_warn_uninstall_magisk="Bạn có muốn gỡ cài đặt Magisk?"
+text_done="Đã xong!"
+text_saved_magisk_apk_to="Đã lưu Magisk APK vào"
+text_mount_rw_system="Gắn kết phân vùng system (Đọc-ghi)"
+text_mount_ro_system="Gắn kết phân vùng system (Chỉ đọc)"
+text_obtain_root="Đang lấy quyền ROOT.."
+text_obtain_root_failed="Không thể lấy quyền ROOT"
+text_recommended="Đề xuất"
+text_install_app="Cài đặt ứng dụng Magisk"
+text_install_app_sug="Vui lòng cài đặt ứng dụng Magisk thủ công"
+text_install="Cài đặt"
+text_setup="Thiết lập lõi Magisk"
+text_rm_magisk_files="Loại bỏ các tập tin Magisk"
+
+
+warn_reboot(){
+echo " Thiết bị sẽ khởi động trong vài giây nữa"
+  pd yellow " NẾU GIẢ LẬP KHÔNG PHẢN HỒI, VUI LÒNG KHỞI ĐỘNG LẠI"
+}
+
+print_menu(){
+pd gray  "=============================================="
+echo "   Magisk on Nox - Installer Script"
+echo "   by HuskyDG"
+# please don't change this or use "by HuskyDG + your name" for credits :((
+p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommend}: NoxPlayer Android 9" || pd light_green "$SDK"
+pd gray "=============================================="
+
+echo "  1 - Cài đặt hoặc cập nhật Magisk"
+pd gray "      Triển khai Magisk root vào giả lập Nox"
+echo "  2 - Gỡ cài đặt Magisk"
+pd gray "      Loại bỏ Magisk và các mô-đun của nó"
+echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
+pd gray "      Quản lí mô-đun thay thế cho Magisk"
+p none "[CHỌN]: "
+}
+
+print_menu_install(){
+
+pd gray "=============================================="
+echo "   Install/Update Magisk"
+pd gray "=============================================="
+echo "  1 - Canary mới nhất"
+echo "  2 - Alpha mới nhất"
+echo "  3 - Stable v23 - Không khuyến khích"
+echo "  4 - Cài đặt Offline (Alpha 23016)"
+pd green "* Bạn sẽ tải magisk.apk và cài đặt Magisk"
+p none "[CHỌN]: "
+
+}
+
+
+
+}
+
+
+LANGUAGE="$(getprop persist.sys.locale)"
+case "$LANGUAGE" in
+"vi-VN")
+    language_vn
+    ;;
+esac
 
 
 mount_rw_system(){
@@ -140,12 +264,12 @@ pd "$1" "$2"; pd yellow "Process exit with error - Enter to exit"; read; exit 1
 
 
 if [ "$USER_ID" != "0" ]; then
-pd yellow "Obtain root access..."
+pd yellow "$text_obtain_root..."
 ( su -c "$SCRIPT" || /system/xbin/su -c "$SCRIPT" || /system/bin/su -c "$SCRIPT" || /sbin/su -c "$SCRIPT" ) 2>/dev/null
 ERR_CODE="$?"
 if [ "$ERR_CODE" != 0 ]; then
 clear
-abortc "light_red" "Failed to obtain root access"
+abortc "light_red" "$text_obtain_root_failed"
 read
 fi
 exit
@@ -177,7 +301,7 @@ alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-releas
 ARG1="$1"
 JOBPWD="${0%/*}"
 bb=/data/local/tmp/busybox
-TMPDIR=/dev/tmp
+TMPDIR=/dev/tmp_magisk
 APKFILE="$JOBPWD/magisk.apk"
 MAGISKCORE="$MAGISK_MIRROR/system/etc/magisk"
 
@@ -196,6 +320,11 @@ link "libapp.so" "magisk.apk"
 link "libbusybox.so" "busybox"
 bb="$DLPATH/busybox"
 
+clean_flash(){
+umount -l "$TMPDIR"
+rm -rf "$TMPDIR"
+}
+
 install_magisk(){
 echo "******************************"
 echo "      Magisk installer"
@@ -211,6 +340,7 @@ MOUNTPOINT=\"\$1\"
 mkdir -p \"\$MOUNTPOINT\"
 mount -t tmpfs -o \"mode=0755\" tmpfs \"\$MOUNTPOINT\"
 ) }
+
 
 mnt_bind(){ (
 # SHORTCUT BY BIND MOUNT
@@ -359,11 +489,11 @@ magiskloader="on post-fs-data
 
 [ "$(whoami)" == "root" ] || abort "! Run script as root only"
 
-echo "- Mount system read-write..."
-mount_rw_system || abort "! Failed to mount system"
+echo "- $text_mount_rw_system"
+mount_rw_system || abort "! $text_failed_mount_system"
 
-echo "- Set up Magisk core..."
-[ ! -d "$MAGISKCORE" ] && rm -rf "$MAGISKCORE"
+echo "- $text_setup"
+rm -rf "$MAGISKCORE"
 mkdir -p "$MAGISKCORE"
 chown root:root "$MAGISKCORE"
 chmod 750 "$MAGISKCORE"
@@ -381,15 +511,47 @@ pd green "- Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
 api_level_arch_detect
 
+echo "- $text_extract_magisk_apk"
 
-$bb unzip -oj "$APKFILE" "lib/$ABI/*" "lib/$ABI32/libmagisk32.so" -x "lib/$ABI/busybox.so" -d "$TMPDIR"
+[ "$IS64BIT" == "true" ] && mkdir -p "$TMPDIR/magisk32"
+mkdir -p "$TMPDIR/magisk"
 
 
-( cd "$TMPDIR"
+$bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk"
+chmod -R 777 "$TMPDIR/magisk"
+ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
+
+if [ "$IS64BIT" == "true" ]; then
+$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk32"
+ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
+chmod -R 777 "$TMPDIR/magisk32"
+fi
+
+( cd "$TMPDIR/magisk"
 for file in lib*.so; do
   chmod 755 $file
-  mv "$file" "$MAGISKCORE/${file:3:${#file}-6}"
+  mv "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
 done
+
+if [ "$IS64BIT" == "true" ]; then
+cd "$TMPDIR/magisk32"
+for file in lib*.so; do
+  chmod 755 $file
+  [ ! -f "$MAGISKCORE/${file:3:${#file}-6}" ] && mv "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
+done
+
+fi
+
+if [ ! -f "$MAGISKCORE/magisk64" ] && [ "$IS64BIT" == "true" ]; then
+"$TMPDIR/magisk/magiskinit" -x magisk "$MAGISKCORE/magisk64" && echo "  add magisk binary: magisk64"
+fi
+
+if [ ! -f "$MAGISKCORE/magisk32" ]; then
+    whatmagisk="magisk"
+    [ "$IS64BIT" == "true" ] && whatmagisk="magisk32"
+"$TMPDIR/$whatmagisk/magiskinit" -x magisk "$MAGISKCORE/magisk32" && echo "  add magisk binary: magisk32"
+fi
+
 )
 
 
@@ -407,17 +569,18 @@ rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
 echo "$magiskloader" >"$MAGISK_MIRROR/system/etc/init/magisk.rc"
 rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
-echo "- Mount system read-only..."
+echo "- $text_mount_ro_system"
 mount_ro_system
-echo "- Install Magisk App..."
+clean_flash
+echo "- $text_install_app..."
 pm uninstall com.topjohnwu.magisk &>/dev/null
-pm install "$APKFILE" &>/dev/null || echo "* Please install Magisk app by yourself"
+pm install "$APKFILE" &>/dev/null || echo "* $text_install_app_sug"
 mkdir -p "/sdcard/Magisk"
 rm -rf "/sdcard/Magisk/Magisk.apk"
 cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
-echo "- Saved Magisk APK to /sdcard/Magisk/Magisk.apk"
-echo "- Done!"
-pd yellow "Press Enter to come back to menu"
+echo "- $text_saved_magisk_apk_to /sdcard/Magisk/Magisk.apk"
+echo "- $text_done"
+pd yellow "$text_press_enter_menu"
 read
 }
 
@@ -425,8 +588,8 @@ uninstall_magisk(){
 echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
-echo "- Mount system read-write..."
-mount_rw_system || abort "! Failed to mount system"
+echo "- $text_mount_rw_system"
+mount_rw_system || abort "! $text_failed_mount_system"
 echo "- Remove Magisk..."
 for fun in /system/etc/magisk /system/etc/init/magisk.rc; do
 rm -rf "$MAGISK_MIRROR/$fun"
@@ -435,9 +598,9 @@ ADDOND=/system/addon.d/99-magisk.sh
 if [ -f $ADDOND ]; then
   rm -f "$MAGISK_MIRROR/$ADDOND"
 fi
-echo "- Mount system read-only..."
+echo "- $text_mount_ro_system"
 mount_ro_system
-echo "- Removing Magisk files"
+echo "- $text_rm_magisk_files"
 rm -rf \
 /cache/*magisk* /cache/unblock /data/*magisk* /data/cache/*magisk* /data/property/*magisk* \
 /data/Magisk.apk /data/busybox /data/custom_ramdisk_patch.sh /data/adb/*magisk* \
@@ -445,11 +608,11 @@ rm -rf \
 /data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk
 cd /
   echo "********************************************"
-  echo " The device will reboot after a few seconds"
+  warn_reboot
   echo "********************************************"
 (sleep 8; /system/bin/reboot)&
-echo "- Done!"
-pd yellow "Press Enter to come back to menu"
+echo "- $text_done"
+pd yellow "$text_press_enter_menu"
 read
 }
 
@@ -458,15 +621,7 @@ read
 
 install_option(){
 clear
-pd gray "=============================================="
-echo "   Install/Update Magisk"
-pd gray "=============================================="
-echo "  1 - Lastest Canary"
-echo "  2 - Lastest Alpha"
-echo "  3 - Stable v23 - Not recommended"
-echo "  4 - Offline (Alpha 23016)"
-pd green "* You will download magisk.apk and install Magisk"
-p none "[CHOICE]: "
+print_menu_install
 read build
 install_magisk=true
 install_offline=false
@@ -515,27 +670,14 @@ fi
 
 main(){
 clear
-pd gray  "=============================================="
-echo "   Magisk on Nox - Installer Script"
-echo "   by Husky DG (deadboltsx303@gmail.com)"
-p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
-p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  Recommend: NoxPlayer Android 9" || pd light_green "$SDK"
-pd gray "=============================================="
-
-echo "  1 - Install/Update Magisk"
-pd gray "      Integrate Magisk root into Nox emulator"
-echo "  2 - Uninstall Magisk"
-pd gray "      Remove Magisk and its modules"
-echo "  3 - Install Magisk Modules Manager"
-pd gray "      Module manager for Magisk"
-p none "[CHOICE]: "
+print_menu
 read option
 case $option in
 1)
     install_option
     ;;
 2)
-    p none "Do you want to uninstall Magisk? <Y/n> "
+    p none "$text_warn_uninstall_magisk <Y/n> "
     read uni
     if [ "$uni" == "y" -o "$uni" == "Y" ]; then
     clear
@@ -545,8 +687,8 @@ case $option in
 3)
    rm -rf "$DLPATH/fmm.apk"
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
-    pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "Install success!" || pd light_red "Cannot install or this app is adready installed"
-    pd yellow "Press Enter to come back to menu"
+    pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
+    pd yellow "$text_press_enter_menu"
     read
     ;;
 *)
