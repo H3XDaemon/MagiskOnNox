@@ -24,7 +24,7 @@ text_install="Install"
 text_setup="Initialize Magisk Core"
 text_rm_magisk_files="Removing Magisk files"
 text_extract_magisk_apk="Extract Magisk APK"
-
+text_failed_mount_system="Failed to mount system partition"
 
 warn_reboot(){
 echo " The device will reboot after a few seconds"
@@ -57,7 +57,8 @@ pd gray "=============================================="
 echo "  1 - Lastest Canary"
 echo "  2 - Lastest Alpha"
 echo "  3 - Stable v23 - Not recommended"
-echo "  4 - Offline (Alpha 23016)"
+echo "  4 - Offline - Alpha 23016"
+echo "  5 - Offline - Legacy Stable v21.4"
 pd green "* You will download magisk.apk and install Magisk"
 p none "[CHOICE]: "
 
@@ -84,10 +85,11 @@ text_install="Cài đặt"
 text_setup="Thiết lập lõi Magisk"
 text_rm_magisk_files="Loại bỏ các tập tin Magisk"
 text_extract_magisk_apk="Giải nén Magisk APK"
+text_failed_mount_system="Gắn kết phân vùng system thất bại"
 
 warn_reboot(){
 echo " Thiết bị sẽ khởi động trong vài giây nữa"
-  pd yellow " NẾU GIẢ LẬP KHÔNG PHẢN HỒI, VUI LÒNG KHỞI ĐỘNG LẠI"
+echo " NẾU HỆ THỐNG KHÔNG PHẢN HỒI, VUI LÒNG KHỞI ĐỘNG LẠI"
 }
 
 print_menu(){
@@ -116,7 +118,8 @@ pd gray "=============================================="
 echo "  1 - Canary mới nhất"
 echo "  2 - Alpha mới nhất"
 echo "  3 - Stable v23 - Không khuyến khích"
-echo "  4 - Cài đặt Offline (Alpha 23016)"
+echo "  4 - Offline - Alpha 23016"
+echo "  5 - Offline - Legacy Stable v21.4"
 pd green "* Bạn sẽ tải magisk.apk và cài đặt Magisk"
 p none "[CHỌN]: "
 
@@ -263,6 +266,7 @@ p "$1" "$2"; echo
 abortc(){
 pd "$1" "$2"; pd yellow "Process exit with error - Enter to exit"; read; exit 1
 }
+if [ "$AGV1" != "noexec" ]; then
 
 
 if [ "$USER_ID" != "0" ]; then
@@ -277,13 +281,16 @@ fi
 exit
 fi
 
+fi
+
 SDK="$(getprop ro.build.version.sdk)"
 
 MAGISK_TMP="$(magisk --path)"
 MAGISKDIR="$MAGISK_TMP/.magisk"
 [ "$MAGISK_TMP" ] && MAGISK_MIRROR="$MAGISKDIR/mirror"
 SYSTEMDIR="$MAGISK_MIRROR/system"
-SYSTEMROOTDIR="$MAGISK_MIRROR/system_root"
+SYSTEMROOTDIR="/"
+[ "$MAGISK_TMP" ] && SYSTEMROOTDIR="$MAGISK_MIRROR/system_root"
 
 
 priv_dir=/data/data/io.github.huskydg.magiskonnox
@@ -320,6 +327,7 @@ ln -s "$(which "$agv1")" "$DLPATH/$agv2" 2>/dev/null
 
 link "libapp.so" "magisk.apk"
 link "libbusybox.so" "busybox"
+link "liblegacy.so" "legacy.zip"
 bb="$DLPATH/busybox"
 
 clean_flash(){
@@ -328,6 +336,8 @@ rm -rf "$TMPDIR"
 }
 
 install_magisk(){
+value1="$1"
+
 echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
@@ -573,14 +583,20 @@ rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
 mount_ro_system
-clean_flash
 echo "- $text_install_app..."
+
+if [ "$value1" == "legacy" ]; then
+$bb unzip -oj "$APKFILE" 'magisk.apk' -d "$TMPDIR" &>/dev/null
+APKFILE="$TMPDIR/magisk.apk"
+fi
+
 pm uninstall com.topjohnwu.magisk &>/dev/null
 pm install "$APKFILE" &>/dev/null || echo "* $text_install_app_sug"
 mkdir -p "/sdcard/Magisk"
 rm -rf "/sdcard/Magisk/Magisk.apk"
 cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
 echo "- $text_saved_magisk_apk_to /sdcard/Magisk/Magisk.apk"
+clean_flash
 echo "- $text_done"
 pd yellow "$text_press_enter_menu"
 read
@@ -627,6 +643,7 @@ print_menu_install
 read build
 install_magisk=true
 install_offline=false
+APKFILE="$JOBPWD/magisk.apk"
 case $build in
 1)
     URL="$canary_magisk_link"
@@ -639,6 +656,10 @@ case $build in
     ;;
 4)
     install_offline=true
+    ;;
+5)
+    install_offline=true
+    APKFILE="$DLPATH/legacy.zip"
     ;;
 *)
     install_magisk=false
@@ -699,6 +720,9 @@ case $option in
 esac
 }
 
+if [ "$AGV1" != "noexec" ]; then
 
 while true; do main; done
 true
+
+fi
