@@ -7,6 +7,30 @@ MYSCRIPT="$(realpath "$0")"
 MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
 
+API=$(getprop ro.build.version.sdk)
+  ABI=$(getprop ro.product.cpu.abi)
+  if [ "$ABI" = "x86" ]; then
+    ARCH=x86
+    ABI32=x86
+    IS64BIT=false
+  elif [ "$ABI" = "arm64-v8a" ]; then
+    ARCH=arm64
+    ABI32=armeabi-v7a
+    IS64BIT=true
+  elif [ "$ABI" = "x86_64" ]; then
+    ARCH=x64
+    ABI32=x86
+    IS64BIT=true
+  else
+    ARCH=arm
+    ABI=armeabi-v7a
+    ABI32=armeabi-v7a
+    IS64BIT=false
+  fi
+
+magisk_name="magisk32"
+[ "$IS64BIT" == true ] && magisk_name="magisk64"
+
 text_press_enter_menu="Press Enter to come back to menu"
 text_cannot_mm="Cannot install or this app is adready installed"
 text_success_mm="Install success!"
@@ -58,7 +82,6 @@ echo "  1 - Lastest Canary"
 echo "  2 - Lastest Alpha"
 echo "  3 - Stable v23 - Not recommended"
 echo "  4 - Offline - Alpha 23016"
-echo "  5 - Offline - Legacy Stable v21.4"
 pd green "* You will download magisk.apk and install Magisk"
 p none "[CHOICE]: "
 
@@ -119,7 +142,6 @@ echo "  1 - Canary mới nhất"
 echo "  2 - Alpha mới nhất"
 echo "  3 - Stable v23 - Không khuyến khích"
 echo "  4 - Offline - Alpha 23016"
-echo "  5 - Offline - Legacy Stable v21.4"
 pd green "* Bạn sẽ tải magisk.apk và cài đặt Magisk"
 p none "[CHỌN]: "
 
@@ -423,7 +445,7 @@ cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
 cp -af ./loadpolicy.sh \$MAGISKTMP
 
-ln -s ./magisk64 \$MAGISKTMP/magisk
+ln -s ./$magisk_name \$MAGISKTMP/magisk
 ln -s ./magisk \$MAGISKTMP/su
 ln -s ./magisk \$MAGISKTMP/resetprop
 ln -s ./magisk \$MAGISKTMP/magiskhide
@@ -657,11 +679,7 @@ case $build in
 4)
     install_offline=true
     ;;
-5)
-    install_offline=true
-    APKFILE="$DLPATH/legacy.zip"
-    value_arg="legacy"
-    ;;
+
 *)
     install_magisk=false
     ;;
