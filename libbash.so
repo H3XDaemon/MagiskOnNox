@@ -660,6 +660,7 @@ case $build in
 5)
     install_offline=true
     APKFILE="$DLPATH/legacy.zip"
+    value_arg="legacy"
     ;;
 *)
     install_magisk=false
@@ -669,7 +670,7 @@ esac
 if [ "$install_magisk" == "true" ]; then
     if [ "$install_offline" == "true" ]; then
     clear
-    ( install_magisk ) 2>/dev/null
+    ( install_magisk "$value_arg" ) 2>/dev/null
     else
     ( clear
     echo "- Downloading Magisk APK..."
