@@ -15,15 +15,15 @@ Integrate Magisk root into Nox Player and other emulators (based on [MagiskOnWSA
 - MagiskHide / MagiskDenyList for hiding root
 - Magisk / Zygisk modules work properly!
 
+*Some features might not work on some emulator*
+
 
 ## Requirements
 - Recommended: Nox Emulator with Android 9 64-bit
-- Any emulator with Android 7.1 and above, 32bit and 64bit, confirmed working Emulator: Bluestacks, Nox, LDPlayer
+- Any emulator with Android 7.1 and above, 32bit and 64bit.
 
-## Some drawbacks
+[Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
 
-- Android 7.1 Nox/LDPlayer cannot load Magisk Canary / Alpha and modules failed to install due to unstable environment
-- Bluestacks Android 9 cannot load Zygisk and modules even you can install it
 
 ## Download
 Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
@@ -39,10 +39,6 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 2. Download and install **Magisk On Nox**. Open and grant root access to **Magisk on Nox** app
 3. Do follow the menu to install Magisk. Here are 3 versions of Magisk that you can install: Canary, Alpha and Stable.
-
-- Android 9: It's recommended to install Magisk Canary / Alpha if you want modules
-
-- Android 7: Install Magisk Canary / Alpha on Android 7.1 may cause Magisk not to work, in that case please install Magisk Stable v23, however you might not able to install Magisk modules due to some bugs.
 
 4. Go to emulator settings, disable built-in Root and reboot. For Bluestacks, press **UnPatch** button in **Bluestacks Tweaker** to remove **SuperSU**.
 
