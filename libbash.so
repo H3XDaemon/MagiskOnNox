@@ -643,7 +643,7 @@ print_menu_install
 read build
 install_magisk=true
 install_offline=false
-APKFILE="$JOBPWD/magisk.apk"
+APKFILE="$DLPATH/magisk.apk"
 case $build in
 1)
     URL="$canary_magisk_link"
@@ -668,7 +668,6 @@ esac
 
 if [ "$install_magisk" == "true" ]; then
     if [ "$install_offline" == "true" ]; then
-    APKFILE="$DLPATH/magisk.apk"
     clear
     ( install_magisk ) 2>/dev/null
     else
