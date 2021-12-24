@@ -29,7 +29,7 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 
 1. Đi tới cài đặt giả lập, bật Root tích hợp sẵn và khởi động lại
 
-- **Bluestacks:** Vì trình giả lập Bluestacks không có tùy chọn root tích hợp, vì vậy bạn cần sử dụng ** Bluestacks Tweaker ** để cài đặt **SuperSU** cho root
+- **Bluestacks:** Vì trình giả lập Bluestacks không có tùy chọn root tích hợp, vì vậy bạn cần sử dụng **Bluestacks Tweaker** để cài đặt **SuperSU** cho root
 
 
  2. Tải xuống và cài đặt **Magisk On Nox**.  Mở và cấp quyền truy cập root cho ứng dụng **Magisk On Nox**
