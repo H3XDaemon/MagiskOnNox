@@ -15,7 +15,7 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 
 ## Các yêu cầu
 - Khuyến nghị: NoxPlayer với Android 9 64-bit
-- Bất kỳ trình giả lập nào chạy Android 7.1 trở lên, 64bit, Trình giả lập được xác nhận: Bluestacks, Nox, LDPlayer
+- Bất kỳ trình giả lập nào chạy Android 7.1 trở lên, 32bit và 64bit, Trình giả lập được xác nhận: Bluestacks, Nox, LDPlayer
 
 ## Một vài hạn chế
 
@@ -29,7 +29,7 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 
 1. Đi tới cài đặt giả lập, bật Root tích hợp sẵn và khởi động lại
 
-- **Bluestacks:** Vì trình giả lập Bluestacks không có tùy chọn root tích hợp, vì vậy bạn cần sử dụng **Bluestacks Tweaker** để cài đặt **SuperSU** cho root
+- **Bluestacks:** Vì trình giả lập Bluestacks không có tùy chọn root tích hợp, vì vậy bạn cần sử dụng ** Bluestacks Tweaker ** để cài đặt **SuperSU** cho root
 
 
  2. Tải xuống và cài đặt **Magisk On Nox**.  Mở và cấp quyền truy cập root cho ứng dụng **Magisk On Nox**
@@ -44,6 +44,10 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 ## Cập nhật Magisk
 
 Vì Nox và các giả lập thường không có đĩa ảnh boot nên bạn không thể cập nhật trực tiếp, vui lòng cập nhật Magisk bằng **Magisk on Nox**
+
+## Các câu hỏi thường gặp
+
+[Vui lòng truy cập trang này](https://github.com/HuskyDG/MagiskOnNox/wiki)
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android

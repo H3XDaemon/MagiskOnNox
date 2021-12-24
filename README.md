@@ -18,7 +18,7 @@ Integrate Magisk root into Nox Player and other emulators (based on [MagiskOnWSA
 
 ## Requirements
 - Recommended: Nox Emulator with Android 9 64-bit
-- Any emulator with Android 7.1 and above, 64bit, confirmed working Emulator: Bluestacks, Nox, LDPlayer
+- Any emulator with Android 7.1 and above, 32bit and 64bit, confirmed working Emulator: Bluestacks, Nox, LDPlayer
 
 ## Some drawbacks
 
@@ -51,6 +51,11 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 ## Update
 
 Since Nox/Emulator doesn't have boot image, you cannot update directly through **Magisk** app, please use **Magisk On Nox** to update it.
+
+
+## Frequently asked Questions
+
+[Please access this page](https://github.com/HuskyDG/MagiskOnNox/wiki)
 
 
 ## Credits
