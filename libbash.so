@@ -31,7 +31,7 @@ API=$(getprop ro.build.version.sdk)
 magisk_name="magisk32"
 [ "$IS64BIT" == true ] && magisk_name="magisk64"
 
-text_press_enter_menu="Press Enter to come back to menu"
+text_press_enter_menu="PRESS ENTER TO BACK TO MENU"
 text_cannot_mm="Cannot install or this app is adready installed"
 text_success_mm="Install success!"
 text_warn_uninstall_magisk="Do you want to uninstall Magisk?"
@@ -63,7 +63,7 @@ echo "   by HuskyDG"
 p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommended}: NoxPlayer Android 9" || pd light_green "$SDK"
 pd gray "=============================================="
-
+pd light_cyan "MAGISK"
 echo "  1 - Install/Update Magisk"
 pd gray "      Integrate Magisk root into Nox emulator"
 echo "  2 - Uninstall Magisk"
@@ -91,7 +91,7 @@ p none "[CHOICE]: "
 
 language_vn(){
 
-text_press_enter_menu="Nhấn Enter để trở về menu"
+text_press_enter_menu="NHẤN ENTER ĐỂ TRỞ VỀ MENU"
 text_cannot_mm="Không thể cài đặt hoặc ứng dụng đã được cài đặt"
 text_success_mm="Cài đặt thành công!"
 text_warn_uninstall_magisk="Bạn có muốn gỡ cài đặt Magisk?"
@@ -123,7 +123,7 @@ echo "   by HuskyDG"
 p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommend}: NoxPlayer Android 9" || pd light_green "$SDK"
 pd gray "=============================================="
-
+pd light_cyan "MAGISK"
 echo "  1 - Cài đặt hoặc cập nhật Magisk"
 pd gray "      Triển khai Magisk root vào giả lập Nox"
 echo "  2 - Gỡ cài đặt Magisk"
@@ -286,7 +286,7 @@ p "$1" "$2"; echo
 
 
 abortc(){
-pd "$1" "$2"; pd yellow "Process exit with error - Enter to exit"; read; exit 1
+pd "$1" "$2"; exit 1
 }
 if [ "$AGV1" != "noexec" ]; then
 
@@ -355,6 +355,11 @@ bb="$DLPATH/busybox"
 clean_flash(){
 umount -l "$TMPDIR"
 rm -rf "$TMPDIR"
+}
+
+turn_back(){
+p yellow "$text_press_enter_menu"
+read
 }
 
 install_magisk(){
@@ -620,8 +625,6 @@ cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
 echo "- $text_saved_magisk_apk_to /sdcard/Magisk/Magisk.apk"
 clean_flash
 echo "- $text_done"
-pd yellow "$text_press_enter_menu"
-read
 }
 
 uninstall_magisk(){
@@ -652,10 +655,26 @@ cd /
   echo "********************************************"
 (sleep 8; /system/bin/reboot)&
 echo "- $text_done"
-pd yellow "$text_press_enter_menu"
-read
+
 }
 
+install_option_process(){
+pd light_cyan "- Magisk build: $build_name"
+if [ "$install_offline" == "true" ]; then
+    
+    ( install_magisk "$value_arg" ) 2>/dev/null
+    else
+    ( 
+    echo "- Downloading Magisk APK..."
+    rm -rf "$DLPATH/app.tmp"
+    rm -rf "$DLPATH/app.apk"
+    $bb wget -O "$DLPATH/app.tmp" "$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
+    APKFILE="$DLPATH/app.apk"
+    install_magisk
+    )
+fi
+}
 
 
 
@@ -668,15 +687,19 @@ install_offline=false
 APKFILE="$DLPATH/magisk.apk"
 case $build in
 1)
+    build_name="Canary"
     URL="$canary_magisk_link"
     ;;
 2)
+    build_name="Alpha"
     URL="$alpha_magisk_link"
     ;;
 3)
+    build_name="Stable"
     URL="$stable_magisk_link"
     ;;
 4)
+   build_name="Alpha"
     install_offline=true
     ;;
 
@@ -686,28 +709,22 @@ case $build in
 esac
 
 if [ "$install_magisk" == "true" ]; then
-    if [ "$install_offline" == "true" ]; then
     clear
-    ( install_magisk "$value_arg" ) 2>/dev/null
-    else
-    ( clear
-    echo "- Downloading Magisk APK..."
-    rm -rf "$DLPATH/app.tmp"
-    rm -rf "$DLPATH/app.apk"
-    $bb wget -O "$DLPATH/app.tmp" "$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
-    [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
-    APKFILE="$DLPATH/app.apk"
-    install_magisk
-    )
-    fi
+    install_option_process
 fi
 
     
 
-
 }
 
-
+uninstall_option(){
+p none "$text_warn_uninstall_magisk <Y/n> "
+    read uni
+    if [ "$uni" == "y" -o "$uni" == "Y" ]; then
+    clear
+    ( uninstall_magisk )
+    fi
+}
 
 main(){
 clear
@@ -718,29 +735,56 @@ case $option in
     install_option
     ;;
 2)
-    p none "$text_warn_uninstall_magisk <Y/n> "
-    read uni
-    if [ "$uni" == "y" -o "$uni" == "Y" ]; then
-    clear
-    ( uninstall_magisk )
-    fi
+    uninstall_option
     ;;
 3)
    rm -rf "$DLPATH/fmm.apk"
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
-    pd yellow "$text_press_enter_menu"
-    read
     ;;
 *)
     exit 0
     ;;
 esac
+turn_back
 }
 
 if [ "$AGV1" != "noexec" ]; then
+    if [ "$AGV1" == "option" ]; then
+        case "$AGV2" in
+            "install")
+                install_option;
+                ;;
 
-while true; do main; done
-true
-
-fi
+            "install:alpha")
+    build_name="Alpha"
+    URL="$alpha_magisk_link"
+    install_option_process
+    ;;
+            "install:canary")
+    build_name="Canary"
+    URL="$canary_magisk_link"
+    install_option_process
+    ;;
+            "install:stable")
+    build_name="Stable"
+    URL="$stable_magisk_link"
+    install_option_process
+    ;;
+            "install:offline")
+    build_name="Alpha"
+    install_offline=true
+    install_option_process
+    ;;
+            "install:"*)
+                echo "Invaild Magisk build. Available build: canary, alpha, stable"
+            ;;
+            "uninstall")
+            uninstall_option
+            ;;
+             *)
+            while true; do main; done
+            ;;
+        esac
+    fi
+fi; true
