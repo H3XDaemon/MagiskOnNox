@@ -15,14 +15,12 @@ Integrate Magisk root into Nox Player and other emulators (based on [MagiskOnWSA
 - MagiskHide / MagiskDenyList for hiding root
 - Magisk / Zygisk modules work properly!
 
-*Some features might not work on some emulator*
-
+Note: Some features might not work on some emulator, Please read [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) to know which Magisk features doesn't work.
 
 ## Requirements
 - Recommended: Nox Emulator with Android 9 64-bit
 - Any emulator with Android 7.1 and above, 32bit and 64bit.
-
-[Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
+- Please read [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
 
 
 ## Download
