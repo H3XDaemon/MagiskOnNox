@@ -55,7 +55,8 @@ usage: inmagisk [OPTION]
 Available option:
  install                       Open Menu for install Magisk
  install:<build>               Install/Update Magisk
- inmagisk uninstall            Uninstall Magisk and its modules"
+ uninstall                     Uninstall Magisk and its modules"
+
 }
 
 p none "Type "; p light_purple "inmagisk"; p none " to open "; pd light_green "Magisk Installer Script";
