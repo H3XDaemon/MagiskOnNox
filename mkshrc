@@ -46,7 +46,7 @@ p "$1" "$2"; echo
 }
 
 inmagisk(){
-libbash.so "$@" 2>/dev/null
+libbash.so option "$@" 2>/dev/null
 }
 
 help(){

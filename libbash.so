@@ -2,10 +2,12 @@
 
 AGVARR="$@"
 SCRIPT="$0"
-AGV1="$1" AGV2="$2"
+AGV1="$1"
+AGV2="$2"
 MYSCRIPT="$(realpath "$0")"
 MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
+cmds="$SCRIPT $AGVARR"
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
@@ -293,7 +295,7 @@ if [ "$AGV1" != "noexec" ]; then
 
 if [ "$USER_ID" != "0" ]; then
 pd yellow "$text_obtain_root..."
-( su -c "$SCRIPT" || /system/xbin/su -c "$SCRIPT" || /system/bin/su -c "$SCRIPT" || /sbin/su -c "$SCRIPT" ) 2>/dev/null
+( su -c "$cmds" || /system/xbin/su -c "$cmds" || /system/bin/su -c "$cmds" || /sbin/su -c "$cmds" ) 2>/dev/null
 ERR_CODE="$?"
 if [ "$ERR_CODE" != 0 ]; then
 clear
@@ -786,5 +788,7 @@ if [ "$AGV1" != "noexec" ]; then
             while true; do main; done
             ;;
         esac
+    else
+        while true; do main; done
     fi
 fi; true
