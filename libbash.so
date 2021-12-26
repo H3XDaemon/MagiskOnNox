@@ -403,11 +403,11 @@ FROM=\"\$1\"; TO=\"\$2\"; IFS=\$\"
 \"
 [ -d \"\$TO\" ] || exit 1;
 ( cd \"\$FROM\" && find * ) | while read obj; do
-if [ -d \"\$FROM/\$obj\" ]; then
+( if [ -d \"\$FROM/\$obj\" ]; then
 mnt_tmpfs \"\$TO/\$obj\"
 else
 mnt_bind \"\$FROM/\$obj\" \"\$TO/\$obj\" 2>/dev/null
-fi
+fi ) &
 done
 ) }
 
@@ -426,13 +426,13 @@ mnt_bind \"\$PAYDIR\" \"\$FOLDER\"
 ) }
 
 mount -o rw,remount /
-rm -rf /root
-mkdir /root
-ln /sbin/* /root
-mount -o ro,remount /
-
+rm -rf /.backup_sbin
+mkdir /.backup_sbin
+ln /sbin/* /.backup_sbin
 mnt_tmpfs /sbin
-clone /root /sbin
+clone /.backup_sbin /sbin
+rm -rf /.backup_sbin 
+mount -o ro,remount /
 
 chcon u:r:rootfs:s0 /sbin
 cd /system/etc/magisk
