@@ -425,6 +425,14 @@ mnt_bind \"\$PAYDIR\" \"\$FOLDER\"
 #______________
 ) }
 
+# hide selinux permissive on emulator
+if [ \$(cat /sys/fs/selinux/enforce) == \"0\" ]; then
+chmod 640 /sys/fs/selinux/enforce
+chmod 440 /sys/fs/selinux/policy
+fi
+
+
+
 mount -o rw,remount /
 rm -rf /.backup_sbin
 mkdir /.backup_sbin
