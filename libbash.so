@@ -4,6 +4,7 @@ AGVARR="$@"
 SCRIPT="$0"
 AGV1="$1"
 AGV2="$2"
+AGV3="$3"
 MYSCRIPT="$(realpath "$0")"
 MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
@@ -57,6 +58,16 @@ echo " The device will reboot after a few seconds"
   pd yellow " IF THE EMULATOR FREEZES, SIMPLY JUST REBOOT IT"
 }
 
+disable_magisk(){
+[ -f "$DLPATH/disable" ] && p light_red "[ON]" || p light_red "[OFF]"
+}
+
+disable_magisk_process(){
+[ -f "$DLPATH/disable" ] && rm -rf "$DLPATH/disable" || touch "$DLPATH/disable"
+}
+
+
+
 print_menu(){
 pd gray  "=============================================="
 echo "   Magisk on Nox - Installer Script"
@@ -72,6 +83,8 @@ echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
 echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
+echo "  4 - Disable Magisk `disable_magisk`"
+pd gray "      Don't load Magisk and its modules"
 p none "[CHOICE]: "
 }
 
@@ -132,6 +145,8 @@ echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
 echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
+echo "  4 - Vô hiệu hóa Magisk `disable_magisk`"
+pd gray "      Không tải Magisk và các mô-đun của nó"
 p none "[CHỌN]: "
 }
 
@@ -326,10 +341,6 @@ rm -rf "$DLPATH" 2>/dev/null
 mkdir -p "$DLPATH" 2>/dev/null
 fi
 
-stable_magisk_link="https://cdn.jsdelivr.net/gh/topjohnwu/magisk-files@23.0/app-release.apk"
-canary_magisk_link="https://github.com/topjohnwu/magisk-files/blob/canary/app-debug.apk?raw=true"
-alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-release.apk?raw=true"
-
 # This script is write by HuskyDG
 ARG1="$1"
 JOBPWD="${0%/*}"
@@ -354,6 +365,37 @@ link "libbusybox.so" "busybox"
 link "liblegacy.so" "legacy.zip"
 bb="$DLPATH/busybox"
 
+busybox_bin(){
+
+mkdir -p "$DLPATH/bin"
+"$bb" --install -s "$DLPATH/bin"
+PATH="$DLPATH/bin:$PATH"
+
+}
+
+busybox_bin 2>/dev/null
+
+unshare_environment(){
+if [ ! "$UNSHARE_MM" == "1" ]; then
+export UNSHARE_MM=1
+export ASH_STANDALONE=1
+"$bb" unshare -m sh -c "$cmds"
+exit
+fi
+}
+
+unshare_environment 2>/dev/null
+
+ISENCRYPTED=false
+  grep ' /data ' /proc/mounts | grep -q 'dm-' && ISENCRYPTED=true
+  [ "$(getprop ro.crypto.state)" = "encrypted" ] && ISENCRYPTED=true
+
+stable_magisk_link="https://github.com/topjohnwu/Magisk/releases/download/v23.0/Magisk-v23.0.apk"
+canary_magisk_link="https://github.com/topjohnwu/magisk-files/blob/canary/app-debug.apk?raw=true"
+alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-release.apk?raw=true"
+
+
+
 clean_flash(){
 umount -l "$TMPDIR"
 rm -rf "$TMPDIR"
@@ -371,7 +413,7 @@ echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
 
-overlay_loader="#!/system/bin/sh
+overlay_loader="#!/system/etc/magisk/busybox sh
 
 export PATH=/sbin:/system/bin:/system/xbin
 
@@ -424,6 +466,13 @@ clone \"\$FOLDER\" \"\$PAYDIR\"
 mnt_bind \"\$PAYDIR\" \"\$FOLDER\"
 #______________
 ) }
+
+exit_overlay(){
+echo -n >/dev/.overlay_unblock
+exit
+}
+
+[ -f \"$DLPATH/disable\" ] && exit_overlay
 
 # hide selinux permissive on emulator
 if [ \$(cat /sys/fs/selinux/enforce) == \"0\" ]; then
@@ -484,12 +533,34 @@ fi
 touch /dev/.overlay_unblock"
 
 cd "$JOBPWD"
-shloadpolicy="#!/system/bin/sh
+shloadpolicy="#!/system/etc/magisk/busybox sh
+          restorecon -R /data/adb/magisk
           for module in \$(ls /data/adb/modules); do
               if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
                   /sbin/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
               fi
-          done"
+          done
+
+exit_magisk(){
+echo -n > /dev/.magisk_unblock
+exit
+}
+
+[ -f \"$DLPATH/disable\" ] && echo -n > /dev/.magisk_unblock
+
+[ ! -f \"/sbin/magisk\" ] && exit_magisk
+
+
+while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
+  do
+    sleep 1
+  done
+
+resetprop --delete init.svc.magiskoverlay
+resetprop --delete init.svc.FAhW7H9G5sf
+resetprop --delete init.svc.HLiFsR1HtIXVN6
+resetprop --delete init.svc.YqCTLTppv3ML
+( sleep 1; resetprop --delete init.svc.IhhslLhHYfse ) &"
 
 magiskloader="on post-fs-data
               start logd
@@ -505,12 +576,12 @@ magiskloader="on post-fs-data
               wait /dev/.magisk_unblock 40
               rm /dev/.magisk_unblock
 
-          service magiskoverlay /system/bin/sh /system/etc/magisk/overlay.sh
+          service magiskoverlay /system/etc/magisk/busybox sh -o standalone /system/etc/magisk/overlay.sh
              user root
              group root
              oneshot
 
-          service IhhslLhHYfse /system/bin/sh /sbin/loadpolicy.sh
+          service IhhslLhHYfse /system/etc/magisk/busybox sh -o standalone /sbin/loadpolicy.sh
               user root
               seclabel u:r:magisk:s0
               oneshot
@@ -566,12 +637,12 @@ echo "- $text_extract_magisk_apk"
 mkdir -p "$TMPDIR/magisk"
 
 
-$bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk" &>/dev/null
+$bb unzip -oj "$APKFILE" "lib/$ABI/*" -d "$TMPDIR/magisk" &>/dev/null
 chmod -R 777 "$TMPDIR/magisk"
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
 
 if [ "$IS64BIT" == "true" ]; then
-$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -x "lib/$ABI/busybox.so" -d "$TMPDIR/magisk32" &>/dev/null
+$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -d "$TMPDIR/magisk32" &>/dev/null
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
 chmod -R 777 "$TMPDIR/magisk32"
 fi
@@ -670,6 +741,7 @@ echo "- $text_done"
 
 install_option_process(){
 pd light_cyan "- Magisk build: $build_name"
+APKFILE="$DLPATH/magisk.apk"
 if [ "$install_offline" == "true" ]; then
     
     ( install_magisk "$value_arg" ) 2>/dev/null
@@ -678,7 +750,11 @@ if [ "$install_offline" == "true" ]; then
     echo "- Downloading Magisk APK..."
     rm -rf "$DLPATH/app.tmp"
     rm -rf "$DLPATH/app.apk"
+mirror_git="https://gh.api.99988866.xyz/"
+
+
     $bb wget -O "$DLPATH/app.tmp" "$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    [ -f "$DLPATH/app.apk" ] || $bb wget -O "$DLPATH/app.tmp" "$mirror_git$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
     [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
     APKFILE="$DLPATH/app.apk"
     install_magisk
@@ -690,11 +766,11 @@ fi
 
 install_option(){
 clear
+
 print_menu_install
 read build
 install_magisk=true
 install_offline=false
-APKFILE="$DLPATH/magisk.apk"
 case $build in
 1)
     build_name="Canary"
@@ -752,6 +828,9 @@ case $option in
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
     ;;
+4)
+    disable_magisk_process
+    ;;
 *)
     exit 0
     ;;
@@ -791,6 +870,14 @@ if [ "$AGV1" != "noexec" ]; then
             ;;
             "uninstall")
             uninstall_option
+            ;;
+            "disable")
+            echo "Magisk will be disabled in the next boot"
+            touch "$DLPATH/disable"
+            ;;
+            "enable")
+            echo "Magisk will be enabled in the next boot"
+            rm -rf "$DLPATH/disable"
             ;;
              *)
             while true; do main; done
