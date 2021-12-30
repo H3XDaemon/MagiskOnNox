@@ -10,6 +10,7 @@ MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
 cmds="$SCRIPT $AGVARR"
 
+
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
   if [ "$ABI" = "x86" ]; then
@@ -85,6 +86,8 @@ echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
 echo "  4 - Disable Magisk `disable_magisk`"
 pd gray "      Don't load Magisk and its modules"
+echo "----------"
+echo " 0 - Exit menu"
 p none "[CHOICE]: "
 }
 
@@ -136,7 +139,7 @@ echo "   Magisk on Nox - Installer Script"
 echo "   by HuskyDG"
 # please don't change this or use "by HuskyDG + your name" for credits :((
 p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
-p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommend}: NoxPlayer Android 9" || pd light_green "$SDK"
+p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommended}: NoxPlayer Android 9" || pd light_green "$SDK"
 pd gray "=============================================="
 pd light_cyan "MAGISK"
 echo "  1 - Cài đặt hoặc cập nhật Magisk"
@@ -147,6 +150,8 @@ echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
 echo "  4 - Vô hiệu hóa Magisk `disable_magisk`"
 pd gray "      Không tải Magisk và các mô-đun của nó"
+echo "----------"
+echo " 0 - Thoát khỏi menu"
 p none "[CHỌN]: "
 }
 
@@ -305,7 +310,34 @@ p "$1" "$2"; echo
 abortc(){
 pd "$1" "$2"; exit 1
 }
+
 if [ "$AGV1" != "noexec" ]; then
+
+priv_dir=/data/data/io.github.huskydg.magiskonnox
+cd "$priv_dir"
+DLPATH="$priv_dir/magisk"
+
+if [ ! -d "$DLPATH" ]; then
+rm -rf "$DLPATH" 2>/dev/null
+mkdir -p "$DLPATH" 2>/dev/null
+fi
+
+
+if [ "$AGV1" == "option" ]; then
+    case "$AGV2" in
+           "disable")
+            echo "Magisk will be disabled in the next boot"
+            touch "$DLPATH/disable"
+            exit 0
+            ;;
+            "enable")
+            echo "Magisk will be enabled in the next boot"
+            rm -rf "$DLPATH/disable"
+            exit 0
+            ;;
+     esac
+fi
+
 
 
 if [ "$USER_ID" != "0" ]; then
@@ -332,14 +364,6 @@ SYSTEMROOTDIR="/"
 [ "$MAGISK_TMP" ] && SYSTEMROOTDIR="$MAGISK_MIRROR/system_root"
 
 
-priv_dir=/data/data/io.github.huskydg.magiskonnox
-cd "$priv_dir"
-DLPATH="$priv_dir/magisk"
-
-if [ ! -d "$DLPATH" ]; then
-rm -rf "$DLPATH" 2>/dev/null
-mkdir -p "$DLPATH" 2>/dev/null
-fi
 
 # This script is write by HuskyDG
 ARG1="$1"
@@ -534,12 +558,6 @@ touch /dev/.overlay_unblock"
 
 cd "$JOBPWD"
 shloadpolicy="#!/system/etc/magisk/busybox sh
-          restorecon -R /data/adb/magisk
-          for module in \$(ls /data/adb/modules); do
-              if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
-                  /sbin/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
-              fi
-          done
 
 exit_magisk(){
 echo -n > /dev/.magisk_unblock
@@ -549,6 +567,15 @@ exit
 [ -f \"$DLPATH/disable\" ] && echo -n > /dev/.magisk_unblock
 
 [ ! -f \"/sbin/magisk\" ] && exit_magisk
+
+          restorecon -R /data/adb/magisk
+          for module in \$(ls /data/adb/modules); do
+              if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
+                  /sbin/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
+              fi
+          done
+
+
 
 
 while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
@@ -566,11 +593,12 @@ magiskloader="on post-fs-data
               start logd
               start adbd
               rm /dev/.overlay_unblock
+              rm /dev/.magisk_unblock
               start magiskoverlay
               wait /dev/.overlay_unblock 10
               rm /dev/.overlay_unblock
               
-              rm /dev/.magisk_unblock
+              
               start IhhslLhHYfse
               start FAhW7H9G5sf
               wait /dev/.magisk_unblock 40
@@ -816,6 +844,7 @@ main(){
 clear
 print_menu
 read option
+no_turn_back=false
 case $option in
 1)
     install_option
@@ -830,12 +859,16 @@ case $option in
     ;;
 4)
     disable_magisk_process
+    no_turn_back=true
     ;;
-*)
+0)
     exit 0
     ;;
+*)
+    no_turn_back=true
+    ;;
 esac
-turn_back
+$no_turn_back || turn_back
 }
 
 if [ "$AGV1" != "noexec" ]; then
@@ -871,14 +904,7 @@ if [ "$AGV1" != "noexec" ]; then
             "uninstall")
             uninstall_option
             ;;
-            "disable")
-            echo "Magisk will be disabled in the next boot"
-            touch "$DLPATH/disable"
-            ;;
-            "enable")
-            echo "Magisk will be enabled in the next boot"
-            rm -rf "$DLPATH/disable"
-            ;;
+            
              *)
             while true; do main; done
             ;;
