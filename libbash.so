@@ -53,6 +53,8 @@ text_setup="Initialize Magisk Core"
 text_rm_magisk_files="Removing Magisk files"
 text_extract_magisk_apk="Extract Magisk APK"
 text_failed_mount_system="Failed to mount system partition"
+text_enter_magisk_apk="Enter path to your Magisk APK"
+text_example="Example"
 
 warn_reboot(){
 echo " The device will reboot after a few seconds"
@@ -100,6 +102,7 @@ echo "  1 - Lastest Canary"
 echo "  2 - Lastest Alpha"
 echo "  3 - Stable v23 - Not recommended"
 echo "  4 - Offline - Alpha 23016"
+echo "  5 - Choose and install from another Magisk APK"
 pd green "* You will download magisk.apk and install Magisk"
 p none "[CHOICE]: "
 
@@ -127,6 +130,8 @@ text_setup="Thiết lập lõi Magisk"
 text_rm_magisk_files="Loại bỏ các tập tin Magisk"
 text_extract_magisk_apk="Giải nén Magisk APK"
 text_failed_mount_system="Gắn kết phân vùng system thất bại"
+text_enter_magisk_apk="Nhập đường dẫn tới tệp Magisk APK của bạn"
+text_example="Ví dụ"
 
 warn_reboot(){
 echo " Thiết bị sẽ khởi động trong vài giây nữa"
@@ -134,11 +139,13 @@ echo " NẾU HỆ THỐNG KHÔNG PHẢN HỒI, VUI LÒNG KHỞI ĐỘNG LẠI"
 }
 
 print_menu(){
+hasMagisk=false
+[ "$(which magisk)" ] && [ "$(magisk -v)" ] && hasMagisk=true
 pd gray  "=============================================="
 echo "   Magisk on Nox - Installer Script"
 echo "   by HuskyDG"
 # please don't change this or use "by HuskyDG + your name" for credits :((
-p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommended}: NoxPlayer Android 9" || pd light_green "$SDK"
 pd gray "=============================================="
 pd light_cyan "MAGISK"
@@ -164,6 +171,7 @@ echo "  1 - Canary mới nhất"
 echo "  2 - Alpha mới nhất"
 echo "  3 - Stable v23 - Không khuyến khích"
 echo "  4 - Offline - Alpha 23016"
+echo "  5 - Chọn và cài đặt từ Magisk APK khác"
 pd green "* Bạn sẽ tải magisk.apk và cài đặt Magisk"
 p none "[CHỌN]: "
 
@@ -437,6 +445,8 @@ echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
 
+[ ! -f "$APKFILE" ] && abortc light_red "! File does not exist"
+
 overlay_loader="#!/system/etc/magisk/busybox sh
 
 export PATH=/sbin:/system/bin:/system/xbin
@@ -542,6 +552,9 @@ ln -s ./magiskinit \$MAGISKTMP/magiskpolicy
 mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
 touch \$MAGISKTMP/.magisk/config
+
+mkdir -p \$MAGISKTMP/.core/img
+mount --bind /data/adb/modules \$MAGISKTMP/.core/img
 
 cd \$MAGISKTMP
 # SELinux stuffs
@@ -719,6 +732,8 @@ rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
 mount_ro_system
+
+if [ ! "$build_name" == "Custom" ]; then
 echo "- $text_install_app..."
 
 if [ "$value1" == "legacy" ]; then
@@ -732,6 +747,7 @@ mkdir -p "/sdcard/Magisk"
 rm -rf "/sdcard/Magisk/Magisk.apk"
 cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
 echo "- $text_saved_magisk_apk_to /sdcard/Magisk/Magisk.apk"
+fi
 clean_flash
 echo "- $text_done"
 }
@@ -769,7 +785,7 @@ echo "- $text_done"
 
 install_option_process(){
 pd light_cyan "- Magisk build: $build_name"
-APKFILE="$DLPATH/magisk.apk"
+
 if [ "$install_offline" == "true" ]; then
     
     ( install_magisk "$value_arg" ) 2>/dev/null
@@ -799,6 +815,7 @@ print_menu_install
 read build
 install_magisk=true
 install_offline=false
+APKFILE="$DLPATH/magisk.apk"
 case $build in
 1)
     build_name="Canary"
@@ -816,7 +833,15 @@ case $build in
    build_name="Alpha"
     install_offline=true
     ;;
-
+5)
+    build_name="Custom"
+    install_offline=true
+    echo "$text_enter_magisk_apk"
+    p none "$text_example: "; pd gray "/sdcard/Magisk.apk"
+    p none "> "
+    read custom_magisk_apk
+    APKFILE="$custom_magisk_apk"
+    ;;
 *)
     install_magisk=false
     ;;
@@ -871,6 +896,7 @@ esac
 $no_turn_back || turn_back
 }
 
+APKFILE="$DLPATH/magisk.apk"
 if [ "$AGV1" != "noexec" ]; then
     if [ "$AGV1" == "option" ]; then
         case "$AGV2" in
@@ -896,6 +922,12 @@ if [ "$AGV1" != "noexec" ]; then
             "install:offline")
     build_name="Alpha"
     install_offline=true
+    install_option_process
+    ;;
+            "install:custom")
+    build_name="Custom"
+    install_offline=true
+    APKFILE="$AGV3"
     install_option_process
     ;;
             "install:"*)
