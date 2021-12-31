@@ -530,7 +530,7 @@ cd /system/etc/magisk
 MAGISKTMP=/sbin
 MAGISKBIN=/data/adb/magisk
 mkdir -p \$MAGISKBIN
-for mdir in modules modules_update post-fs-data.d service.d; do
+for mdir in modules post-fs-data.d service.d; do
 mkdir /data/adb/\$mdir
 done
 
@@ -553,8 +553,6 @@ mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
 touch \$MAGISKTMP/.magisk/config
 
-mkdir -p \$MAGISKTMP/.core/img
-mount --bind /data/adb/modules_update \$MAGISKTMP/.core/img
 
 cd \$MAGISKTMP
 # SELinux stuffs
