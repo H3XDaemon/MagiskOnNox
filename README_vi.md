@@ -49,19 +49,19 @@ Hướng dẫn này khá khó hiểu và có thể không dành cho người dù
 Bạn phải có bản sao của `ramdisk.img`.  Nó thường được đặt trong thư mục BlissOS / PhoenixOS trên HĐH Windows.  Lấy và chuyển nó vào **Bộ nhớ trong** của môi trường Android x86, hiện tại không thể giải nén trực tiếp từ môi trường Android x86.
 
 
- Bạn có thể vá `ramdisk.img` thông qua trình giả lập như ** NoxPlayer ** và sau đó lấy `ramdisk.img` mới
+ Bạn có thể vá `ramdisk.img` thông qua trình giả lập như **NoxPlayer** và sau đó lấy `ramdisk.img` mới
 
  Hoặc vá ramdisk thông qua môi trường Android x86:
 
-  `data.img` sẽ được gắn vào `/data` khi bạn khởi động vào **BlissOS/PhoenixOS**.  Nếu không thể di chuyển tệp giữ Windows và BlissOS/PhoenixOS, bạn có thể sử dụng phần mềm **[AnyBurn](https://anyburn.com/download.php)** để đọc `data.img` (Hình ảnh bộ nhớ trong) và đặt vào hoặc lấy ra `ramdisk.img`
+  `data.img` sẽ được gắn vào `/data` khi bạn khởi động vào **BlissOS/PhoenixOS**.  Nếu không thể di chuyển tệp giữ Windows và BlissOS/PhoenixOS, bạn có thể sử dụng phần mềm **[AnyBurn](https://anyburn.com/download.php)** để đọc `data.img` (Hình ảnh bộ nhớ trong) để đặt vào hoặc lấy ra `ramdisk.img`
 
  1. Khởi động vào **BlissOS/PhoenixOS**.  Cài đặt **Magisk on Nox** và mở, cấp quyền truy cập root nếu bạn có!
 
  2. Nếu bạn không có quyền truy cập root, hãy nhấn *ALT + F1* để mở root shell, sau đó gõ lệnh này:
 
- ``
+ ```
  /data/data/io.github.huskydg.magiskonnox/magisk/menu
- ``
+ ```
 
  3. Một menu sẽ hiển thị, hãy làm theo *Cài đặt /cập nhật Magisk *> * Bản dựng Magisk* > *Vá hình ảnh đĩa ram* và nhập đường dẫn đến hình ảnh đĩa ram của bạn (ramdisk.img), nhấn Enter và nó sẽ vá `ramdisk.img`. Nhấn *ALT + F7* để đóng root shell
 
