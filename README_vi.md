@@ -63,13 +63,13 @@ Bạn phải có bản sao của `ramdisk.img`.  Nó thường được đặt t
  /data/data/io.github.huskydg.magiskonnox/magisk/menu
  ``
 
- 3. Một menu sẽ hiển thị, hãy làm theo *Cài đặt /cập nhật Magisk *> * Bản dựng Magisk* > *Vá hình ảnh đĩa ram* và nhập đường dẫn đến hình ảnh đĩa ram của bạn (ramdisk.img), nhấn Enter và nó sẽ vá `ramdisk.img`
+ 3. Một menu sẽ hiển thị, hãy làm theo *Cài đặt /cập nhật Magisk *> * Bản dựng Magisk* > *Vá hình ảnh đĩa ram* và nhập đường dẫn đến hình ảnh đĩa ram của bạn (ramdisk.img), nhấn Enter và nó sẽ vá `ramdisk.img`. Nhấn *ALT + F7* để đóng root shell
 
  4. Bây giờ di chuyển `ramdisk.img` mới sang ổ đĩa Windows
 
  5. Khởi động vào **Hệ điều hành Windows**.  Mở **File Exploerer**, điều hướng đến thư mục BlissOS / PhoenixOS, đảm bảo rằng bạn đã sao lưu `ramdisk.img` cũ và thay thế no bằng `ramdisk.img` mới.
 
-5. Khởi động vào **BlissOS/PhoenixOS** và thưởng t **Magisk**.
+5. Khởi động vào **BlissOS/PhoenixOS** và thưởng thức **Magisk**.
 
 ## Cập nhật Magisk
 

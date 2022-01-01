@@ -68,7 +68,7 @@ Or patch ramdisk image through Android x86 environment:
 /data/data/io.github.huskydg.magiskonnox/magisk/menu
 ```
 
-3. A menu will be visible, follow *Install/update Magisk* > *Magisk build* > *Patch ramdisk image* and enter path to your ramdisk image (ramdisk.img), press Enter and it will patch your **ramdisk.img**
+3. A menu will be visible, follow *Install/update Magisk* > *Magisk build* > *Patch ramdisk image* and enter path to your ramdisk image (ramdisk.img), press Enter and it will patch your **ramdisk.img**. Press *ALT + F7* to close root shell
 
 4. Now transfer new `ramdisk.img` to Windows disk
 
