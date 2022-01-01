@@ -29,6 +29,12 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Installation
 
+### Direct Install
+
+Install Magisk into system image.
+
+It's recommended for Android emulator, as you don't have `ramdisk.img`. Also extract `ramdisk.img` through Android emulator environment is very difficult.
+
 
 1. Go to emulator settings, enable built-in Root and reboot.
 -    **Bluestacks:**
@@ -41,6 +47,34 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 4. Go to emulator settings, disable built-in Root and reboot. For Bluestacks, press **UnPatch** button in **Bluestacks Tweaker** to remove **SuperSU**.
 
 
+### Patch ramdisk image
+
+Recommended for Android x86 project (BlissOS, PhoenixOS)
+
+This guide is quite confusing and may not be for the average user
+
+You must have copy of `ramdisk.img`. It is usually placed in BlissOS/PhoenixOS folder on Windows OS. Take and transfer it to **Internal Storage** of Android x86 environment, currently cannot extract it directly from Android x86 environment.
+
+You can patch `ramdisk.img` through emulator like **NoxPlayer** and then take new `ramdisk.img`
+
+Or patch ramdisk image through Android x86 environment:
+
+`data.img` will be mounted to `/data` when you boot into **BlissOS/PhoenixOS**. If you cannot transfer files between Windows and BlissOS/PhoenixOS, you can use **[AnyBurn](https://anyburn.com/download.php)** software to read `data.img` (Internal Storage image) to put in or take `ramdisk.img` out
+
+1. Boot to **BlissOS/PhoenixOS**. Install **Magisk on Nox** and open, grant root access if you have!
+
+2. If you doesn't have root access, press *ALT+F1* to open root shell, then type this command:
+```
+/data/data/io.github.huskydg.magiskonnox/magisk/menu
+```
+
+3. A menu will be visible, follow *Install/update Magisk* > *Magisk build* > *Patch ramdisk image* and enter path to your ramdisk image (ramdisk.img), press Enter and it will patch your **ramdisk.img**
+
+4. Now transfer new `ramdisk.img` to Windows disk
+
+5. Boot into **Windows OS**. Open **File Exploerer**, navigate to BlissOS/PhoenixOS folder, make sure you back up old `ramdisk.img` and replace with new patched `ramdisk.img`.
+
+6. Boot to **BlissOS/PhoenixOS** and enjoy **Magisk**.
 
 ## Update
 

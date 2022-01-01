@@ -62,6 +62,8 @@ text_repack_ramdisk="Repack new ramdisk image"
 text_repack_ramdisk_fail="Cannot repack new ramdisk image"
 text_enter_path_ramdisk="Enter path to your ramdisk"
 text_new_ramdisk="New ramdisk image was saved to"
+text_uninstall_fail="! No Magisk found in system
+! If you are using Magisk patched ramdisk.img, replace with original one"
 
 
 blissos_open_menu(){
@@ -173,6 +175,8 @@ text_repack_ramdisk="Đóng gói lại với đĩa ảnh ramdisk mới ramdisk i
 text_repack_ramdisk_fail="Không thể đóng gói đĩa ảnh!"
 text_enter_path_ramdisk="Nhập đường dẫn đến đĩa ảnh ramdisk.img"
 text_new_ramdisk="Đĩa ảnh ramdisk mới đã lưu vào"
+text_uninstall_fail="! Không tìm thấy Magisk trên hệ thống
+! Nếu bạn đang sử dụng Magisk ramdisk.img, thay thế bằng bản gốc"
 
 warn_reboot(){
 echo " Thiết bị sẽ khởi động trong vài giây nữa"
@@ -957,6 +961,7 @@ uninstall_magisk(){
 echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
+[ ! -d "$MAGISK_MIRROR/system/etc/magisk" ] && abort "$text_uninstall_fail"
 echo "- $text_mount_rw_system"
 mount_rw_system || abort "! $text_failed_mount_system"
 echo "- Remove Magisk..."
