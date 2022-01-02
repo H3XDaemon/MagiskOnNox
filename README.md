@@ -52,11 +52,11 @@ This guide is quite confusing and may not be for the average user
 
 You must have copy of `ramdisk.img`
 
-- **Patch ramdisk through Android emulator**
+#### Patch ramdisk through Android emulator
 
-You can use **Magisk on Nox** to patch `ramdisk.img` of **Android x86** through emulator such as **NoxPlayer, MEmu** and then take new `ramdisk.img`. Replace current `ramdisk.img` with magisk patched `ramdisk.img`.
+- You can use **Magisk on Nox** to patch `ramdisk.img` of **Android x86** through emulator such as **NoxPlayer, MEmu** and then take new `ramdisk.img`. Replace current `ramdisk.img` with magisk patched `ramdisk.img`.
 
-- **Patch ramdisk through Android x86**
+#### Patch ramdisk through Android x86
 
 
 1. Boot to **Android x86**
@@ -65,7 +65,7 @@ You can use **Magisk on Nox** to patch `ramdisk.img` of **Android x86** through 
 ```
 Detecting Android-x86... found at /dev/<blockname>
 ```
-   That's mean **Android x86** was installed at `/dev/<blockname>`. Now type these command to mount device block `/dev/block/<blockname>` to `/disk`:
+ -  That's mean **Android x86** was installed at `/dev/<blockname>`. Now type these command to mount device block `/dev/block/<blockname>` to `/disk`:
 ```
 mount -o rw,remount /
 mkdir /disk
