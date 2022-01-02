@@ -89,7 +89,10 @@ disable_magisk_process(){
 [ -f "$DLPATH/disable" ] && rm -rf "$DLPATH/disable" || touch "$DLPATH/disable"
 }
 
+need_root_access(){
 
+[ "$(whoami)" == "root" ] || abortc light_red "! Need root access to perform this action"
+}
 
 print_menu(){
 pd gray  "=============================================="
@@ -144,6 +147,11 @@ p none "[CHOICE]: "
 
 }
 
+need_root_access(){
+
+[ "$(whoami)" == "root" ] || abortc light_red "! Cần quyền truy cập root để thực hiện hành động này"
+}
+
 
 
 language_vn(){
@@ -171,7 +179,7 @@ text_example="Ví dụ"
 text_unpack_ramdisk="Giải nén đĩa ảnh ramdisk"
 text_unpack_ramdisk_fail="Không thể giải nén đĩa ảnh!"
 text_patch_ramdisk="Đang vá đĩa ảnh ramdisk"
-text_repack_ramdisk="Đóng gói lại với đĩa ảnh ramdisk mới ramdisk image"
+text_repack_ramdisk="Đóng gói lại với đĩa ảnh ramdisk mới"
 text_repack_ramdisk_fail="Không thể đóng gói đĩa ảnh!"
 text_enter_path_ramdisk="Nhập đường dẫn đến đĩa ảnh ramdisk.img"
 text_new_ramdisk="Đĩa ảnh ramdisk mới đã lưu vào"
@@ -258,7 +266,7 @@ esac
 
 
 mount_rw_system(){
-if mount | grep -q rootfs | grep -q " / " || mount | grep -q tmpfs | grep " / "; then
+if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep " / "; then
 # legacy rootfs
 mount -o rw,remount "$SYSTEMDIR"
 else
@@ -268,7 +276,7 @@ fi
 }
 
 mount_ro_system(){
-if mount | grep -q rootfs | grep -q " / " || mount | grep -q tmpfs | grep " / "; then
+if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep " / "; then
 # legacy rootfs
 mount -o ro,remount "$SYSTEMDIR"
 else
@@ -427,22 +435,27 @@ link "libapp.so" "magisk.apk"
 link "libbusybox.so" "busybox"
 link "liblegacy.so" "legacy.zip"
 link "libbash.so" "menu"
-
+CACHEDIR="$DLPATH/tmp"
 
 
 if [ "$USER_ID" != "0" ]; then
-pd yellow "$text_obtain_root..."
-( su -c "$cmds" || /system/xbin/su -c "$cmds" || /system/bin/su -c "$cmds" || /sbin/su -c "$cmds" ) 2>/dev/null
-ERR_CODE="$?"
-if [ "$ERR_CODE" != 0 ]; then
-clear
-pd "light_red" "$text_obtain_root_failed"
-blissos_open_menu
-pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
-read
+    p none "Run script with root access? <Y/n> "
+    read ROOT
+    if [ "$ROOT" == "Y" -o "$ROOT" == "y" ]; then
+        pd yellow "$text_obtain_root..."
+        ( su -c "$cmds" || /system/xbin/su -c "$cmds" || /system/bin/su -c "$cmds" || /sbin/su -c "$cmds" ) 2>/dev/null
+        ERR_CODE="$?"
+        if [ "$ERR_CODE" != 0 ]; then
+            clear
+            pd "light_red" "$text_obtain_root_failed"
+            blissos_open_menu
+            pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
+            read
+        fi
+        exit
+    fi
 fi
-exit
-fi
+
 
 fi
 
@@ -461,7 +474,8 @@ SYSTEMROOTDIR="/"
 ARG1="$1"
 JOBPWD="${0%/*}"
 bb=/data/local/tmp/busybox
-TMPDIR=/dev/tmp
+TMPDIR="$CACHEDIR"
+[ "$USER_ID" == "0" ] && TMPDIR=/dev/tmp
 APKFILE="$JOBPWD/magisk.apk"
 MAGISKCORE="$MAGISK_MIRROR/system/etc/magisk"
 
@@ -501,7 +515,7 @@ exit
 fi
 }
 
-unshare_environment 2>/dev/null
+[ "$USER_ID" == "0" ] && unshare_environment 2>/dev/null
 
 ISENCRYPTED=false
   grep ' /data ' /proc/mounts | grep -q 'dm-' && ISENCRYPTED=true
@@ -703,7 +717,9 @@ resetprop --delete init.svc.HLiFsR1HtIXVN6
 resetprop --delete init.svc.YqCTLTppv3ML
 ( sleep 1; resetprop --delete init.svc.IhhslLhHYfse ) &"
 
-magiskloader="on post-fs-data
+magiskloader="
+
+          on post-fs-data
               start logd
               start adbd
               rm /dev/.overlay_unblock
@@ -818,8 +834,8 @@ $bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 MAGISK_VER=""
 MAGISK_VER_CODE=""
 [ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
-. $TMPDIR/util_functions.sh
-pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
+( . $TMPDIR/util_functions.sh
+pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)" )
 
 echo "- $text_unpack_ramdisk"
 
@@ -830,6 +846,27 @@ mkdir -p "$TMPDIR/ramdisk"
 ( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abort "! $text_unpack_ramdisk_fail"
 echo "- $text_patch_ramdisk"
 # ramdisk was unpack to $TMPDIR/ramdisk
+
+if file "$TMPDIR/ramdisk/init" | grep "x86" | grep -q "32-bit"; then
+    ARCH=x86
+    ABI32=x86
+    IS64BIT=false
+  elif file "$TMPDIR/ramdisk/init" | grep "arm64" | grep -q "64-bit"; then
+    ARCH=arm64
+    ABI32=armeabi-v7a
+    IS64BIT=true
+  elif file "$TMPDIR/ramdisk/init" | grep "x86-64" | grep -q "64-bit"; then
+    ARCH=x64
+    ABI32=x86
+    IS64BIT=true
+  else
+    ARCH=arm
+    ABI=armeabi-v7a
+    ABI32=armeabi-v7a
+    IS64BIT=false
+  fi
+echo "- ARCH: $ARCH, 64-bit: $IS64BIT"
+
 mkdir "$TMPDIR/ramdisk/magisk"
 if [ -f "$TMPDIR/ramdisk/magisk/init.rc" ]; then
 # found init.rc backup!
@@ -844,6 +881,7 @@ rm -rf "$TMPDIR/ramdisk/magisk/loadpolicy.sh" "$TMPDIR/ramdisk/magisk/overlay.sh
 echo "$shloadpolicy" >"$TMPDIR/ramdisk/magisk/loadpolicy.sh"
 echo "$overlay_loader" >"$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "mount -o rw,remount /
+cat "/magisk/init.rc" >/init.rc
 rm -rf /magisk
 mount -o ro,remount /" >>"$TMPDIR/ramdisk/magisk/overlay.sh"
 chmod 755 "$TMPDIR/ramdisk/init.rc"
@@ -859,6 +897,7 @@ echo "- $text_done"
 
 
 update_magiskbin(){
+need_root_access
 rm -rf /data/.magisk_binary
 mkdir -p /data/.magisk_binary
 rm -rf "$TMPDIR"
@@ -891,13 +930,14 @@ echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
 
+need_root_access
+
 [ ! -f "$APKFILE" ] && abortc light_red "! File does not exist"
 
 MAGISKBASE="/system/etc/magisk"
 
 magisk_loader
 
-[ "$(whoami)" == "root" ] || abort "! Run script as root only"
 
 echo "- $text_mount_rw_system"
 mount_rw_system || abort "! $text_failed_mount_system"
@@ -961,6 +1001,7 @@ uninstall_magisk(){
 echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
+need_root_access
 [ ! -d "$MAGISK_MIRROR/system/etc/magisk" ] && abort "$text_uninstall_fail"
 echo "- $text_mount_rw_system"
 mount_rw_system || abort "! $text_failed_mount_system"
