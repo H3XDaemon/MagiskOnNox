@@ -5,8 +5,6 @@ Integrate Magisk root into Nox Player and other Android x86, emulators
 
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png" />
 
-[Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
-
 ## Features
 
 - Bring Magisk / Zygisk to Android x86
@@ -27,6 +25,9 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 ## Installation
 
 ### Direct Install
+
+[Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
+
 
 Install Magisk into system image, so your system must be able to be mounted as read-write
 
