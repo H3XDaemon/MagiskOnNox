@@ -52,16 +52,17 @@ This guide is quite confusing and may not be for the average user
 
 You must have copy of `ramdisk.img`. It is usually loacted in BlissOS/PhoenixOS folder on volume disk where you installed it.
 
-- **Patch ramdisk through Android emulator**
+#### **Patch ramdisk through Android emulator**
 
-You can use **Magisk on Nox** to patch `ramdisk.img` of **BlissOS/PhoenixOS** through emulator such as **NoxPlayer, MEmu** and then take new `ramdisk.img`. Replace current `ramdisk.img` with magisk patched `ramdisk.img`.
+-  You can use **Magisk on Nox** to patch `ramdisk.img` of **BlissOS/PhoenixOS** through emulator such as **NoxPlayer, MEmu** and then take new `ramdisk.img`. Replace with magisk patched `ramdisk.img`.
 
-- **Patch ramdisk through Android x86**
+#### **Patch ramdisk through Android x86**
 
 1. Take and transfer it to **Internal Storage** of **BlissOS/PhoenixOS**
 
-On **BlissOS/PhoenixOS**, usually you will have `data.img` that will be mounted to `/data` partition when you boot into **BlissOS/PhoenixOS**. 
-If you cannot transfer files between **Windows** and **BlissOS/PhoenixOS**, you can use **[AnyBurn](https://anyburn.com/download.php)** software to read `data.img` (Internal Storage image) to put in or take `ramdisk.img` out while you want to patch through **BlissOS/PhoenixOS**.
+-  On **BlissOS/PhoenixOS**, usually you will have `data.img` that will be mounted to `/data` partition when you boot into **BlissOS/PhoenixOS**. 
+  
+-  If you cannot transfer files between **Windows** and **BlissOS/PhoenixOS**, you can use **[AnyBurn](https://anyburn.com/download.php)** software to read `data.img` (Internal Storage image) to put in or take `ramdisk.img` out while you want to patch through **BlissOS/PhoenixOS**.
 
 2. Boot to **BlissOS/PhoenixOS**. Install **Magisk on Nox** and open, grant root access if you have!
 
