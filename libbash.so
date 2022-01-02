@@ -266,7 +266,7 @@ esac
 
 
 mount_rw_system(){
-if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep " / "; then
+if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
 mount -o rw,remount "$SYSTEMDIR"
 else
@@ -276,7 +276,7 @@ fi
 }
 
 mount_ro_system(){
-if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep " / "; then
+if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
 mount -o ro,remount "$SYSTEMDIR"
 else
@@ -880,10 +880,10 @@ fi
 rm -rf "$TMPDIR/ramdisk/magisk/loadpolicy.sh" "$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "$shloadpolicy" >"$TMPDIR/ramdisk/magisk/loadpolicy.sh"
 echo "$overlay_loader" >"$TMPDIR/ramdisk/magisk/overlay.sh"
-echo "mount -o rw,remount /
+echo "( mount -o rw,remount /
 cat "/magisk/init.rc" >/init.rc
 rm -rf /magisk
-mount -o ro,remount /" >>"$TMPDIR/ramdisk/magisk/overlay.sh"
+mount -o ro,remount / ) &" >>"$TMPDIR/ramdisk/magisk/overlay.sh"
 chmod 755 "$TMPDIR/ramdisk/init.rc"
 ( MAGISKCORE="$TMPDIR/ramdisk/magisk"; IS64BIT=true; extract_magisk_apk )
 chmod -R 777 "$TMPDIR/ramdisk/magisk"
