@@ -65,12 +65,13 @@ You can use **Magisk on Nox** to patch `ramdisk.img` of **Android x86** through 
 ```
 Detecting Android-x86... found at /dev/<blockname>
 ```
--   That's mean **Android x86** was installed at `/dev/<blockname>`. Now type these command to mount device block `/dev/block/<blockname>` to `/storage/disk`:
+   That's mean **Android x86** was installed at `/dev/<blockname>`. Now type these command to mount device block `/dev/block/<blockname>` to `/storage/disk`:
 ```
-mkdir /storage/disk
-mount.ntfs /dev/block/<blockname> /storage/disk
+mount -o rw,remount /
+mkdir /disk
+mount.ntfs /dev/block/<blockname> /disk
 ```
-3. Press *ALT+F7* to close root shell, open File manager and browse to `/storage/disk`. Find `ramdisk.img` in folder and copy to **Internal Storage**.
+3. Press *ALT+F7* to close root shell, open File manager and browse to `/disk`. Find `ramdisk.img` in folder and copy to **Internal Storage**.
 
 4. Install **Magisk on Nox** and open, grant root access if you have.
 
