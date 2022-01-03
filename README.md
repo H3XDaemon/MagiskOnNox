@@ -73,7 +73,12 @@ Detecting Android-x86... found at /dev/<blockname>
 
 3. Press *ALT+F7* to close root shell.
 
-4. Install **Magisk on Nox** and open, grant root access if you have.
+4. Install and open **Magisk on Nox**.
+- Grant root access if you have
+- If you don't have root access, press *ALT+F1* and type this command:
+```
+/data/data/io.github.huskydg.magiskonnox/magisk/menu
+```
 
 5. The menu will be displayed, go *Install/update Magisk* > Select Magisk build > *Install Magisk into ramdisk* > *Direct install*
 - You will need to select a from partition where you have this **Android x86** installed, usually it will be `/dev/block/<blockname>`.
