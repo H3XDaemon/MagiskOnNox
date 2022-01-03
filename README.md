@@ -24,7 +24,7 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Installation
 
-### Install Magisk into system
+### Install Magisk into system partition
 
 [Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
 
