@@ -66,13 +66,20 @@ You must have copy of `ramdisk.img`
 ```
 Detecting Android-x86... found at /dev/<blockname>
 ```
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_074812.png" /> 
+
  -  That's mean **Android x86** was installed at `/dev/<blockname>`. Now type these command to mount device block `/dev/block/<blockname>` to `/disk`:
 ```
 mount -o rw,remount /
 mkdir /disk
 mount.ntfs /dev/block/<blockname> /disk
 ```
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_075254.png" />
+
+
 3. Press *ALT+F7* to close root shell, open File manager and browse to `/disk`. Find `ramdisk.img` in folder and copy to **Internal Storage**.
+
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot_20220102-155405.jpg"/>
 
 4. Install **Magisk on Nox** and open, grant root access if you have.
 
