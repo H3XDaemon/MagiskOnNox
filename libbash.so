@@ -293,22 +293,24 @@ esac
 
 
 mount_rw_system(){
+IS_SYSTEM_MOUNT=false
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
-mount -o rw,remount "$SYSTEMDIR"
+mount -o rw,remount "$SYSTEMDIR" && IS_SYSTEM_MOUNT=true
 else
 # system-as-root, mount "/"
-mount -o rw,remount "$SYSTEMROOTDIR"
+mount -o rw,remount "$SYSTEMROOTDIR" && IS_SYSTEM_MOUNT=true
 fi
 }
 
 mount_ro_system(){
+IS_SYSTEM_MOUNT=false
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
-mount -o ro,remount "$SYSTEMDIR"
+mount -o ro,remount "$SYSTEMDIR" && IS_SYSTEM_MOUNT=true
 else
 # system-as-root, mount "/"
-mount -o ro,remount "$SYSTEMROOTDIR"
+mount -o ro,remount "$SYSTEMROOTDIR" && IS_SYSTEM_MOUNT=true
 fi
 }
 
@@ -979,7 +981,8 @@ magisk_loader
 
 
 echo "- $text_mount_rw_system"
-mount_rw_system || abort "! $text_failed_mount_system"
+mount_rw_system
+$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 
 echo "- $text_setup"
 rm -rf "$MAGISKCORE"
@@ -1012,12 +1015,12 @@ mkdir $SERVICED 2>/dev/null
 
 
 echo "- $text_install Magisk loader..."
-rm -rf $MAGISKCORE/overlay.sh
-echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
+rm -rf "$MAGISK_MIRROR/$MAGISKCORE/overlay.sh"
+echo "$overlay_loader" >"$MAGISK_MIRROR/$MAGISKCORE/overlay.sh"
 rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
 echo "$magiskloader" >"$MAGISK_MIRROR/system/etc/init/magisk.rc"
-rm -rf "$MAGISKCORE/loadpolicy.sh"
-echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
+rm -rf "$MAGISK_MIRROR/$MAGISKCORE/loadpolicy.sh"
+echo "$shloadpolicy" >"$MAGISK_MIRROR/$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
 mount_ro_system
 
@@ -1043,7 +1046,8 @@ echo "******************************"
 need_root_access
 [ ! -d "$MAGISK_MIRROR/system/etc/magisk" ] && abort "$text_uninstall_fail"
 echo "- $text_mount_rw_system"
-mount_rw_system || abort "! $text_failed_mount_system"
+mount_rw_system
+$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 echo "- Remove Magisk..."
 for fun in /system/etc/magisk /system/etc/init/magisk.rc; do
 rm -rf "$MAGISK_MIRROR/$fun"
