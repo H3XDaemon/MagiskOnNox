@@ -45,7 +45,7 @@ It's recommended for Android emulator, as you don't have `ramdisk.img`. Also ext
 4. Go to emulator settings, disable built-in Root and reboot. For Bluestacks, press **UnPatch** button in **Bluestacks Tweaker** to remove **SuperSU**.
 
 
-### Install Magisk into ramdisk (systemless)
+### Install Magisk into ramdisk (system)
 
 Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS, PhoenixOS)
 
@@ -57,7 +57,7 @@ You must have copy of `ramdisk.img`
 
 - You can use **Magisk on Nox** to patch `ramdisk.img` of **Android x86** through emulator such as **NoxPlayer, MEmu** and then take new `ramdisk.img`. Replace current `ramdisk.img` with magisk patched `ramdisk.img`.
 
-#### Patch ramdisk through Android x86
+#### Direct install into Android x86
 
 
 1. Boot to **Android x86**
