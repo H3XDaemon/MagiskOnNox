@@ -6,16 +6,16 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png"/>
 
 ## Tính năng
-- Đem các tính năng Magisk/Zygisk  lên giả lập Nox
+- Đem các tính năng Magisk/Zygisk  lên Android x86
 - MagiskHide / MagiskDenyList để ẩn root
 - Magisk/Zygisk mô-đun hoạt động chính xác.
 
 Lưu ý: Một vài tính năng có thể không hoạt động trên một số giả lập, vui lòng đọc [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) để biết tính năng của Magisk không hoạt động
 
 ## Các yêu cầu
-- Khuyến nghị: NoxPlayer với Android 9 64-bit
-- Bất kỳ trình giả lập nào chạy Android 7.1 trở lên, 32bit và 64bit, Trình giả lập được xác nhận: Bluestacks, Nox, LDPlayer
-- Vui lòng đọc [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
+- Android x86 project (BlissOS/PhoenixOS)
+- Giả lập Android: [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
+- Phiên bản Android 7.1 ~ 9.0
 
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
@@ -25,7 +25,7 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 ### Cài đặt Trực tiếp
 
 
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png">
 
 Cài đặt Magisk vào phân vùng system
 
