@@ -16,7 +16,7 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 ## Requirements
 - Android x86 project (BlissOS/PhoenixOS)
 - Android Emulator (NoxPlayer, LDPlayer, ...): [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
-- Android version: 7.1 ~ 9.0
+- Android version: 7.1 ~ 9.0 (legacy rootfs)
 
 ## Download
 Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
@@ -24,7 +24,7 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Installation
 
-### Direct Install
+### Install Magisk into system
 
 [Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
 
@@ -45,7 +45,7 @@ It's recommended for Android emulator, as you don't have `ramdisk.img`. Also ext
 4. Go to emulator settings, disable built-in Root and reboot. For Bluestacks, press **UnPatch** button in **Bluestacks Tweaker** to remove **SuperSU**.
 
 
-### Patch ramdisk image
+### Install Magisk into ramdisk (system)
 
 Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS, PhoenixOS)
 
@@ -62,32 +62,25 @@ You must have copy of `ramdisk.img`
 
 1. Boot to **Android x86**
 
-2. Now you need to mount a volume disk where **Android x86** was installed to get `ramdisk.img`. Press *ALT+F1* to open root shell and pay attention to this text (it may look like):
+2. Press *ALT+F1* to open root shell and pay attention to this text (it may look like):
 ```
 Detecting Android-x86... found at /dev/<blockname>
 ```
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_074812.png" /> 
 
- -  That's mean **Android x86** was installed at `/dev/<blockname>`. Now type these command to mount device block `/dev/block/<blockname>` to `/disk`:
-```
-mount -o rw,remount /
-mkdir /disk
-mount.ntfs /dev/block/<blockname> /disk
-```
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_075254.png" />
+ -  That's mean **Android x86** was installed at `/dev/<blockname>`
 
 
-3. Press *ALT+F7* to close root shell, open File manager and browse to `/disk`. Find `ramdisk.img` in folder and copy to **Internal Storage**.
-
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot_20220102-155405.jpg"/>
+3. Press *ALT+F7* to close root shell.
 
 4. Install **Magisk on Nox** and open, grant root access if you have.
 
-5. A menu will be visible, go *Install/update Magisk* > *Magisk build* > *Patch ramdisk image* and enter path to your ramdisk image (ramdisk.img), press Enter and it will patch your **ramdisk.img** and new ramdisk will be saved to `/sdcard/magisk_ramdisk_<random_number>.img`
+5. The menu will be displayed, go *Install/update Magisk* > Select Magisk build > *Install Magisk into ramdisk* > *Direct install*
+- You will need to select a from partition where you have this **Android x86** installed, usually it will be `/dev/block/<blockname>`.
+- After select the partition, now you will need to select `ramdisk.img` correctly!
+- Then **Magisk on Nox** will patch `ramdisk.img` install it into ramdisk.
 
-6. Now transfer new `ramdisk.img` back to volume disk and replace it with new one.
-
-7. Reboot **Android x86** and enjoy **Magisk**.
+6. Reboot **Android x86** and enjoy **Magisk**.
 
 ## Uninstall
 
