@@ -10,6 +10,8 @@ MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
 cmds="$SCRIPT $AGVARR"
 
+RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
+
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
@@ -64,6 +66,17 @@ text_enter_path_ramdisk="Enter path to your ramdisk"
 text_new_ramdisk="New ramdisk image was saved to"
 text_uninstall_fail="! No Magisk found in system
 ! If you are using Magisk patched ramdisk.img, replace with original one"
+text_cannot_mount_part="Cannot mount the partition!"
+text_wrong_input="Wrong input, please enter again correctly"
+text_enter_part="Enter the ${BGREEN}partition${RC} number where you got this ${BPURPLE}Android-x86 OS${RC} installed"
+text_enter_ramdisk="Enter the ${BGREEN}ramdisk.img${RC} number from this ${BPURPLE}Android-x86 OS${RC}"
+
+print_ramdisk_method(){
+pd "light_cyan" "Install Magisk into ramdisk image"
+echo "  1 - Direct install"
+echo "  2 - Select ramdisk image and patch"
+echo -n "[CHOICE]: "
+}
 
 
 blissos_open_menu(){
@@ -110,6 +123,7 @@ echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
 echo "  4 - Disable Magisk `disable_magisk`"
 pd gray "      Don't load Magisk and its modules"
+
 echo "----------"
 echo " 0 - Exit menu"
 p none "[CHOICE]: "
@@ -185,6 +199,19 @@ text_enter_path_ramdisk="Nhập đường dẫn đến đĩa ảnh ramdisk.img"
 text_new_ramdisk="Đĩa ảnh ramdisk mới đã lưu vào"
 text_uninstall_fail="! Không tìm thấy Magisk trên hệ thống
 ! Nếu bạn đang sử dụng Magisk ramdisk.img, thay thế bằng bản gốc"
+text_cannot_mount_part="Không thể gắn kết phân vùng!"
+text_wrong_input="Sai dữ liệu, vui lòng nhập lại"
+text_enter_part="Nhập số với ${BGREEN}phân vùng${RC} mà bạn đã cài đặt ${BPURPLE}Android-x86 OS${RC} này"
+text_enter_ramdisk="Nhập số tương ứng với ${BGREEN}ramdisk.img${RC} từ ${BPURPLE}Android-x86 OS${RC}"
+
+
+print_ramdisk_method(){
+pd "light_cyan" "Cài đặt Magisk vào đĩa ảnh ramdisk"
+echo "  1 - Cài đặt trực tiếp"
+echo "  2 - Chọn đĩa ảnh ramdisk và vá"
+echo -n "[CHỌN]: "
+}
+
 
 warn_reboot(){
 echo " Thiết bị sẽ khởi động trong vài giây nữa"
@@ -195,7 +222,7 @@ print_menu(){
 hasMagisk=false
 [ "$(which magisk)" ] && [ "$(magisk -v)" ] && hasMagisk=true
 pd gray  "=============================================="
-echo "   Magisk on Nox - Installer Script"
+echo "   Magisk on Android x86"
 echo "   by HuskyDG"
 # please don't change this or use "by HuskyDG + your name" for credits :((
 p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
@@ -203,7 +230,7 @@ p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd li
 pd gray "=============================================="
 pd light_cyan "MAGISK"
 echo "  1 - Cài đặt hoặc cập nhật Magisk"
-pd gray "      Triển khai Magisk root vào giả lập Nox"
+pd gray "      Triển khai Magisk root vào Android-x86"
 echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
 echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
@@ -240,14 +267,14 @@ pd gray "=============================================="
 echo "   Install/Update Magisk"
 pd gray "=============================================="
 pd light_cyan "Phương thức cài đặt Magisk"
-echo "  1 - Cài đặt hoặc cập nhật trực tiếp"
-pd gray "      Đề xuất cho các giả lập Android (NoxPlayer, MEmu, ...)"
-echo "  2 - Vá đĩa ảnh ramdisk.img (systemless)"
+echo "  1 - Cài đặt Magisk vào \"/system\""
+pd gray "      Khuyên dùng cho các giả lập Android (NoxPlayer, MEmu, ...)"
+echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
 pd gray "      Khuyên dùng cho Android x86 project (Phoenix OS, BlissOS)"
 pd gray "      Chỉ tương thích với legacy rootfs (Android 9 trở xuống)"
 echo "  3 - Cập nhật nhị phân (phải có Magisk)"
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
-p none "[CHOICE]: "
+p none "[CHỌN]: "
 
 }
 
@@ -436,7 +463,7 @@ link "libbusybox.so" "busybox"
 link "liblegacy.so" "legacy.zip"
 link "libbash.so" "menu"
 CACHEDIR="$DLPATH/tmp"
-
+DISKINFO="/data/adb/diskinfo"
 
 if [ "$USER_ID" != "0" ]; then
     p none "Run script with root access? <Y/n> "
@@ -812,6 +839,7 @@ fi
 
 patch_ramdisk(){
 RAMDISK="$1"
+REPLACE_CURRENT="$2"
 
 #magisk in ramdisk
 
@@ -892,10 +920,17 @@ chmod 755 "$TMPDIR/ramdisk/init.rc"
 chmod -R 777 "$TMPDIR/ramdisk/magisk"
 echo "- $text_repack_ramdisk"
 NEWRAMDISK="/sdcard/magisk_ramdisk_$RANDOM$RANDOM.img"
-( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abort "! $text_repack_ramdisk_fail"
+if [ "$REPLACE_CURRENT" != "true" ]; then
 echo "- $text_new_ramdisk $NEWRAMDISK"
+else
+[ -f "${RAMDISK}.bak" ] || mv "${RAMDISK}" "${RAMDISK}.bak"
+NEWRAMDISK="$RAMDISK"
+fi
+( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abort "! $text_repack_ramdisk_fail"
+rm -rf /data/.magisk_binary
 clean_flash
 echo "- $text_done"
+true
 }
 
 
@@ -915,13 +950,14 @@ MAGISK_VER_CODE=""
 . $TMPDIR/util_functions.sh
 pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
-( MAGISKCORE="/data/.magisk_binary"; extract_magisk_apk )
+( MAGISKCORE="/data/.magisk_binary"; extract_magisk_apk
 mkdir -p $MAGISKBIN 2>/dev/null
 $bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
 mkdir $NVBASE/modules 2>/dev/null
 mkdir $POSTFSDATAD 2>/dev/null
-mkdir $SERVICED 2>/dev/null
+mkdir $SERVICED 2>/dev/null )
 
+chmod -R 750 /data/.magisk_binary
 
 }
 
@@ -1023,7 +1059,7 @@ rm -rf \
 /cache/*magisk* /cache/unblock /data/*magisk* /data/cache/*magisk* /data/property/*magisk* \
 /data/Magisk.apk /data/busybox /data/custom_ramdisk_patch.sh /data/adb/*magisk* \
 /data/adb/post-fs-data.d /data/adb/service.d /data/adb/modules* \
-/data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk
+/data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk /data/.magisk_binary
 cd /
   echo "********************************************"
   warn_reboot
@@ -1067,10 +1103,7 @@ case "$method" in
     install_command="install_magisk"
     ;;
 2)
-    install_command="patch_ramdisk"
-    echo "$text_enter_path_ramdisk"
-    p none "> "
-    read RAMDISK
+    patch_ramdisk_method
     ;;
 3)
     install_command="update_magiskbin"
@@ -1082,6 +1115,48 @@ esac
     
 $nomethod || install_option_process
 
+}
+
+patch_ramdisk_directly(){
+VAR_OSROOT="$(cat $DISKINFO/blockdev)"
+VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
+RAMDISK="$VAR_RAMDISK"
+if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
+mount_disk
+( patch_ramdisk "$RAMDISK" "true" )
+ERR_CODE=$?
+if [ "$ERR_CODE" != "0" ]; then
+table_list
+patch_ramdisk "$RAMDISK" "true"
+fi
+else
+table_list
+patch_ramdisk "$RAMDISK" "true"
+fi
+}
+
+
+
+
+patch_ramdisk_method(){
+RAMDISK=""
+print_ramdisk_method
+read c
+case "$c" in
+    1)
+        need_root_access
+        install_command="patch_ramdisk_directly"
+        ;;
+     2)
+        echo "$text_enter_path_ramdisk"
+        p none "> "
+        read RAMDISK
+        install_command="patch_ramdisk"
+        ;;
+      *)
+        nomethod=true
+        ;;
+esac
 }
 
 
@@ -1142,6 +1217,114 @@ p none "$text_warn_uninstall_magisk <Y/n> "
     fi
 }
 
+mount_all_disk(){
+need_root_access
+umount -l /disk
+rm -rf /disk
+mkdir -p /disk
+mount -o 'mode=0755' -t tmpfs tmpfs /storage/disk
+for guess in /dev/sda* /dev/block/mmcblk* /dev/block/nvme*; do
+              diskfol="/storage/disk/$(basename "$guess")"
+              mkdir -p "$diskfol"
+              mount.ntfs "$guess" "$diskfol"
+done
+echo "$text_all_disk_mounted"
+}
+
+mount_disk(){
+IS_MOUNT=false
+OSROOT=/dev/os_disk
+umount -l /dev/os_disk
+rm -rf /dev/os_disk
+mkdir /dev/os_disk
+echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
+mount -o rw,relatime "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
+mount.ntfs "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
+}
+
+
+table_blockdev(){
+echo " ------- Partition Table -------"
+BLOCKDEVS="$(/system/bin/blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | awk 'NF')"
+#BLOCKDEVS="/dev/block/example"
+echo "$BLOCKDEVS" | nl -s "]. "
+echo "     ENTER 0 TO EXIT TABLE"
+IS_MOUNT=false
+while true; do
+echo -ne "+ $text_enter_part >>"
+read -r c
+VAR_OSROOT="$(echo "$BLOCKDEVS" | sed -n "$c p" 2>/dev/null | cut -d : -f1)"
+if [ "$c" == "0" ]; then
+exit
+elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
+			echo -e "${RED}! $text_wrong_input ...${RC}"
+else
+# mount the partition for us
+    mount_disk
+    $IS_MOUNT && break || echo -e "${RED}! $text_cannot_mount_part${RC}"
+fi
+done
+}
+
+table_ramdisk(){
+    test -f $DISKINFO/blockdev || rm -rf $DISKINFO/blockdev
+    echo -n "$VAR_OSROOT" >$DISKINFO/blockdev
+    echo "------- CHOICE RAMDISK -------:"
+    LIST_OS="$(find "$OSROOT"  -mindepth 2 -maxdepth 2 -name "$chkFile" 2>/dev/null)"
+    echo "$LIST_OS" | nl -s "]. "
+    echo "     ENTER 0 TO EXIT TABLE"
+    while true; do
+    echo -ne "$text_enter_ramdisk >>"
+    read -r c
+    VAR_RAMDISK=$(echo "$LIST_OS" | sed -n "$c p" 2>/dev/null | cut -d : -f1)
+    if [ "$c" == "0" ]; then
+        exit
+    elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
+			echo -e "${RED}! $text_wrong_input ...${RC}"
+    else
+        echo -e "- Target ramdisk: ${BGREEN}${VAR_RAMDISK}${RC}"
+        test -f $DISKINFO/ramdisk || rm -rf $DISKINFO/ramdisk
+        echo -n "$VAR_RAMDISK" >$DISKINFO/ramdisk
+        RAMDISK="$VAR_RAMDISK"
+        break
+    fi
+    done
+}
+
+mount_fail_pick_again(){
+echo -e "${RED}! $text_cannot_mount_part${RC}"
+sleep 1
+table_blockdev
+}
+
+
+table_list(){
+RESET_DISKINFO="$1"
+mkdir -p "$DISKINFO"
+BLOCKDEV="$(cat $DISKINFO/blockdev)"
+VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
+if [ -z "$BLOCKDEV" ]; then
+    table_blockdev
+else
+    VAR_OSROOT="$BLOCKDEV"
+    echo -ne "Is the device block correct?: ${BPURPLE}${BLOCKDEV}${RC} ? <Y/n>"; read m
+    if [ "$m" == "Y" -o "$m" == "y" ]; then
+        mount_disk
+        $IS_MOUNT || mount_fail_pick_again
+    else
+        table_blockdev
+     fi
+fi
+
+chkFile="ramdisk.img"
+#test_if_ramdisk
+# find Android x86 folder
+
+if $IS_MOUNT; then
+    table_ramdisk
+fi
+}
+
 main(){
 clear
 print_menu
@@ -1149,7 +1332,7 @@ read option
 no_turn_back=false
 case $option in
 1)
-    install_option
+   ( install_option )
     ;;
 2)
     uninstall_option
@@ -1163,6 +1346,7 @@ case $option in
     disable_magisk_process
     no_turn_back=true
     ;;
+
 0)
     exit 0
     ;;
