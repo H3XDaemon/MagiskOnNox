@@ -1015,12 +1015,12 @@ mkdir $SERVICED 2>/dev/null
 
 
 echo "- $text_install Magisk loader..."
-rm -rf "$MAGISK_MIRROR/$MAGISKCORE/overlay.sh"
-echo "$overlay_loader" >"$MAGISK_MIRROR/$MAGISKCORE/overlay.sh"
+rm -rf $MAGISKCORE/overlay.sh
+echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
 rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
 echo "$magiskloader" >"$MAGISK_MIRROR/system/etc/init/magisk.rc"
-rm -rf "$MAGISK_MIRROR/$MAGISKCORE/loadpolicy.sh"
-echo "$shloadpolicy" >"$MAGISK_MIRROR/$MAGISKCORE/loadpolicy.sh"
+rm -rf "$MAGISKCORE/loadpolicy.sh"
+echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
 mount_ro_system
 
