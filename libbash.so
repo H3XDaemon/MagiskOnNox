@@ -34,6 +34,12 @@ API=$(getprop ro.build.version.sdk)
     IS64BIT=false
   fi
 
+DEVICE_API="$API"
+DEVICE_ABI="$ABI"
+DEVICE_ARCH="$ARCH"
+DEVICE_ABI32="$ABI32"
+DEVICE_64BIT="$IS64BIT"
+
 magisk_name="magisk32"
 [ "$IS64BIT" == true ] && magisk_name="magisk64"
 
@@ -64,12 +70,16 @@ text_repack_ramdisk="Repack new ramdisk image"
 text_repack_ramdisk_fail="Cannot repack new ramdisk image"
 text_enter_path_ramdisk="Enter path to your ramdisk"
 text_new_ramdisk="New ramdisk image was saved to"
-text_uninstall_fail="! No Magisk found in system
-! If you are using Magisk patched ramdisk.img, replace with original one"
+text_uninstall_fail="! No Magisk found in system"
 text_cannot_mount_part="Cannot mount the partition!"
 text_wrong_input="Wrong input, please enter again correctly"
 text_enter_part="Enter the ${BGREEN}partition${RC} number where you got this ${BPURPLE}Android-x86 OS${RC} installed"
 text_enter_ramdisk="Enter the ${BGREEN}ramdisk.img${RC} number from this ${BPURPLE}Android-x86 OS${RC}"
+text_unpatch_ramdisk="Remove patch with magisk from ramdisk"
+text_backup_not_exist="Backup not exist, cannot uninstall"
+text_uninstall_magisk_in="Uninstall Magisk in"
+text_choice=CHOICE
+text_run_with_root="Run script with root access"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -78,6 +88,12 @@ echo "  2 - Select ramdisk image and patch"
 echo -n "[CHOICE]: "
 }
 
+print_unpatch_ramdisk(){
+pd "light_cyan" "Remove Magisk in ramdisk"
+echo "  1 - Direct uninstall"
+echo "  2 - Select ramdisk image and patch"
+echo -n "[CHOICE]: "
+}
 
 blissos_open_menu(){
 
@@ -121,8 +137,6 @@ echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
 echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
-echo "  4 - Disable Magisk `disable_magisk`"
-pd gray "      Don't load Magisk and its modules"
 
 echo "----------"
 echo " 0 - Exit menu"
@@ -197,12 +211,18 @@ text_repack_ramdisk="Đóng gói lại với đĩa ảnh ramdisk mới"
 text_repack_ramdisk_fail="Không thể đóng gói đĩa ảnh!"
 text_enter_path_ramdisk="Nhập đường dẫn đến đĩa ảnh ramdisk.img"
 text_new_ramdisk="Đĩa ảnh ramdisk mới đã lưu vào"
-text_uninstall_fail="! Không tìm thấy Magisk trên hệ thống
-! Nếu bạn đang sử dụng Magisk ramdisk.img, thay thế bằng bản gốc"
+text_uninstall_fail="! Không tìm thấy Magisk trên hệ thống"
 text_cannot_mount_part="Không thể gắn kết phân vùng!"
 text_wrong_input="Sai dữ liệu, vui lòng nhập lại"
 text_enter_part="Nhập số với ${BGREEN}phân vùng${RC} mà bạn đã cài đặt ${BPURPLE}Android-x86 OS${RC} này"
 text_enter_ramdisk="Nhập số tương ứng với ${BGREEN}ramdisk.img${RC} từ ${BPURPLE}Android-x86 OS${RC}"
+text_unpatch_ramdisk="Loại bỏ bản vá với magisk khỏi ramdisk"
+text_unpatch_ramdisk="Loại bỏ bản vá Magisk khỏi ramdisk"
+text_backup_not_exist="Bản sao lưu không tồn tại, không thể gỡ"
+text_uninstall_magisk_in="Gỡ cài đặt Magisk trong"
+text_choice="CHỌN"
+text_run_with_root="Chạy script với quyền root"
+
 
 
 print_ramdisk_method(){
@@ -211,6 +231,14 @@ echo "  1 - Cài đặt trực tiếp"
 echo "  2 - Chọn đĩa ảnh ramdisk và vá"
 echo -n "[CHỌN]: "
 }
+
+print_unpatch_ramdisk(){
+pd "light_cyan" "Loại bỏ Magisk khỏi ramdisk"
+echo "  1 - Gỡ cài đặt trực tiếp"
+echo "  2 - Chọn đĩa ảnh ramdisk và vá"
+echo -n "[CHỌN]: "
+}
+
 
 
 warn_reboot(){
@@ -235,8 +263,6 @@ echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
 echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
-echo "  4 - Vô hiệu hóa Magisk `disable_magisk`"
-pd gray "      Không tải Magisk và các mô-đun của nó"
 echo "----------"
 echo " 0 - Thoát khỏi menu"
 p none "[CHỌN]: "
@@ -438,22 +464,6 @@ fi
 
 
 
-
-if [ "$AGV1" == "option" ]; then
-    case "$AGV2" in
-           "disable")
-            echo "Magisk will be disabled in the next boot"
-            touch "$DLPATH/disable"
-            exit 0
-            ;;
-            "enable")
-            echo "Magisk will be enabled in the next boot"
-            rm -rf "$DLPATH/disable"
-            exit 0
-            ;;
-     esac
-fi
-
 link(){ (
 agv1="$1"; agv2="$2"
 [ ! -f "$DLPATH/$agv2" ] && rm -rf "$DLPATH/$agv2" 2>/dev/null
@@ -464,11 +474,12 @@ link "libapp.so" "magisk.apk"
 link "libbusybox.so" "busybox"
 link "liblegacy.so" "legacy.zip"
 link "libbash.so" "menu"
+
 CACHEDIR="$DLPATH/tmp"
 DISKINFO="/data/adb/diskinfo"
 
 if [ "$USER_ID" != "0" ]; then
-    p none "Run script with root access? <Y/n> "
+    p none "$text_run_with_root ? <Y/n> "
     read ROOT
     if [ "$ROOT" == "Y" -o "$ROOT" == "y" ]; then
         pd yellow "$text_obtain_root..."
@@ -530,6 +541,8 @@ busybox_bin(){
 mkdir -p "$DLPATH/bin"
 "$bb" --install -s "$DLPATH/bin"
 PATH="$DLPATH/bin:$PATH"
+rm -rf "$DLPATH/disable"
+
 
 }
 
@@ -621,12 +634,6 @@ mnt_bind \"\$PAYDIR\" \"\$FOLDER\"
 #______________
 ) }
 
-exit_overlay(){
-echo -n >/dev/.overlay_unblock
-exit
-}
-
-[ -f \"$DLPATH/disable\" ] && exit_overlay
 
 # hide selinux permissive on emulator
 if [ \$(cat /sys/fs/selinux/enforce) == \"0\" ]; then
@@ -663,6 +670,9 @@ done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
 cp -af ./loadpolicy.sh \$MAGISKTMP
+
+xz -d \$MAGISKTMP/*.xz
+xz -d \$MAGISKBIN/*.xz
 
 API=\$(getprop ro.build.version.sdk)
   ABI=\$(getprop ro.product.cpu.abi)
@@ -711,19 +721,19 @@ else
   ./magiskpolicy --live --magisk 2>&1
 fi
 
-touch /dev/.overlay_unblock"
+touch /dev/.overlay_unblock
+sleep 3
+exit_magisk(){
+echo -n >/dev/.magisk_unblock
+}
+
+[ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
+
+"
 
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
 
-exit_magisk(){
-echo -n > /dev/.magisk_unblock
-exit
-}
-
-[ -f \"$DLPATH/disable\" ] && echo -n > /dev/.magisk_unblock
-
-[ ! -f \"/sbin/magisk\" ] && exit_magisk
 
           restorecon -R /data/adb/magisk
           for module in \$(ls /data/adb/modules); do
@@ -795,19 +805,23 @@ magiskloader="
 }
 
 extract_magisk_apk(){
+
 [ "$IS64BIT" == "true" ] && mkdir -p "$TMPDIR/magisk32"
 mkdir -p "$TMPDIR/magisk"
+mkdir -p "$TMPDIR/magisktool"
 
 
-$bb unzip -oj "$APKFILE" "lib/$ABI/*" -d "$TMPDIR/magisk" &>/dev/null
+$bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/libmagiskboot.so" -d "$TMPDIR/magisk" &>/dev/null
 chmod -R 777 "$TMPDIR/magisk"
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
 
 if [ "$IS64BIT" == "true" ]; then
-$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -d "$TMPDIR/magisk32" &>/dev/null
+$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -x "lib/$ABI32/libmagiskboot.so" -d "$TMPDIR/magisk32" &>/dev/null
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
 chmod -R 777 "$TMPDIR/magisk32"
 fi
+
+
 
 ( cd "$TMPDIR/magisk"
 for file in lib*.so; do
@@ -835,8 +849,58 @@ if [ ! -f "$MAGISKCORE/magisk32" ]; then
 fi
 
 )
+
+
 }
 
+unpatch_ramdisk(){
+RAMDISK="$1"
+REPLACE_CURRENT="$2"
+
+#magisk in ramdisk
+
+MAGISKBASE="/magisk"
+
+echo "******************************"
+echo "      Magisk uninstaller"
+echo "******************************"
+
+rm -rf "$TMPDIR"
+mkdir -p "$TMPDIR"
+[ ! -f "$RAMDISK" ] && abortc light_red "! Ramdisk does not exist!"
+
+echo "- $text_unpack_ramdisk"
+mkdir -p "$TMPDIR/ramdisk"
+
+( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abort "! $text_unpack_ramdisk_fail"
+echo "- $text_unpatch_ramdisk"
+# restore init.rc
+if [ -f "$TMPDIR/ramdisk/magisk/init.rc" ]; then
+# found init.rc backup!
+cat "$TMPDIR/ramdisk/magisk/init.rc" >"$TMPDIR/ramdisk/init.rc"
+else
+abortc light_red "$text_backup_not_exist"
+fi
+
+rm -rf "$TMPDIR/ramdisk/magisk"
+echo "- $text_repack_ramdisk"
+NEWRAMDISK="/sdcard/Magisk/unpatch_ramdisk_$RANDOM$RANDOM.img"
+if [ "$REPLACE_CURRENT" != "true" ]; then
+mkdir -p "/sdcard/Magisk" 2>/dev/null
+echo "- $text_new_ramdisk"
+echo "  $NEWRAMDISK"
+else
+[ -f "${RAMDISK}.bak" ] || mv "${RAMDISK}" "${RAMDISK}.bak"
+NEWRAMDISK="$RAMDISK"
+fi
+( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abort "! $text_repack_ramdisk_fail"
+rm -rf /data/.magisk_binary 2>/dev/null
+clean_flash
+echo "- $text_done"
+true
+
+
+}
 
 
 patch_ramdisk(){
@@ -921,9 +985,11 @@ chmod 755 "$TMPDIR/ramdisk/init.rc"
 ( MAGISKCORE="$TMPDIR/ramdisk/magisk"; IS64BIT=true; extract_magisk_apk )
 chmod -R 777 "$TMPDIR/ramdisk/magisk"
 echo "- $text_repack_ramdisk"
-NEWRAMDISK="/sdcard/magisk_ramdisk_$RANDOM$RANDOM.img"
+NEWRAMDISK="/sdcard/Magisk/magisk_ramdisk_$RANDOM$RANDOM.img"
 if [ "$REPLACE_CURRENT" != "true" ]; then
-echo "- $text_new_ramdisk $NEWRAMDISK"
+mkdir -p "/sdcard/Magisk" 2>/dev/null
+echo "- $text_new_ramdisk:"
+echo "  $NEWRAMDISK"
 else
 [ -f "${RAMDISK}.bak" ] || mv "${RAMDISK}" "${RAMDISK}.bak"
 NEWRAMDISK="$RAMDISK"
@@ -962,6 +1028,7 @@ mkdir $SERVICED 2>/dev/null )
 chmod -R 750 /data/.magisk_binary
 
 }
+
 
 
 install_magisk(){
@@ -1038,6 +1105,9 @@ fi
 clean_flash
 echo "- $text_done"
 }
+
+
+
 
 uninstall_magisk(){
 echo "******************************"
@@ -1139,7 +1209,23 @@ patch_ramdisk "$RAMDISK" "true"
 fi
 }
 
-
+unpatch_ramdisk_directly(){
+VAR_OSROOT="$(cat $DISKINFO/blockdev)"
+VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
+RAMDISK="$VAR_RAMDISK"
+if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
+mount_disk
+( unpatch_ramdisk "$RAMDISK" "true" )
+ERR_CODE=$?
+if [ "$ERR_CODE" != "0" ]; then
+table_list
+unpatch_ramdisk "$RAMDISK" "true"
+fi
+else
+table_list
+unpatch_ramdisk "$RAMDISK" "true"
+fi
+}
 
 
 patch_ramdisk_method(){
@@ -1213,27 +1299,48 @@ fi
 }
 
 uninstall_option(){
-p none "$text_warn_uninstall_magisk <Y/n> "
+clear
+pd gray "=============================================="
+echo "   Uninstall Magisk"
+pd gray "=============================================="
+echo "   1 - $text_uninstall_magisk_in \"/system\""
+echo "   2 - $text_uninstall_magisk_in ramdisk"
+echo -n "[$text_choice]: "
+read c
+case "$c" in
+1)
+   p none "$text_warn_uninstall_magisk <Y/n> "
     read uni
     if [ "$uni" == "y" -o "$uni" == "Y" ]; then
     clear
     ( uninstall_magisk )
     fi
+   ;;
+2)
+   unpatch_ramdisk_method
+   ;;
+esac
 }
 
-mount_all_disk(){
-need_root_access
-umount -l /disk
-rm -rf /disk
-mkdir -p /disk
-mount -o 'mode=0755' -t tmpfs tmpfs /storage/disk
-for guess in /dev/sda* /dev/block/mmcblk* /dev/block/nvme*; do
-              diskfol="/storage/disk/$(basename "$guess")"
-              mkdir -p "$diskfol"
-              mount.ntfs "$guess" "$diskfol"
-done
-echo "$text_all_disk_mounted"
+unpatch_ramdisk_method(){
+print_unpatch_ramdisk
+read c
+case "$c" in
+1)
+      ( need_root_access; clear; unpatch_ramdisk_directly )
+      ;;
+2)
+       echo "$text_enter_path_ramdisk"
+       echo -n "> "
+       read RAMDISK
+       clear
+       ( unpatch_ramdisk "$RAMDISK" )
+       ;;
+esac
 }
+
+
+
 
 mount_disk(){
 IS_MOUNT=false
@@ -1345,10 +1452,6 @@ case $option in
    rm -rf "$DLPATH/fmm.apk"
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
-    ;;
-4)
-    disable_magisk_process
-    no_turn_back=true
     ;;
 
 0)
