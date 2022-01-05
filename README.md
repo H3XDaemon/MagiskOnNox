@@ -14,7 +14,8 @@ Integrate Magisk root into Nox Player and other Android x86, emulators
 Note: Some features might not work on some emulator, Please read [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) to know which Magisk features doesn't work.
 
 ## Requirements
-- Android x86 project (BlissOS/PhoenixOS)
+- Android x86 project: BlissOS 11 - Android 9
+- Phoenix OS is not supported yet
 - Android Emulator (NoxPlayer, LDPlayer, ...): [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
 - Android version: 7.1 ~ 9.0 (legacy rootfs)
 
@@ -24,7 +25,7 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Installation
 
-### Install Magisk into system partition
+### Install Magisk into system
 
 [Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
 
@@ -47,7 +48,7 @@ It's recommended for Android emulator, as you don't have `ramdisk.img`. Also ext
 
 ### Install Magisk into ramdisk (system)
 
-Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS, PhoenixOS)
+Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS
 
 This guide is quite confusing and may not be for the average user
 

@@ -1,9 +1,11 @@
-# Magisk trên giả lập, Android x86
+# Magisk On Nox
 ## Giới thiệu
 Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA))
 
 
 <img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png"/>
+
+[Video: Hướng dẫn cài đặt Magisk và LSPosed lên giả lập Nox Player]( https://youtu.be/ZtZQPfZjFuU)
 
 ## Tính năng
 - Đem các tính năng Magisk/Zygisk  lên giả lập Nox
@@ -13,9 +15,11 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 Lưu ý: Một vài tính năng có thể không hoạt động trên một số giả lập, vui lòng đọc [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) để biết tính năng của Magisk không hoạt động
 
 ## Các yêu cầu
-- Khuyến nghị: NoxPlayer với Android 9 64-bit
+- Android x86 project: BlissOS 11 - Android 9
+- PhoenixOS chưa được hỗ trợ!
 - Bất kỳ trình giả lập nào chạy Android 7.1 trở lên, 32bit và 64bit, Trình giả lập được xác nhận: Bluestacks, Nox, LDPlayer
 - Vui lòng đọc [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
+- Hiện chỉ hỗ trợ Android 7.1 ~ 9.0
 
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
@@ -24,10 +28,7 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 
 ### Cài đặt Trực tiếp
 
-
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png
-
-Cài đặt Magisk vào phân vùng system
+Cài đặt Magisk vào system image
 
 Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.img`.  Ngoài ra việc giải nén `ramdisk.img` thông qua môi trường giả lập Android cũng rất khó.
 
@@ -43,7 +44,7 @@ Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.im
 
 ### Vá đĩa ảnh ramdisk
 
- Được đề xuất nếu bạn có `ramdisk.img` hoặc bạn đang sử dụng dự án **Android x86** (BlissOS, PhoenixOS)
+ Được đề xuất nếu bạn có `ramdisk.img` hoặc bạn đang sử dụng dự án **Android x86** (BlissOS)
 
  Hướng dẫn này khá khó hiểu và có thể không dành cho người dùng bình thường
 
@@ -59,11 +60,11 @@ Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.im
 
  2. Nhấn *ALT + F1* để mở root shell và chú ý đến văn bản này (nó có thể giống):
  ```
- Detecting Android x86... found at /dev/<blockname>
+ Detecting Android-x86... found at /dev/<blockname>
  ```
  <img src = "https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_074812.png" />
 
-  - Điều đó có nghĩa là **Android x86** đã được cài đặt tại `/dev/<blockname>`
+  - Điều đó có nghĩa là **Android x86** đã được cài đặt tại `/dev/<blockname> '
 
 
  3. Nhấn * ALT + F7 * để đóng root shell.
@@ -88,7 +89,7 @@ Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.im
 
 ## Cập nhật Magisk
 
-- Vì Nox và các giả lập thường không có đĩa ảnh boot nên bạn không thể cập nhật trực tiếp, vui lòng cập nhật Magisk bằng **Magisk on Nox**
+Vì Nox và các giả lập thường không có đĩa ảnh boot nên bạn không thể cập nhật trực tiếp, vui lòng cập nhật Magisk bằng **Magisk on Nox**
 
 - Nếu bạn cài đặt Magisk vào `ramdisk.img`, bạn có thể sử dụng tùy chọn **Cập nhật nhị phân** để cập nhật **Magisk** mà không cần phải vá lại `ramdisk.img`!
 
