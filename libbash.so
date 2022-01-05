@@ -98,7 +98,7 @@ echo -n "[CHOICE]: "
 blissos_open_menu(){
 
 
-pd none "If you are using PhoenixOS or BlissOS"
+pd none "If you are using Android x86 (BlissOS)"
 pd none "You can press Alt+F1 and type this command:"
 
 
@@ -151,7 +151,7 @@ pd light_cyan "Install Magisk method"
 echo "  1 - Install Magisk into \"/system\""
 pd gray "      Recommended for Android Emulator (NoxPlayer, MEmu, ...)"
 echo "  2 - Install Magisk into ramdisk image (systemless)"
-pd gray "      Recommended for Android x86 project (Phoenix OS, BlissOS)"
+pd gray "      Recommended for Android x86 project (BlissOS)"
 pd gray "      Only compatible with legacy rootfs (Android 9 and below)"
 echo "  3 - Update binary (must have Magisk)"
 pd gray "     Update Magisk without having to modify system/ramdisk again"
@@ -296,7 +296,7 @@ pd light_cyan "Phương thức cài đặt Magisk"
 echo "  1 - Cài đặt Magisk vào \"/system\""
 pd gray "      Khuyên dùng cho các giả lập Android (NoxPlayer, MEmu, ...)"
 echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
-pd gray "      Khuyên dùng cho Android x86 project (Phoenix OS, BlissOS)"
+pd gray "      Khuyên dùng cho Android x86 project (BlissOS)"
 pd gray "      Chỉ tương thích với legacy rootfs (Android 9 trở xuống)"
 echo "  3 - Cập nhật nhị phân (phải có Magisk)"
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
@@ -448,7 +448,10 @@ p "$1" "$2"; echo
 
 
 abortc(){
-pd "$1" "$2"; exit 1
+ERR_CODE="$3"
+pd "$1" "$2"; 
+test -z "$ERR_CODE" && ERR_CODE=1
+exit "$ERR_CODE"
 }
 
 if [ "$AGV1" != "noexec" ]; then
@@ -521,7 +524,10 @@ MAGISKCORE="$MAGISK_MIRROR/system/etc/magisk"
 
 
 abort(){
-echo "$1" ; exit 1
+ERR_CODE="$2"
+pd "$1"; 
+test -z "$ERR_CODE" && ERR_CODE=1
+exit "$ERR_CODE"
 }
 
 link(){ (
@@ -644,6 +650,13 @@ fi
 
 
 mount -o rw,remount /
+
+# umount previous /sbin tmpfs overlay
+until ! mount | grep -q \" /sbin \"; do
+umount -l /sbin
+sleep 0.1
+done
+
 rm -rf /.backup_sbin
 mkdir /.backup_sbin
 ln /sbin/* /.backup_sbin
@@ -670,9 +683,6 @@ done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
 cp -af ./loadpolicy.sh \$MAGISKTMP
-
-xz -d \$MAGISKTMP/*.xz
-xz -d \$MAGISKBIN/*.xz
 
 API=\$(getprop ro.build.version.sdk)
   ABI=\$(getprop ro.product.cpu.abi)
@@ -918,7 +928,7 @@ echo "******************************"
 rm -rf "$TMPDIR"
 mkdir -p "$TMPDIR"
 
-[ ! -f "$APKFILE" ] && abortc light_red "! Magisk APK does not exist"
+
 [ ! -f "$RAMDISK" ] && abortc light_red "! Ramdisk does not exist!"
 
 magisk_loader
@@ -927,7 +937,7 @@ $bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 
 MAGISK_VER=""
 MAGISK_VER_CODE=""
-[ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
+[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
 ( . $TMPDIR/util_functions.sh
 pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)" )
 
@@ -1014,7 +1024,7 @@ $bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 
 MAGISK_VER=""
 MAGISK_VER_CODE=""
-[ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
+[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
 . $TMPDIR/util_functions.sh
 pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
@@ -1063,7 +1073,7 @@ mkdir $TMPDIR
 $bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 MAGISK_VER=""
 MAGISK_VER_CODE=""
-[ -f "$TMPDIR/util_functions.sh" ] || abort "! This apk is not Magisk app"
+[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
 . $TMPDIR/util_functions.sh
 pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
@@ -1199,7 +1209,7 @@ if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
 mount_disk
 ( patch_ramdisk "$RAMDISK" "true" )
 ERR_CODE=$?
-if [ "$ERR_CODE" != "0" ]; then
+if [ "$ERR_CODE" == "1" ]; then
 table_list
 patch_ramdisk "$RAMDISK" "true"
 fi
@@ -1217,7 +1227,7 @@ if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
 mount_disk
 ( unpatch_ramdisk "$RAMDISK" "true" )
 ERR_CODE=$?
-if [ "$ERR_CODE" != "0" ]; then
+if [ "$ERR_CODE" == "1" ]; then
 table_list
 unpatch_ramdisk "$RAMDISK" "true"
 fi
@@ -1283,6 +1293,7 @@ case $build in
     p none "> "
     read custom_magisk_apk
     APKFILE="$custom_magisk_apk"
+    [ ! -f "$APKFILE" ] && abortc light_red "Magisk APK does not exist"
     ;;
 *)
     install_magisk=false
