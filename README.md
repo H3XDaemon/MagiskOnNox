@@ -3,7 +3,13 @@
 ## About
 Integrate Magisk root into Nox Player and other Android x86, emulators
 
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png" />
+**Magisk on NoxPlayer**
+
+<img src="https://i.imgur.com/dkuKfDt.png" />
+
+**Magisk on BlissOS**
+
+<img src="https://i.imgur.com/udNrMx2.jpg"/>
 
 ## Features
 
@@ -67,7 +73,7 @@ You must have copy of `ramdisk.img`
 ```
 Detecting Android-x86... found at /dev/<blockname>
 ```
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_074812.png" /> 
+<img src="https://i.imgur.com/AmcrOyX.png" /> 
 
  -  That's mean **Android x86** was installed at `/dev/<blockname>`
 
