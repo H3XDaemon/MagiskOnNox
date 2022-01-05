@@ -26,7 +26,7 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 
 ## Cài đặt
 
-### Cài đặt Trực tiếp
+### Cài đặt vào phân vùng hệ thống
 
 
 Cài đặt Magisk vào system image
@@ -47,7 +47,7 @@ Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.im
 
  4. Vào cài đặt giả lập, vô hiệu hóa Root tích hợp và khởi động lại. Đối với Bluestacks, nhấn nút **UnPatch** trong **Bluestacks Tweaker** để xóa **SuperSU**.
 
-### Vá đĩa ảnh ramdisk
+### Vá đĩa ảnh ramdisk (systemless)
 
  Được đề xuất nếu bạn có `ramdisk.img` hoặc bạn đang sử dụng dự án **Android x86** (BlissOS)
 
