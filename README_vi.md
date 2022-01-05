@@ -3,11 +3,11 @@
 Triển khai root Magisk trên giả lập và Android x86 project
 
 
-**Magisk trên giả lập NoxPlayer**
+**Magisk trên giả lập Android 9 NoxPlayer**
 
 <img src="https://i.imgur.com/dkuKfDt.png" />
 
-**Magisk trên hệ điều hành BlissOS (Android x86)**
+**Magisk trên BlissOS 11 Android 9**
 
 <img src="https://i.imgur.com/udNrMx2.jpg"/>
 
