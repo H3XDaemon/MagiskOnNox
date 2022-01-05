@@ -48,7 +48,7 @@ It's recommended for Android emulator, as you don't have `ramdisk.img`. Also ext
 
 ### Install Magisk into ramdisk (system)
 
-Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS
+Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS)
 
 This guide is quite confusing and may not be for the average user
 
