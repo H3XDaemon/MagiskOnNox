@@ -25,7 +25,7 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Installation
 
-### Install Magisk into system
+### Install Magisk into system partition
 
 [Video: How to install Magisk and LSPosed on Nox Player emulator]( https://youtu.be/ZtZQPfZjFuU)
 
@@ -46,7 +46,7 @@ It's recommended for Android emulator, as you don't have `ramdisk.img`. Also ext
 4. Go to emulator settings, disable built-in Root and reboot. For Bluestacks, press **UnPatch** button in **Bluestacks Tweaker** to remove **SuperSU**.
 
 
-### Install Magisk into ramdisk (system)
+### Install Magisk into ramdisk (systemless)
 
 Recommended if you have `ramdisk.img` or you are using **Android x86** project (BlissOS)
 
