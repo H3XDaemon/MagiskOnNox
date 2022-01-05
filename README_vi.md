@@ -8,18 +8,18 @@ Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https:
 [Video: Hướng dẫn cài đặt Magisk và LSPosed lên giả lập Nox Player]( https://youtu.be/ZtZQPfZjFuU)
 
 ## Tính năng
-- Đem các tính năng Magisk/Zygisk  lên giả lập Nox
+- Đem các tính năng Magisk/Zygisk  lên Android x86
 - MagiskHide / MagiskDenyList để ẩn root
 - Magisk/Zygisk mô-đun hoạt động chính xác.
 
 Lưu ý: Một vài tính năng có thể không hoạt động trên một số giả lập, vui lòng đọc [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) để biết tính năng của Magisk không hoạt động
 
 ## Các yêu cầu
-- Android x86 project: BlissOS 11 - Android 9
+
+- Android x86 project (BlissOS/PhoenixOS)
 - PhoenixOS chưa được hỗ trợ!
-- Bất kỳ trình giả lập nào chạy Android 7.1 trở lên, 32bit và 64bit, Trình giả lập được xác nhận: Bluestacks, Nox, LDPlayer
-- Vui lòng đọc [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
-- Hiện chỉ hỗ trợ Android 7.1 ~ 9.0
+- Giả lập Android: [Giả lập mà Magisk có thể hoạt động chính xác](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly)
+- Phiên bản Android 7.1 ~ 9.0
 
 ## Download
 Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/releases) 
@@ -28,7 +28,12 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 
 ### Cài đặt Trực tiếp
 
+
 Cài đặt Magisk vào system image
+
+<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png">
+
+Cài đặt Magisk vào phân vùng system
 
 Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.img`.  Ngoài ra việc giải nén `ramdisk.img` thông qua môi trường giả lập Android cũng rất khó.
 
