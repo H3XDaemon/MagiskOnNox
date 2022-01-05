@@ -1,11 +1,16 @@
 # Magisk On Nox
 ## Giới thiệu
-Triển khai root Magisk trên giả lập Nox (dựa trên [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA))
+Triển khai root Magisk trên giả lập và Android x86 project
 
 
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png"/>
+**Magisk trên giả lập NoxPlayer**
 
-[Video: Hướng dẫn cài đặt Magisk và LSPosed lên giả lập Nox Player]( https://youtu.be/ZtZQPfZjFuU)
+<img src="https://i.imgur.com/dkuKfDt.png" />
+
+**Magisk trên hệ điều hành BlissOS (Android x86)**
+
+<img src="https://i.imgur.com/udNrMx2.jpg"/>
+
 
 ## Tính năng
 - Đem các tính năng Magisk/Zygisk  lên Android x86
@@ -28,10 +33,7 @@ Tải về trong [tag **Releases**](https://github.com/HuskyDG/MagiskOnNox/relea
 
 ### Cài đặt vào phân vùng hệ thống
 
-
-Cài đặt Magisk vào system image
-
-<img src="https://github.com/HuskyDG/MagiskOnNox/raw/main/Screenshot%20(3).png">
+[Video: Hướng dẫn cài đặt Magisk và LSPosed lên giả lập Nox Player]( https://youtu.be/ZtZQPfZjFuU)
 
 Cài đặt Magisk vào phân vùng system
 
@@ -67,7 +69,7 @@ Khuyến nghị cho trình giả lập Android, vì bạn không có `ramdisk.im
  ```
  Detecting Android-x86... found at /dev/<blockname>
  ```
- <img src = "https://github.com/HuskyDG/MagiskOnNox/raw/main/IMG_20220103_074812.png" />
+ <img src = "https://i.imgur.com/AmcrOyX.png" />
 
   - Điều đó có nghĩa là **Android x86** đã được cài đặt tại `/dev/<blockname> '
 
