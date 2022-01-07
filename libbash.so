@@ -167,6 +167,7 @@ pd gray "      Recommended for Android x86 project (BlissOS)"
 pd gray "      Only compatible with legacy rootfs (Android 9 and below)"
 echo "  3 - Update binary (must have Magisk)"
 pd gray "     Update Magisk without having to modify system/ramdisk again"
+pd light_red "* Remove rusty-magisk if you have it installed"
 p none "[CHOICE]: "
 
 }
@@ -177,11 +178,14 @@ print_menu_install(){
 pd gray "=============================================="
 echo "   Install/Update Magisk"
 pd gray "=============================================="
+pd light_cyan "ONLINE"
 echo "  1 - Lastest Canary"
 echo "  2 - Lastest Alpha"
 echo "  3 - Canary v23001 (MEmu, LD Player)"
-echo "  4 - Offline - Alpha 23016"
-echo "  5 - Choose and install from another Magisk APK"
+echo "  4 - Stable v23.0 (MEmu, LD Player)"
+pd light_cyan "OFFLINE"
+echo "  a - Alpha 23016"
+echo "  x - Choose and install from another Magisk APK"
 pd green "* You will download magisk.apk and install Magisk"
 p none "[CHOICE]: "
 
@@ -291,11 +295,14 @@ print_menu_install(){
 pd gray "=============================================="
 echo "   Install/Update Magisk"
 pd gray "=============================================="
+pd light_cyan "TRỰC TUYẾN"
 echo "  1 - Canary mới nhất"
 echo "  2 - Alpha mới nhất"
 echo "  3 - Canary v23001 (MEmu, LD Player)"
-echo "  4 - Offline - Alpha 23016"
-echo "  5 - Chọn và cài đặt từ Magisk APK khác"
+echo "  4 - Stable v23.0 (MEmu, LD Player)"
+pd light_cyan "NGOẠI TUYẾN"
+echo "  a - Alpha 23016"
+echo "  x - Chọn và cài đặt từ Magisk APK khác"
 pd green "* Bạn sẽ tải magisk.apk và cài đặt Magisk"
 p none "[CHỌN]: "
 
@@ -315,6 +322,7 @@ pd gray "      Khuyên dùng cho Android x86 project (BlissOS)"
 pd gray "      Chỉ tương thích với legacy rootfs (Android 9 trở xuống)"
 echo "  3 - Cập nhật nhị phân (phải có Magisk)"
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
+pd light_red "* Gỡ rusty-magisk nếu bạn đã cài đặt nó"
 p none "[CHỌN]: "
 
 }
@@ -574,7 +582,8 @@ ISENCRYPTED=false
   grep ' /data ' /proc/mounts | grep -q 'dm-' && ISENCRYPTED=true
   [ "$(getprop ro.crypto.state)" = "encrypted" ] && ISENCRYPTED=true
 
-stable_magisk_link="https://github.com/topjohnwu/magisk-files/blob/4f737b70868eb3f8b71e48518f919819cbf5ad63/app-debug.apk?raw=true"
+canary_v23001_magisk_link="https://github.com/topjohnwu/magisk-files/blob/4f737b70868eb3f8b71e48518f919819cbf5ad63/app-debug.apk?raw=true"
+stable_magisk_link="https://github.com/topjohnwu/Magisk/releases/download/v23.0/Magisk-v23.0.apk"
 canary_magisk_link="https://github.com/topjohnwu/magisk-files/blob/canary/app-debug.apk?raw=true"
 alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-release.apk?raw=true"
 
@@ -604,7 +613,8 @@ rm -rf /.backup_sbin
 mkdir /.backup_sbin
 ln /sbin/* /.backup_sbin
 mnt_tmpfs /sbin
-clone /.backup_sbin /sbin
+clone /.backup_sbin /sbin"
+    remount_rootfs="
 rm -rf /.backup_sbin 
 mount -o ro,remount /"
     ;;
@@ -643,7 +653,7 @@ if [ \"\$ERR_CODE\" != 0 ]; then
 ERR_CHAR=E; TEXT=\"\$ERR_TEXT\"
 fi
 CURRENT_JOB=\$\$
-echo \"\$(date +%m-%d\\ %T.%3N)   \$MAIN_JOB   \$CURRENT_JOB \$ERR_CHAR : \$TEXT \" >>/data/local/tmp/magisk.log
+echo \"\$(date +%m-%d\\ %T.%3N)  \$MAIN_JOB  \$CURRENT_JOB \$ERR_CHAR : \$TEXT \" >>/data/local/tmp/magisk.log
 }
 
 mnt_tmpfs(){ (
@@ -661,15 +671,15 @@ mnt_bind(){ (
 FROM=\"\$1\"; TO=\"\$2\"
 if [ -L \"\$FROM\" ]; then
 SOFTLN=\"\$(readlink \"\$FROM\")\"
-ln -s \"\$SOFTLN\" \"\$TO\" 2>/dev/null
+ln -s \"\$SOFTLN\" \"\$TO\"
 write_log \"link : \$FROM -> \$TO\" \"link : \$FROM -> \$TO failed with \$?\" 
 elif [ -d \"\$FROM\" ]; then
 mkdir -p \"\$TO\" 2>/dev/null
-mount --rbind \"\$FROM\" \"\$TO\" 2>/dev/null
+mount --bind \"\$FROM\" \"\$TO\"
 write_log \"mnt_bind : \$FROM -> \$TO\" \"mnt_bind : \$FROM -> \$TO failed with \$?\" 
 else
 echo -n 2>/dev/null >\"\$TO\"
-mount --rbind \"\$FROM\" \"\$TO\" 2>/dev/null
+mount --bind \"\$FROM\" \"\$TO\"
 write_log \"mnt_bind : \$FROM -> \$TO\" \"mnt_bind : \$FROM -> \$TO failed with \$?\" 
 fi
 ) }
@@ -808,6 +818,7 @@ fi
 write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 
 touch /dev/.overlay_unblock
+$remount_rootfs
 sleep 3
 exit_magisk(){
 echo -n >/dev/.magisk_unblock
@@ -820,11 +831,26 @@ echo -n >/dev/.magisk_unblock
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
 
+write_log(){
+ERR_CODE=\$?
+NOERR_TEXT=\"\$1\"
+ERR_TEXT=\"\$2\"
+ERR_CHAR=I
+TEXT=\"\$NOERR_TEXT\"
+if [ \"\$ERR_CODE\" != 0 ]; then
+ERR_CHAR=E; TEXT=\"\$ERR_TEXT\"
+fi
+CURRENT_JOB=\$\$
+echo \"\$(date +%m-%d\\ %T.%3N)   \$MAIN_JOB   \$CURRENT_JOB \$ERR_CHAR : \$TEXT \" >>/data/local/tmp/magisk.log
+}
+
 
           restorecon -R /data/adb/magisk
           for module in \$(ls /data/adb/modules); do
               if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
+                  TEXT_LOG=\"\$module: load sepolicy rules\"
                   $MAGISKTMP/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
+                  write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
               fi
           done
 
@@ -910,7 +936,9 @@ ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
 chmod -R 777 "$TMPDIR/magisk32"
 fi
 
-
+rm -rf "$MAGISKCORE/.rw" 2>/dev/null
+touch "$MAGISKCORE/.rw" 2>/dev/null  || abortc light_red "$text_cannot_install_magisk"
+rm -rf "$MAGISKCORE/.rw" 2>/dev/null
 
 ( cd "$TMPDIR/magisk"
 for file in lib*.so; do
@@ -922,7 +950,7 @@ if [ "$IS64BIT" == "true" ]; then
 cd "$TMPDIR/magisk32"
 for file in lib*.so; do
   chmod 755 $file
-  [ ! -f "$MAGISKCORE/${file:3:${#file}-6}" ] && mv "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}" || abortc light_red "$text_cannot_install_magisk"
+  [ ! -f "$MAGISKCORE/${file:3:${#file}-6}" ] && mv "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
 done
 
 fi
@@ -1374,13 +1402,17 @@ case $build in
     ;;
 3)
     build_name="Canary"
-    URL="$stable_magisk_link"
+    URL="$canary_v23001_magisk_link"
     ;;
 4)
+    build_name="Stable"
+    URL="$stable_magisk_link"
+    ;;
+"a")
    build_name="Alpha"
     install_offline=true
     ;;
-5)
+"x")
     build_name="Custom"
     install_offline=true
     echo "$text_enter_magisk_apk"
@@ -1589,7 +1621,7 @@ if [ "$AGV1" != "noexec" ]; then
     install_option_method
     ;;
             "install:stable")
-    build_name="Canary"
+    build_name="Stable"
     URL="$stable_magisk_link"
     install_option_method
     ;;
