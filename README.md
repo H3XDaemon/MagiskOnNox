@@ -32,10 +32,12 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Useful link
 
-- [Magisk on Emulator Installation Guide](https://github.com/HuskyDG/MagiskOnNox/wiki/Installation)  
+- [Installation Guide](https://github.com/HuskyDG/MagiskOnNox/wiki/Installation) - Learn how to install Magisk on Emulator, Android x86 project
+
 - [MagiskOnNox Wiki](https://github.com/HuskyDG/MagiskOnNox/wiki)
 - [Magisk Documentation](https://topjohnwu.github.io/Magisk/)  
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android
+- [Magisk emulator.sh](https://github.com/topjohnwu/Magisk/blob/master/scripts/emulator.sh) : Magisk setup script without patching `boot.img`
 - [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA): For Magisk on WSA script, how to integrate Magisk on Emulator
