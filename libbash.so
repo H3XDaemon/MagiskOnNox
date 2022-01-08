@@ -511,7 +511,7 @@ if [ "$AGV1" == "option" ] && [ "$AGV2" == "help" ]; then
 help; exit
 fi
 
-if [ "$USER_ID" != "0" -o "$NOROOT" != "true" ]; then
+if [ "$USER_ID" != "0" ]; then
     p none "$text_run_with_root ? <Y/n> "
     read ROOT
     if [ "$ROOT" == "Y" -o "$ROOT" == "y" ]; then
