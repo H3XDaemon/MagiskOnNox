@@ -5,6 +5,8 @@ SCRIPT="$0"
 AGV1="$1"
 AGV2="$2"
 AGV3="$3"
+AGV4="$4"
+AGV5="$5"
 MYSCRIPT="$(realpath "$0")"
 MYPATH="${MYSCRIPT%/*}"
 PATH="$MYPATH:$PATH"
@@ -509,7 +511,7 @@ if [ "$AGV1" == "option" ] && [ "$AGV2" == "help" ]; then
 help; exit
 fi
 
-if [ "$USER_ID" != "0" ]; then
+if [ "$USER_ID" != "0" -o "$NOROOT" != "true" ]; then
     p none "$text_run_with_root ? <Y/n> "
     read ROOT
     if [ "$ROOT" == "Y" -o "$ROOT" == "y" ]; then
@@ -1506,7 +1508,8 @@ umount -l /dev/os_disk
 rm -rf /dev/os_disk
 mkdir /dev/os_disk
 echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
-mount -o rw,relatime "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
+mount -o ro "$VAR_OSROOT" "/dev/os_disk"
+mount -o rw,remount "/dev/os_disk" && IS_MOUNT=true
 mount.ntfs "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
 }
 
@@ -1644,6 +1647,28 @@ esac
 $no_turn_back || turn_back
 }
 
+install_option_dd(){
+
+case "$AGV3" in
+    "system")
+        (need_root_access; install_magisk)
+        ;;
+     "ramdisk")
+         (need_root_access; patch_ramdisk_directly)
+         ;;
+     "ramdisk-patch")
+         (patch_ramdisk "$AGV4")
+         ;;
+     *)
+         install_option_method
+         ;;
+esac
+}
+
+
+
+
+
 APKFILE="$DLPATH/magisk.apk"
 if [ "$AGV1" != "noexec" ]; then
     if [ "$AGV1" == "option" ]; then
@@ -1655,28 +1680,28 @@ if [ "$AGV1" != "noexec" ]; then
             "install:alpha")
     build_name="Alpha"
     URL="$alpha_magisk_link"
-    install_option_method
+    install_option_dd
     ;;
             "install:canary")
     build_name="Canary"
     URL="$canary_magisk_link"
-    install_option_method
+    install_option_dd
     ;;
             "install:stable")
     build_name="Stable"
     URL="$stable_magisk_link"
-    install_option_method
+    install_option_dd
     ;;
             "install:offline")
     build_name="Alpha"
     install_offline=true
-    install_option_method
+    install_option_dd
     ;;
             "install:custom")
     build_name="Custom"
     install_offline=true
-    APKFILE="$AGV3"
-    install_option_method
+    APKFILE="$AGV5"
+    install_option_dd
     ;;
             "install:"*)
                 echo "Invaild Magisk build. Available build: canary, alpha, stable"
