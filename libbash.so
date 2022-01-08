@@ -52,6 +52,16 @@ fi
 magisk_name="magisk32"
 [ "$IS64BIT" == true ] && magisk_name="magisk64"
 
+help(){
+echo "Magisk Installer script for emulator
+usage: inmagisk [OPTION]
+Available option:
+ install                       Open Menu for install Magisk
+ install:<build>               Install/Update Magisk
+ uninstall                     Uninstall Magisk and its modules"
+}
+
+
 text_press_enter_menu="PRESS ENTER TO BACK TO MENU"
 text_cannot_mm="Cannot install or this app is adready installed"
 text_success_mm="Install success!"
@@ -90,6 +100,7 @@ text_uninstall_magisk_in="Uninstall Magisk in"
 text_choice=CHOICE
 text_run_with_root="Run script with root access"
 text_cannot_install_magisk="Unable to install Magisk!"
+text_added_bs_module="Added Bluestacks Fix Magisk modules"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -147,7 +158,8 @@ echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
 echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
-
+echo "  4 - Fix Bluestacks cannot load modules"
+pd gray "      Fix the incorrect Bluestacks system that breaks Magisk modules"
 echo "----------"
 echo " 0 - Exit menu"
 p none "[CHOICE]: "
@@ -239,6 +251,7 @@ text_uninstall_magisk_in="Gỡ cài đặt Magisk trong"
 text_choice="CHỌN"
 text_run_with_root="Chạy script với quyền root"
 text_cannot_install_magisk="Không thể cài đặt Magisk!"
+text_added_bs_module="Đã thêm Magisk mô-đun Bluestacks Fix"
 
 
 
@@ -280,6 +293,8 @@ echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
 echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
+echo "  4 - Sửa Bluestacks không thể tải các mô-đun"
+pd gray "      Sửa hệ thống Bluestacks lỗi gây hỏng mô-đun Magisk"
 echo "----------"
 echo " 0 - Thoát khỏi menu"
 p none "[CHỌN]: "
@@ -490,6 +505,10 @@ link "libbash.so" "menu"
 CACHEDIR="$DLPATH/tmp"
 DISKINFO="/data/adb/diskinfo"
 
+if [ "$AGV1" == "option" ] && [ "$AGV2" == "help" ]; then
+help; exit
+fi
+
 if [ "$USER_ID" != "0" ]; then
     p none "$text_run_with_root ? <Y/n> "
     read ROOT
@@ -498,7 +517,7 @@ if [ "$USER_ID" != "0" ]; then
         ( su -c "$cmds" || /system/xbin/su -c "$cmds" || /system/bin/su -c "$cmds" || /sbin/su -c "$cmds" ) 2>/dev/null
         ERR_CODE="$?"
         if [ "$ERR_CODE" != 0 ]; then
-            clear
+            
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
             pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
@@ -1546,6 +1565,27 @@ sleep 1
 table_blockdev
 }
 
+bluestacks_fix(){ (
+MODDIR=/data/adb/modules/bluestacks-fix
+MODDIR2=/data/adb/modules_update/bluestacks-fix
+mkdir -p $MODDIR
+mkdir -p $MODDIR2
+echo "MAGISKTMP=\$(magisk --path) || MAGISKTMP=/sbin
+MIRROR_SYSTEM=\"\$MAGISKTMP/.magisk/mirror/system\"
+test ! -d \"\$MIRROR_SYSTEM/android/system\" && exit
+mount --bind \"\$MIRROR_SYSTEM/android/system\" \"\$MIRROR_SYSTEM\"">$MODDIR2/post-fs-data.sh
+MODPROP="id=bluestacks-fix
+name=Bluestacks System Fix
+version=v1.0
+versionCode=10000
+author=HuskyDG
+description=Fix the incorrect Bluestacks system partition that breaks Magisk modules"
+echo "$MODPROP" >$MODDIR/module.prop
+echo "$MODPROP" >$MODDIR2/module.prop
+echo -n >$MODDIR/update
+pd light_green "$text_added_bs_module"
+) 2>/dev/null }
+
 
 table_list(){
 RESET_DISKINFO="$1"
@@ -1591,7 +1631,9 @@ case $option in
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
     ;;
-
+4)
+    (need_root_access; bluestacks_fix)
+    ;;
 0)
     exit 0
     ;;
@@ -1643,9 +1685,10 @@ if [ "$AGV1" != "noexec" ]; then
             uninstall_option
             ;;
             
-             *)
+            *)
             while true; do main; done
             ;;
+            
         esac
     else
         while true; do main; done
