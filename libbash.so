@@ -103,6 +103,7 @@ text_choice=CHOICE
 text_run_with_root="Run script with root access"
 text_cannot_install_magisk="Unable to install Magisk!"
 text_added_bs_module="Added Bluestacks Fix Magisk modules"
+text_magisk_patched_ramdisk="Magisk patched ramdisk image detected"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -119,10 +120,11 @@ echo -n "[CHOICE]: "
 }
 
 blissos_open_menu(){
+echo "- If you are using ${BPURPLE}Bluestacks${RC} emulator"
+echo "You can use ${BGREEN}BSTweaker 6.8.5+${RC} to enable Root access"
 
-
-pd none "If you are using Android x86 (BlissOS)"
-pd none "You can press Alt+F1 and type this command:"
+pd none "- If you are using ${BPURPLE}Android x86${RC} (BlissOS)"
+pd none "You can press ${BGREEN}Alt+F1${RC} and type this command:"
 
 
 }
@@ -197,6 +199,7 @@ echo "  1 - Lastest Canary"
 echo "  2 - Lastest Alpha"
 echo "  3 - Canary v23001 (MEmu, LD Player)"
 echo "  4 - Stable v23.0 (MEmu, LD Player)"
+echo "  5 - Minimal Stable (Bluestacks Nougat)"
 pd light_cyan "OFFLINE"
 echo "  a - Alpha 23016"
 echo "  x - Choose and install from another Magisk APK"
@@ -254,7 +257,7 @@ text_choice="CHỌN"
 text_run_with_root="Chạy script với quyền root"
 text_cannot_install_magisk="Không thể cài đặt Magisk!"
 text_added_bs_module="Đã thêm Magisk mô-đun Bluestacks Fix"
-
+text_magisk_patched_ramdisk="Đã phát hiện ramdisk đã vá với Magisk "
 
 
 print_ramdisk_method(){
@@ -303,8 +306,11 @@ p none "[CHỌN]: "
 }
 
 blissos_open_menu(){
-pd none "Nếu bạn đang sử dụng BlissOS";
-pd none "Bạn có thể nhấn ALT+F1 và gõ dòng lệnh:"
+echo "- Nếu bạn đang sử dụng giả lập ${BPURPLE}Bluestacks${RC}"
+echo "Bạn có thể sử dụng ${BGREEN}BSTweaker 6.8.5+${RC} để bật quyền Root"
+
+pd none "- Nếu bạn đang sử dụng ${BPURPLE}Android x86${RC} như BlissOS";
+pd none "Bạn có thể nhấn ${BGREEN}ALT+F1${RC} và gõ dòng lệnh:"
 }
 
 print_menu_install(){
@@ -317,6 +323,7 @@ echo "  1 - Canary mới nhất"
 echo "  2 - Alpha mới nhất"
 echo "  3 - Canary v23001 (MEmu, LD Player)"
 echo "  4 - Stable v23.0 (MEmu, LD Player)"
+echo "  5 - Minimal Stable (Bluestacks Nougat)"
 pd light_cyan "NGOẠI TUYẾN"
 echo "  a - Alpha 23016"
 echo "  x - Chọn và cài đặt từ Magisk APK khác"
@@ -539,9 +546,25 @@ get_magisk_path(){
 MAGISK_TMP="$(magisk --path)"
 MAGISKDIR="$MAGISK_TMP/.magisk"
 [ "$MAGISK_TMP" ] && MAGISK_MIRROR="$MAGISKDIR/mirror"
-SYSTEMDIR="$MAGISK_MIRROR/system"
+# SYSTEMDIR="/system"
+# SYSTEMROOTDIR="/"
+# [ "$MAGISK_TMP" ] && SYSTEMROOTDIR="/system_root"
+
+# umount to make sure there are no magisk module mount on these folder
+
+( umount -l /system/etc
+umount -l /system/etc/*
+umount -l /system/addon.d
+umount -l /system/addon.d/*
+umount -l /system/etc/magisk
+umount -l /system/etc/init
+umount -l /system/etc/magisk/*
+umount -l /system/etc/init/* ) &
+
+# no need to use Magisk's mirror anymore
+
+SYSTEMDIR="/system"
 SYSTEMROOTDIR="/"
-[ "$MAGISK_TMP" ] && SYSTEMROOTDIR="$MAGISK_MIRROR/system_root"
 
 }
 
@@ -554,7 +577,7 @@ bb=/data/local/tmp/busybox
 TMPDIR="$CACHEDIR"
 [ "$USER_ID" == "0" ] && TMPDIR=/dev/tmp
 APKFILE="$JOBPWD/magisk.apk"
-MAGISKCORE="$MAGISK_MIRROR/system/etc/magisk"
+MAGISKCORE="/system/etc/magisk"
 
 
 abort(){
@@ -607,7 +630,7 @@ canary_v23001_magisk_link="https://github.com/topjohnwu/magisk-files/blob/4f737b
 stable_magisk_link="https://github.com/topjohnwu/Magisk/releases/download/v23.0/Magisk-v23.0.apk"
 canary_magisk_link="https://github.com/topjohnwu/magisk-files/blob/canary/app-debug.apk?raw=true"
 alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-release.apk?raw=true"
-
+lite_magisk_link="https://github.com/vvb2060/magisk_files/blob/master/app-release.apk?raw=true"
 
 
 clean_flash(){
@@ -650,6 +673,44 @@ mount -o ro,remount /"
 mnt_tmpfs \"$MAGISKTMP\""
      ;;
 esac
+
+LOAD_MODULES_POLICY="for module in \$(ls /data/adb/modules); do
+              if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
+                  TEXT_LOG=\"\$module: load sepolicy rules\"
+                  $MAGISKTMP/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
+                  write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
+              fi
+          done"
+
+unset LOG_MAGISK
+unset FORCE_MAGISKHIDE
+unset ADD_FORCE_MAGISKHIDE
+CDMAGISKUPDATE="[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary"
+
+if [ "$MINIMAL_MAGISK" == "true" ]; then
+LOG_MAGISK="
+true; write_log \"Minimal Magisk: Only MagiskSU and MagiskHide!\""
+LOAD_MODULES_POLICY=""
+ADD_FORCE_MAGISKHIDE="mkdir -p $MAGISKTMP/.magisk/modules
+mkdir -p /data/adb/modules_minimal/force_magiskhide
+mount --bind /data/adb/modules_minimal $MAGISKTMP/.magisk/modules
+echo \"id=force_magiskhide
+name=Force Enable MagiskHide
+version=v1.0
+versionCode=10000
+author=HuskyDG
+description=Always enable MagiskHide whenever MagiskHide cannot persist after restart\" >/data/adb/modules_minimal/force_magiskhide/module.prop"
+FORCE_MAGISKHIDE="rm -rf /data/adb/modules_minimal/force_magiskhide/remove
+if [ ! -f \"/data/adb/modules_minimal/force_magiskhide/disable\" ]; then 
+$MAGISKTMP/magisk magiskhide disable
+$MAGISKTMP/magisk magiskhide enable
+fi
+[ -f \"/data/adb/modules_minimal/hosts/remove\" ] && rm -rf /data/adb/modules_minimal/hosts
+rm -rf /data/adb/modules_minimal/hosts/update
+[ ! -f \"/data/adb/modules_minimal/hosts/disable\" ] && mount --bind $MAGISKTMP/.magisk/modules/hosts/system/etc/hosts /system/etc/hosts
+"
+unset CDMAGISKUPDATE
+fi
 
 
 overlay_loader="#!$MAGISKBASE/busybox sh
@@ -732,6 +793,7 @@ mnt_bind \"\$PAYDIR\" \"\$FOLDER\"
 #______________
 ) }
 
+true; write_log \"* Set up Magisk tmpfs directory\"
 
 # hide selinux permissive on emulator
 if [ \$(cat /sys/fs/selinux/enforce) == \"0\" ]; then
@@ -740,10 +802,15 @@ chmod 440 /sys/fs/selinux/policy
 fi
 
 # umount previous /sbin tmpfs overlay
+
+count=0
+
 until ! mount | grep -q \" /sbin \"; do
+[ "$count" -gt "10" ] && break
 umount -l /sbin 2>/dev/null
 write_log \"umount : /sbin\" \"umount /sbin failed with \$?\" 
 sleep 0.1
+count=$(($count+1))
 test ! -d /sbin && break
 done
 
@@ -754,16 +821,14 @@ chcon u:r:rootfs:s0 /sbin
 
 
 cd $MAGISKBASE
-[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary
+$CDMAGISKUPDATE
 MAGISKTMP=$MAGISKTMP
 MAGISKBIN=/data/adb/magisk
 TEXT_LOG=\"mkdir \$MAGISKBIN\"
 mkdir -p \$MAGISKBIN 2>/dev/null
 write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 for mdir in modules post-fs-data.d service.d; do
-TEXT_LOG=\"mkdir /data/adb/\$mdir\"
 mkdir /data/adb/\$mdir 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 done
 
 for file in magisk32 magisk64 magiskinit; do
@@ -823,12 +888,12 @@ write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\"
 mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
 touch \$MAGISKTMP/.magisk/config
-
+$ADD_FORCE_MAGISKHIDE
 
 cd \$MAGISKTMP
 # SELinux stuffs
 ln -sf ./magiskinit magiskpolicy
-TEXT_LOG=\"magiskpolicy: patch to allow magisk domain\"
+TEXT_LOG=\"magiskpolicy: patch selinux rules to allow magisk daemon\"
 if [ -f /vendor/etc/selinux/precompiled_sepolicy ]; then
   ./magiskpolicy --load /vendor/etc/selinux/precompiled_sepolicy --live --magisk 2>&1
 elif [ -f /sepolicy ]; then
@@ -836,7 +901,8 @@ elif [ -f /sepolicy ]; then
 else
   ./magiskpolicy --live --magisk 2>&1
 fi
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
+write_log \"\$TEXT_LOG\" \"magiskpolicy: patch selinux rules failed with \$?\" 
+$LOG_MAGISK
 
 touch /dev/.overlay_unblock
 $remount_rootfs
@@ -847,10 +913,30 @@ echo -n >/dev/.magisk_unblock
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
 
+( while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
+  do
+    sleep 1
+  done
+
+
+# hide magisk modify init.rc
+$MAGISKTMP/resetprop --delete init.svc.magisk_overlay
+$MAGISKTMP/resetprop --delete init.svc.magisk_postfsdata
+$MAGISKTMP/resetprop --delete init.svc.magisk_service
+$MAGISKTMP/resetprop --delete init.svc.magisk_daemon
+$MAGISKTMP/resetprop --delete init.svc.magisk_boot_complete
+$MAGISKTMP/resetprop --delete init.svc.magisk_loadpolicy
+echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
+cat /cache/magisk.log >>/data/local/tmp/magisk.log
+cat /data/local/tmp/magisk.log >/cache/magisk.log 
+$FORCE_MAGISKHIDE   ) &
+
 "
 
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
+
+MAIN_JOB=\$\$
 
 write_log(){
 ERR_CODE=\$?
@@ -867,76 +953,104 @@ echo \"\$(date +%m-%d\\ %T.%3N)   \$MAIN_JOB   \$CURRENT_JOB \$ERR_CHAR : \$TEXT
 
 
           restorecon -R /data/adb/magisk
-          for module in \$(ls /data/adb/modules); do
-              if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
-                  TEXT_LOG=\"\$module: load sepolicy rules\"
-                  $MAGISKTMP/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
-                  write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
-              fi
-          done
+          $LOAD_MODULES_POLICY
 
+"
 
-
-
-while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
-  do
-    sleep 1
-  done
-echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
-cat /cache/magisk.log >>/data/local/tmp/magisk.log
-cat /data/local/tmp/magisk.log >/cache/magisk.log
-
-$MAGISKTMP/resetprop --delete init.svc.magiskoverlay
-$MAGISKTMP/resetprop --delete init.svc.FAhW7H9G5sf
-$MAGISKTMP/resetprop --delete init.svc.HLiFsR1HtIXVN6
-$MAGISKTMP/resetprop --delete init.svc.YqCTLTppv3ML
-( sleep 1; $MAGISKTMP/resetprop --delete init.svc.IhhslLhHYfse ) &"
 
 magiskloader="
+
+         on early-init
+             export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin
+
 
           on post-fs-data
               start logd
               start adbd
               rm /dev/.overlay_unblock
               rm /dev/.magisk_unblock
-              start magiskoverlay
+              start magisk_overlay
               wait /dev/.overlay_unblock 10
               rm /dev/.overlay_unblock
               
-              
-              start IhhslLhHYfse
-              start FAhW7H9G5sf
+              start magisk_daemon
+              start magisk_loadpolicy
+              start magisk_postfsdata
               wait /dev/.magisk_unblock 40
               rm /dev/.magisk_unblock
 
-          service magiskoverlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
+          service magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
              user root
-             group root
+             group root 
+             seclabel u:r:su:s0
              oneshot
 
-          service IhhslLhHYfse $MAGISKBASE/busybox sh -o standalone /sbin/loadpolicy.sh
+          service magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-          service FAhW7H9G5sf $MAGISKTMP/magisk --post-fs-data
+          service magisk_postfsdata $MAGISKTMP/magisk --post-fs-data
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-          service HLiFsR1HtIXVN6 $MAGISKTMP/magisk --service
+          service magisk_service $MAGISKTMP/magisk --service
               class late_start
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-          on property:sys.boot_completed=1
-              start YqCTLTppv3ML
+         service magisk_daemon $MAGISKTMP/magisk --daemon
+              user root
+              seclabel u:r:magisk:s0
+              oneshot
 
-          service YqCTLTppv3ML $MAGISKTMP/magisk --boot-complete
+          on property:sys.boot_completed=1
+              start magisk_boot_complete
+
+          service magisk_boot_complete $MAGISKTMP/magisk --boot-complete
               user root
               seclabel u:r:magisk:s0
               oneshot"
+
+[ "$MINIMAL_MAGISK" == "true" ] && magiskloader="
+
+         on early-init
+             export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin
+
+
+          on post-fs-data
+              start logd
+              start adbd
+              
+          on property:sys.boot_completed=1
+          
+          rm /dev/.overlay_unblock
+          start magisk_overlay
+          wait /dev/.overlay_unblock 10
+          rm /dev/.overlay_unblock
+          start magisk_daemon
+          start magisk_loadpolicy
+
+          service magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
+             user root
+             group root
+             seclabel u:r:su:s0
+             oneshot
+
+          service magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
+              user root
+              seclabel u:r:magisk:s0
+              oneshot
+
+         service magisk_daemon $MAGISKTMP/magisk --daemon
+              user root
+              seclabel u:r:magisk:s0
+              oneshot
+
+
+"
 
 }
 
@@ -945,6 +1059,7 @@ extract_magisk_apk(){
 [ "$IS64BIT" == "true" ] && mkdir -p "$TMPDIR/magisk32"
 mkdir -p "$TMPDIR/magisk"
 mkdir -p "$TMPDIR/magisktool"
+ 
 
 
 $bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/libmagiskboot.so" -d "$TMPDIR/magisk" &>/dev/null
@@ -960,6 +1075,10 @@ fi
 rm -rf "$MAGISKCORE/.rw" 2>/dev/null
 touch "$MAGISKCORE/.rw" 2>/dev/null  || abortc light_red "$text_cannot_install_magisk"
 rm -rf "$MAGISKCORE/.rw" 2>/dev/null
+
+for file in magisk32 magisk64 magiskinit busybox; do
+rm -rf $MAGISKCORE/$file
+done
 
 ( cd "$TMPDIR/magisk"
 for file in lib*.so; do
@@ -1106,6 +1225,7 @@ mkdir "$TMPDIR/ramdisk/magisk"
 if [ -f "$TMPDIR/ramdisk/magisk/init.rc" ]; then
 # found init.rc backup!
 cat "$TMPDIR/ramdisk/magisk/init.rc" >"$TMPDIR/ramdisk/init.rc"
+echo "- $text_magisk_patched_ramdisk"
 echo "$magiskloader" >>"$TMPDIR/ramdisk/init.rc"
 else
 # no backup init
@@ -1233,8 +1353,8 @@ mkdir $SERVICED 2>/dev/null
 echo "- $text_install Magisk loader..."
 rm -rf $MAGISKCORE/overlay.sh
 echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
-rm -rf "$MAGISK_MIRROR/system/etc/init/magisk.rc"
-echo "$magiskloader" >"$MAGISK_MIRROR/system/etc/init/magisk.rc"
+rm -rf "/system/etc/init/magisk.rc"
+echo "$magiskloader" >"/system/etc/init/magisk.rc"
 rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
@@ -1268,17 +1388,17 @@ echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
 need_root_access
-[ ! -d "$MAGISK_MIRROR/system/etc/magisk" -o ! -d "/magisk" ] && abort "$text_uninstall_fail"
+[ ! -d "/system/etc/magisk" -o ! -d "/magisk" ] && abort "$text_uninstall_fail"
 echo "- $text_mount_rw_system"
 mount_rw_system
 $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 echo "- Remove Magisk..."
 for fun in /system/etc/magisk /system/etc/init/magisk.rc; do
-rm -rf "$MAGISK_MIRROR/$fun"
+rm -rf "/$fun"
 done
 ADDOND=/system/addon.d/99-magisk.sh
 if [ -f $ADDOND ]; then
-  rm -f "$MAGISK_MIRROR/$ADDOND"
+  rm -f "/$ADDOND"
 fi
 echo "- $text_mount_ro_system"
 mount_ro_system
@@ -1352,14 +1472,17 @@ RAMDISK="$VAR_RAMDISK"
 if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
 mount_disk
 ( patch_ramdisk "$RAMDISK" "true" )
+umount_disk
 ERR_CODE=$?
 if [ "$ERR_CODE" == "1" ]; then
 table_list
 patch_ramdisk "$RAMDISK" "true"
+umount_disk
 fi
 else
 table_list
 patch_ramdisk "$RAMDISK" "true"
+umount_disk
 fi
 }
 
@@ -1371,13 +1494,16 @@ if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
 mount_disk
 ( unpatch_ramdisk "$RAMDISK" "true" )
 ERR_CODE=$?
+umount_disk
 if [ "$ERR_CODE" == "1" ]; then
 table_list
 unpatch_ramdisk "$RAMDISK" "true"
+umount_disk
 fi
 else
 table_list
 unpatch_ramdisk "$RAMDISK" "true"
+umount_disk
 fi
 }
 
@@ -1411,6 +1537,7 @@ print_menu_install
 read build
 install_magisk=true
 install_offline=false
+MINIMAL_MAGISK=false
 APKFILE="$DLPATH/magisk.apk"
 case $build in
 1)
@@ -1428,6 +1555,11 @@ case $build in
 4)
     build_name="Stable"
     URL="$stable_magisk_link"
+    ;;
+5)
+    build_name="Stable (Minimal)"
+    URL="$stable_magisk_link"
+    MINIMAL_MAGISK=true
     ;;
 "a")
    build_name="Alpha"
@@ -1509,10 +1641,16 @@ rm -rf /dev/os_disk
 mkdir /dev/os_disk
 echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
 mount -o ro "$VAR_OSROOT" "/dev/os_disk"
+mount -t ext4 "$VAR_OSROOT" "/dev/os_disk"
 mount -o rw,remount "/dev/os_disk" && IS_MOUNT=true
 mount.ntfs "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
+$IS_MOUNT || echo -e "${BRED}$text_cannot_mount_part${RC}" 
 }
 
+umount_disk(){
+echo -ne "Unmount ${BPURPLE}/dev/os_disk${RC}... "
+umount -l /dev/os_disk && echo -e "${BGREEN}SUCCESS!${RC}" || echo -e "${BRED}FAILED!${RC}" 
+}
 
 table_blockdev(){
 echo " ------- Partition Table -------"
