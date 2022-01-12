@@ -389,11 +389,9 @@ mount_rw_system(){
 IS_SYSTEM_MOUNT=false
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
-mount -o rw,remount "$SYSTEMDIR" && IS_SYSTEM_MOUNT=true
+mount -o rw,remount "/system" && IS_SYSTEM_MOUNT=true
 else
 # system-as-root, mount "/"
-mount -o rw,remount "$SYSTEMROOTDIR" && IS_SYSTEM_MOUNT=true
-mount -o rw,remount "$SYSTEMDIR" && IS_SYSTEM_MOUNT=true
 mount -o rw,remount "/" && IS_SYSTEM_MOUNT=true
 fi
 }
@@ -402,11 +400,9 @@ mount_ro_system(){
 IS_SYSTEM_MOUNT=false
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
-mount -o ro,remount "$SYSTEMDIR" && IS_SYSTEM_MOUNT=true
+mount -o ro,remount "/system" && IS_SYSTEM_MOUNT=true
 else
 # system-as-root, mount "/"
-mount -o ro,remount "$SYSTEMROOTDIR" && IS_SYSTEM_MOUNT=true
-mount -o ro,remount "$SYSTEMDIR" && IS_SYSTEM_MOUNT=true
 mount -o ro,remount "/" && IS_SYSTEM_MOUNT=true
 fi
 }
@@ -986,12 +982,12 @@ cat /data/local/tmp/magisk.log >/cache/magisk.log
 $FORCE_MAGISKHIDE
 # hide magisk modify init.rc
 sleep 3
-$MAGISKTMP/resetprop --delete init.svc.$magisk_overlay
 $MAGISKTMP/resetprop --delete init.svc.$magisk_postfsdata
 $MAGISKTMP/resetprop --delete init.svc.$magisk_service
 $MAGISKTMP/resetprop --delete init.svc.$magisk_daemon
 $MAGISKTMP/resetprop --delete init.svc.$magisk_boot_complete
-$MAGISKTMP/resetprop --delete init.svc.$magisk_loadpolicy ) &
+$MAGISKTMP/resetprop --delete init.svc.$magisk_loadpolicy
+$MAGISKTMP/resetprop --delete init.svc.$magisk_overlay ) &
 
 "
 
@@ -1466,7 +1462,7 @@ echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
 need_root_access
-[ ! -d "/system/etc/magisk" -o ! -d "/magisk" ] && abort "$text_uninstall_fail"
+[ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && abort "$text_uninstall_fail"
 echo "- $text_mount_rw_system"
 mount_rw_system
 $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
@@ -2027,7 +2023,6 @@ if [ "$AGV1" != "noexec" ]; then
             "uninstall")
             uninstall_option
             ;;
-            
             *)
             open_main
             ;;
