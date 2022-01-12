@@ -64,6 +64,8 @@ Available option:
  uninstall                     Uninstall Magisk and its modules"
 }
 
+ui_print(){ echo -e "$1"; }
+
 
 text_press_enter_menu="PRESS ENTER TO BACK TO MENU"
 text_cannot_mm="Cannot install or this app is adready installed"
@@ -107,7 +109,8 @@ text_added_bs_module="Added Bluestacks Fix Magisk modules"
 text_magisk_patched_ramdisk="Magisk patched ramdisk image detected"
 text_saved_ramdisk_info="Saved ramdisk information to" 
 text_unsupport_ramdisk_format="Unsupported ramdisk format"
-
+text_tell_remove_rusty_magisk="You may have rust-magisk installed, please remove it if present!!!"
+text_magisk_tmpfs_directory="Magisk tmpfs path"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -168,6 +171,8 @@ echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
 echo "  4 - Fix Bluestacks cannot load modules"
 pd gray "      Fix the incorrect Bluestacks system that breaks Magisk modules"
+echo "  5 - Remove all other root methods"
+pd gray "      Only use if you cannot find Disable root option"
 echo "----------"
 echo " 0 - Exit menu"
 p none "[CHOICE]: "
@@ -182,7 +187,7 @@ echo "  1 - Install Magisk into \"/system\""
 pd gray "      The system partition must be mounted as read-write"
 pd gray "      Recommended for Android Emulator (NoxPlayer, MEmu, ...)"
 echo "  2 - Install Magisk into ramdisk image (systemless)"
-pd gray "      Use this option if you have ramdisk.img"
+pd gray "      Use this option if you can find ramdisk.img"
 pd gray "      Recommended for Android x86 project (BlissOS)"
 pd gray "      Only compatible with legacy rootfs (Android 9 and below)"
 echo "  3 - Update binary file into \"/data\""
@@ -265,6 +270,9 @@ text_added_bs_module="Đã thêm Magisk mô-đun Bluestacks Fix"
 text_magisk_patched_ramdisk="Đã phát hiện ramdisk đã vá với Magisk "
 text_saved_ramdisk_info="Đã lưu thông tin ramdisk vào"
 text_unsupport_ramdisk_format="Định dạng ramdisk không được hỗ trợ"
+text_tell_remove_rusty_magisk="Bạn có thể đã cài rusty-magisk, vui lòng hãy gỡ nó nếu có!!!"
+text_magisk_tmpfs_directory="Đường dẫn Magisk tmpfs"
+
 
 
 print_ramdisk_method(){
@@ -307,6 +315,8 @@ echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
 echo "  4 - Sửa Bluestacks không thể tải các mô-đun"
 pd gray "      Sửa hệ thống Bluestacks lỗi gây hỏng mô-đun Magisk"
+echo "  5 - Loại bỏ các phương pháp ROOT khác"
+pd gray "      Chỉ sử dụng khi bạn không tìm thấy tùy chọn để tắt Root"
 echo "----------"
 echo " 0 - Thoát khỏi menu"
 p none "[CHỌN]: "
@@ -348,7 +358,7 @@ echo "  1 - Cài đặt Magisk vào \"/system\""
 pd gray "      Phân vùng hệ thống có thể gắn kết đọc ghi"
 pd gray "      Khuyên dùng cho các giả lập Android (NoxPlayer, MEmu, ...)"
 echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
-pd gray "      Sử dụng tùy chọn này nếu bạn có Ramdisk"
+pd gray "      Sử dụng tùy chọn này nếu bạn tìm thấy Ramdisk"
 pd gray "      Khuyên dùng cho Android x86 project (BlissOS)"
 pd gray "      Chỉ tương thích với legacy rootfs (Android 9 trở xuống)"
 echo "  3 - Cập nhật nhị phân vào trong \"/data\""
@@ -577,7 +587,7 @@ SYSTEMROOTDIR="/"
 
 }
 
-[ "$USER_ID" == "0" ] && get_magisk_path
+
 
 # This script is write by HuskyDG
 ARG1="$1"
@@ -631,6 +641,8 @@ fi
 
 [ "$USER_ID" == "0" ] && unshare_environment 2>/dev/null
 
+[ "$USER_ID" == "0" ] && get_magisk_path
+
 ISENCRYPTED=false
   grep ' /data ' /proc/mounts | grep -q 'dm-' && ISENCRYPTED=true
   [ "$(getprop ro.crypto.state)" = "encrypted" ] && ISENCRYPTED=true
@@ -683,6 +695,8 @@ magisk_loader(){
 MAGISKTMP_TYPE="$1"
 test -z "$MAGISKTMP_TYPE" && MAGISKTMP_TYPE=1
 MAGISKTMP=/sbin
+
+[ "$MAGISK_IN_DEV" == "1" -o "$MAGISK_IN_DEV" == "true" ] && MAGISKTMP_TYPE=3
 
 magisk_overlay=`random_str`
 magisk_postfsdata=`random_str`
@@ -966,18 +980,18 @@ echo -n >/dev/.magisk_unblock
     sleep 1
   done
 
-
+echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
+cat /cache/magisk.log >>/data/local/tmp/magisk.log
+cat /data/local/tmp/magisk.log >/cache/magisk.log 
+$FORCE_MAGISKHIDE
 # hide magisk modify init.rc
+sleep 3
 $MAGISKTMP/resetprop --delete init.svc.$magisk_overlay
 $MAGISKTMP/resetprop --delete init.svc.$magisk_postfsdata
 $MAGISKTMP/resetprop --delete init.svc.$magisk_service
 $MAGISKTMP/resetprop --delete init.svc.$magisk_daemon
 $MAGISKTMP/resetprop --delete init.svc.$magisk_boot_complete
-$MAGISKTMP/resetprop --delete init.svc.$magisk_loadpolicy
-echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
-cat /cache/magisk.log >>/data/local/tmp/magisk.log
-cat /data/local/tmp/magisk.log >/cache/magisk.log 
-$FORCE_MAGISKHIDE   ) &
+$MAGISKTMP/resetprop --delete init.svc.$magisk_loadpolicy ) &
 
 "
 
@@ -1245,6 +1259,7 @@ mkdir -p "$TMPDIR/ramdisk"
 ( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abort "! $text_unpack_ramdisk_fail"
 echo "- $text_patch_ramdisk"
 # ramdisk was unpack to $TMPDIR/ramdisk
+[ -d "$TMPDIR/ramdisk/sbin" ] || magisk_loader 3
 
 if file "$TMPDIR/ramdisk/init" | grep "x86" | grep -q "32-bit"; then
     ARCH=x86
@@ -1267,6 +1282,7 @@ if file "$TMPDIR/ramdisk/init" | grep "x86" | grep -q "32-bit"; then
     ABI32=armeabi-v7a
     IS64BIT=false
   fi
+echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
 echo "- ARCH: $ARCH, 64-bit: $IS64BIT"
 
 mkdir "$TMPDIR/ramdisk/magisk"
@@ -1337,6 +1353,7 @@ chmod -R 750 /data/.magisk_binary
 
 
 
+
 install_magisk(){
 value1="$1"
 
@@ -1364,9 +1381,22 @@ MAGISKCORE="/magisk"
 magisk_loader 3
 fi
 
+if [ -e "/init" ] && [ -e "/init.real" ]; then
+pd light_red "$text_tell_remove_rusty_magisk"
+sleep 1
+# /dev mode to not conflit with rusty-Magisk
+magisk_loader 3
+fi
+echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
+
 echo "- $text_mount_rw_system"
 mount_rw_system
 $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
+
+umount -l /system/bin
+umount -l /system/bin/*
+test ! -f /system/bin/._orig_su && rm -rf /system/bin/._orig_su
+mv -f /system/bin/su /system/bin/._orig_su
 
 echo "- $text_setup"
 rm -rf "$MAGISKCORE"
@@ -1463,6 +1493,102 @@ cd /
 (sleep 8; /system/bin/reboot)&
 echo "- $text_done"
 
+}
+
+
+unsu(){
+clear
+ui_print " ";
+echo "******************************"
+ui_print "unSU Script";
+ui_print "by osm0sis @ xda-developers"; #keep credit
+echo "******************************"
+echo "- $text_mount_rw_system"
+mount_rw_system
+$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
+
+mount --bind /system /system
+
+
+if [ -e /data/su ]; then
+  ui_print "Removing phh's SuperUser...";
+  rm -rf /data/app/me.phh.superuser* /data/data/me.phh.superuser* /data/su;
+  bootmsg=1;
+fi;
+
+
+if [ -e /cache/su.img -o -e /data/su.img ]; then
+  ui_print "Removing SuperSU Systemless (su.img)...";
+  umount /su;
+  rm -rf /cache/su.img /data/su.img /data/adb/suhide;
+  bootmsg=1;
+  supersu=1;
+fi;
+
+bindsbin=$(dirname `find /data -name supersu_is_here | head -n1`);
+if [ -e "$bindsbin" ]; then
+  ui_print "Removing SuperSU Systemless (BINDSBIN at $bindsbin)...";
+  rm -rf $bindsbin /data/app/eu.chainfire.suhide* /data/user*/*/eu.chainfire.suhide*;
+  bootmsg=1;
+  supersu=1;
+fi;
+
+if [ -e /system/bin/.ext/.su ]; then
+  ui_print "Removing SuperSU...";
+  mount -o rw,remount /system;
+
+  rm -rf /system/.pin /system/.supersu \
+         /system/app/Superuser.apk /system/app/SuperSU \
+         /system/bin/.ext /system/bin/app_process_init \
+         /system/etc/.installed_su_daemon /system/etc/install-recovery.sh /system/etc/init.d/99SuperSUDaemon \
+         /system/lib/libsupol.so /system/lib64/libsupol.so /system/su.d \
+         /system/xbin/daemonsu /system/xbin/su /system/xbin/sugote /system/xbin/sugote-mksh /system/xbin/supolicy;
+
+  mv -f /system/bin/app_process32_original /system/bin/app_process32;
+  mv -f /system/bin/app_process64_original /system/bin/app_process64;
+  mv -f /system/bin/install-recovery_original.sh /system/bin/install-recovery.sh;
+
+  cd /system/bin;
+  if [ -e app_process64 ]; then
+    ln -sf app_process64 app_process;
+  elif [ -e app_process32 ]; then
+    ln -sf app_process32 app_process;
+  fi;
+  supersu=1;
+fi;
+
+if [ "$supersu" ]; then
+  rm -rf /cache/.supersu /cache/SuperSU.apk \
+         /data/.supersu /data/SuperSU.apk \
+         /data/app/eu.chainfire.supersu* /data/user*/*/eu.chainfire.supersu*;
+fi;
+
+if [ -e /system/bin/su -a "$(strings /system/xbin/su | grep koush)" ]; then
+  ui_print "Removing Koush's SuperUser...";
+  mount -o rw,remount /system;
+
+  rm -rf /system/app/Superuser.apk /system/bin/su \
+         /system/etc/.has_su_daemon /system/etc/.installed_su_daemon /system/xbin/su \
+         /cache/su /cache/Superuser.apk /cache/install-recovery-sh \
+         /data/app/com.koushikdutta.superuser* /data/user*/*/com.koushikdutta.superuser*;
+fi;
+
+if [ -e /system/addon.d/51-addonsu.sh ]; then
+  ui_print "Removing LineageOS addonsu...";
+  mount -o rw,remount /system;
+  rm -rf /system/addon.d/51-addonsu.sh /system/bin/su \
+         /system/etc/init/superuser.rc /system/xbin/su;
+fi;
+
+if [ -e /system/bin/su -o -e /system/xbin/su ]; then
+  ui_print "Removing ROM su binary...";
+  mount -o rw,remount /system;
+  rm -rf /system/bin/su /system/xbin/su;
+fi;
+
+umount -l /system
+echo "- $text_mount_ro_system"
+mount_ro_system
 }
 
 install_option_process(){
@@ -1825,6 +1951,9 @@ case $option in
     ;;
 4)
     (need_root_access; bluestacks_fix)
+    ;;
+5)
+    (need_root_access; unsu)
     ;;
 0)
     exit 0
