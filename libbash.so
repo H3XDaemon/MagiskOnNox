@@ -16,6 +16,7 @@ RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;3
 
 test -z "$USER_ID" && USER_ID="$(id -u)"
 
+OVERLAYVER=10026
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
@@ -104,6 +105,9 @@ text_run_with_root="Run script with root access"
 text_cannot_install_magisk="Unable to install Magisk!"
 text_added_bs_module="Added Bluestacks Fix Magisk modules"
 text_magisk_patched_ramdisk="Magisk patched ramdisk image detected"
+text_saved_ramdisk_info="Saved ramdisk information to" 
+text_unsupport_ramdisk_format="Unsupported ramdisk format"
+
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -181,8 +185,9 @@ echo "  2 - Install Magisk into ramdisk image (systemless)"
 pd gray "      Use this option if you have ramdisk.img"
 pd gray "      Recommended for Android x86 project (BlissOS)"
 pd gray "      Only compatible with legacy rootfs (Android 9 and below)"
-echo "  3 - Update binary (must have Magisk)"
+echo "  3 - Update binary file into \"/data\""
 pd gray "     Update Magisk without having to modify system/ramdisk again"
+pd gray "     Magisk must be installed by this script"
 pd light_red "* Remove rusty-magisk if you have it installed"
 p none "[CHOICE]: "
 
@@ -258,6 +263,8 @@ text_run_with_root="Chạy script với quyền root"
 text_cannot_install_magisk="Không thể cài đặt Magisk!"
 text_added_bs_module="Đã thêm Magisk mô-đun Bluestacks Fix"
 text_magisk_patched_ramdisk="Đã phát hiện ramdisk đã vá với Magisk "
+text_saved_ramdisk_info="Đã lưu thông tin ramdisk vào"
+text_unsupport_ramdisk_format="Định dạng ramdisk không được hỗ trợ"
 
 
 print_ramdisk_method(){
@@ -344,8 +351,9 @@ echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
 pd gray "      Sử dụng tùy chọn này nếu bạn có Ramdisk"
 pd gray "      Khuyên dùng cho Android x86 project (BlissOS)"
 pd gray "      Chỉ tương thích với legacy rootfs (Android 9 trở xuống)"
-echo "  3 - Cập nhật nhị phân (phải có Magisk)"
+echo "  3 - Cập nhật nhị phân vào trong \"/data\""
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
+pd gray "      Magisk phải được cài đặt bởi script này"
 pd light_red "* Gỡ rusty-magisk nếu bạn đã cài đặt nó"
 p none "[CHỌN]: "
 
@@ -517,7 +525,7 @@ DISKINFO="/data/adb/diskinfo"
 if [ "$AGV1" == "option" ] && [ "$AGV2" == "help" ]; then
 help; exit
 fi
-
+open_main(){
 if [ "$USER_ID" != "0" ]; then
     p none "$text_run_with_root ? <Y/n> "
     read ROOT
@@ -535,7 +543,8 @@ if [ "$USER_ID" != "0" ]; then
         exit
     fi
 fi
-
+while true; do main; done
+}
 
 fi
 
@@ -643,11 +652,45 @@ p yellow "$text_press_enter_menu"
 read
 }
 
+random(){
+VALUE=$1; TYPE=$2; PICK="$3"; PICKC="$4"
+TMPR=""
+HEX="0123456789abcdef"; HEXC=16
+CHAR="qwertyuiopasdfghjklzxcvbnm"; CHARC=26
+NUM="0123456789"; NUMC=10
+COUNT=$(seq 1 1 $VALUE)
+list_pick=$HEX; C=$HEXC
+[ "$TYPE" == "char" ] &&  list_pick=$CHAR && C=$CHARC 
+[ "$TYPE" == "number" ] && list_pick=$NUM && C=$NUMC 
+[ "$TYPE" == "custom" ] && list_pick="$PICK" && C=$PICKC 
+      for i in $COUNT; do
+          random_pick=$(( $RANDOM % $C))
+          echo -n ${list_pick:$random_pick:1}
+      done
+
+}
+
+random_str(){
+random_length=$(random 1 custom 23456789 8);
+random $random_length custom "qwertyuiopasdfghjklzxcvbnm0123456789QWERTYUIOPASDFGHJKLZXCVBNM" 63 | base64 | sed "s/=//g"
+}
+
+
+
+
 magisk_loader(){
 
 MAGISKTMP_TYPE="$1"
 test -z "$MAGISKTMP_TYPE" && MAGISKTMP_TYPE=1
 MAGISKTMP=/sbin
+
+magisk_overlay=`random_str`
+magisk_postfsdata=`random_str`
+magisk_service=`random_str`
+magisk_daemon=`random_str`
+magisk_boot_complete=`random_str`
+magisk_loadpolicy=`random_str`
+dev_random=`random_str`
 
 case "$MAGISKTMP_TYPE" in
 1)
@@ -668,7 +711,7 @@ mount -o ro,remount /"
      ;;
 3)
      #system-as-root, /sbin is removal
-     MAGISKTMP="/dev/android-x86-magisk"
+     MAGISKTMP="/dev/$dev_random"
      mount_sbin="mkdir -p \"$MAGISKTMP\"
 mnt_tmpfs \"$MAGISKTMP\""
      ;;
@@ -685,7 +728,8 @@ LOAD_MODULES_POLICY="for module in \$(ls /data/adb/modules); do
 unset LOG_MAGISK
 unset FORCE_MAGISKHIDE
 unset ADD_FORCE_MAGISKHIDE
-CDMAGISKUPDATE="[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary"
+CDMAGISKUPDATE="[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary
+chcon u:object_r:app_data_file:s0 /data/.magisk_binary"
 
 if [ "$MINIMAL_MAGISK" == "true" ]; then
 LOG_MAGISK="
@@ -721,7 +765,7 @@ MAIN_JOB=\$\$
 rm -rf /data/local/tmp/magisk.log.bak
 mv -f /data/local/tmp/magisk.log /data/local/tmp/magisk.log.bak
 
-echo \"--------- beginning of overlay \" >/data/local/tmp/magisk.log
+echo \"--------- beginning of overlay $OVERLAYVER \" >/data/local/tmp/magisk.log
 
 chmod 664 /data/local/tmp/magisk.log
 
@@ -819,6 +863,7 @@ $mount_sbin
 
 chcon u:r:rootfs:s0 /sbin
 
+[ -f \"/data/.magisk_binary/remove\" ] && rm -rf \"/data/.magisk_binary\"
 
 cd $MAGISKBASE
 $CDMAGISKUPDATE
@@ -905,6 +950,9 @@ write_log \"\$TEXT_LOG\" \"magiskpolicy: patch selinux rules failed with \$?\"
 $LOG_MAGISK
 
 touch /dev/.overlay_unblock
+UID_MYAPP=\$(ls -ld \"$priv_dir\" | awk '{ print \$3 }') || UID_MYAPP=root
+chown \$UID_MYAPP:\$UID_MYAPP /data/.magisk_binary
+
 $remount_rootfs
 sleep 3
 exit_magisk(){
@@ -920,12 +968,12 @@ echo -n >/dev/.magisk_unblock
 
 
 # hide magisk modify init.rc
-$MAGISKTMP/resetprop --delete init.svc.magisk_overlay
-$MAGISKTMP/resetprop --delete init.svc.magisk_postfsdata
-$MAGISKTMP/resetprop --delete init.svc.magisk_service
-$MAGISKTMP/resetprop --delete init.svc.magisk_daemon
-$MAGISKTMP/resetprop --delete init.svc.magisk_boot_complete
-$MAGISKTMP/resetprop --delete init.svc.magisk_loadpolicy
+$MAGISKTMP/resetprop --delete init.svc.$magisk_overlay
+$MAGISKTMP/resetprop --delete init.svc.$magisk_postfsdata
+$MAGISKTMP/resetprop --delete init.svc.$magisk_service
+$MAGISKTMP/resetprop --delete init.svc.$magisk_daemon
+$MAGISKTMP/resetprop --delete init.svc.$magisk_boot_complete
+$MAGISKTMP/resetprop --delete init.svc.$magisk_loadpolicy
 echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
 cat /cache/magisk.log >>/data/local/tmp/magisk.log
 cat /data/local/tmp/magisk.log >/cache/magisk.log 
@@ -969,39 +1017,39 @@ magiskloader="
               start adbd
               rm /dev/.overlay_unblock
               rm /dev/.magisk_unblock
-              start magisk_overlay
+              start $magisk_overlay
               wait /dev/.overlay_unblock 10
               rm /dev/.overlay_unblock
               
-              start magisk_daemon
-              start magisk_loadpolicy
-              start magisk_postfsdata
+              start $magisk_daemon
+              start $magisk_loadpolicy
+              start $magisk_postfsdata
               wait /dev/.magisk_unblock 40
               rm /dev/.magisk_unblock
 
-          service magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
+          service $magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
              user root
              group root 
              seclabel u:r:su:s0
              oneshot
 
-          service magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
+          service $magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-          service magisk_postfsdata $MAGISKTMP/magisk --post-fs-data
+          service $magisk_postfsdata $MAGISKTMP/magisk --post-fs-data
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-          service magisk_service $MAGISKTMP/magisk --service
+          service $magisk_service $MAGISKTMP/magisk --service
               class late_start
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-         service magisk_daemon $MAGISKTMP/magisk --daemon
+         service $magisk_daemon $MAGISKTMP/magisk --daemon
               user root
               seclabel u:r:magisk:s0
               oneshot
@@ -1009,7 +1057,7 @@ magiskloader="
           on property:sys.boot_completed=1
               start magisk_boot_complete
 
-          service magisk_boot_complete $MAGISKTMP/magisk --boot-complete
+          service $magisk_boot_complete $MAGISKTMP/magisk --boot-complete
               user root
               seclabel u:r:magisk:s0
               oneshot"
@@ -1027,24 +1075,24 @@ magiskloader="
           on property:sys.boot_completed=1
           
           rm /dev/.overlay_unblock
-          start magisk_overlay
+          start $magisk_overlay
           wait /dev/.overlay_unblock 10
           rm /dev/.overlay_unblock
-          start magisk_daemon
-          start magisk_loadpolicy
+          start $magisk_daemon
+          start $magisk_loadpolicy
 
-          service magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
+          service $magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
              user root
              group root
              seclabel u:r:su:s0
              oneshot
 
-          service magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
+          service $magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
               user root
               seclabel u:r:magisk:s0
               oneshot
 
-         service magisk_daemon $MAGISKTMP/magisk --daemon
+         service $magisk_daemon $MAGISKTMP/magisk --daemon
               user root
               seclabel u:r:magisk:s0
               oneshot
@@ -1690,12 +1738,15 @@ table_ramdisk(){
         exit
     elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
 			echo -e "${RED}! $text_wrong_input ...${RC}"
-    else
+    elif file "$VAR_RAMDISK" | grep -q " gzip "; then
         echo -e "- Target ramdisk: ${BGREEN}${VAR_RAMDISK}${RC}"
         test -f $DISKINFO/ramdisk || rm -rf $DISKINFO/ramdisk
         echo -n "$VAR_RAMDISK" >$DISKINFO/ramdisk
         RAMDISK="$VAR_RAMDISK"
+        echo "- $text_saved_ramdisk_info ${BGREEN}/data/adb/diskinfo${RC}"
         break
+    else
+        echo "${RED}! $text_unsupport_ramdisk_format${RC}"
     fi
     done
 }
@@ -1849,11 +1900,11 @@ if [ "$AGV1" != "noexec" ]; then
             ;;
             
             *)
-            while true; do main; done
+            open_main
             ;;
             
         esac
     else
-        while true; do main; done
+        open_main
     fi
 fi; true
