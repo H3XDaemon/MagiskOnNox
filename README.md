@@ -20,7 +20,7 @@ Integrate Magisk root into Nox Player and other Android x86, emulators
 Note: Some features might not work on some emulator, Please read [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) to know which Magisk features doesn't work.
 
 ## Requirements
-- Android x86 project: BlissOS 11 - Android 9, BlissOS 14 - Android 11
+- Android x86 project: BlissOS 11 - Android 9, BlissOS 14 - Android 11, PrimeOS Android 11, ...
 - Phoenix OS is not supported yet
 - Android Emulator (NoxPlayer, LDPlayer, ...): [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
 - Android version: 7.1 ~ 11
