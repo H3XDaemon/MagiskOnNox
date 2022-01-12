@@ -105,6 +105,7 @@ text_uninstall_magisk_in="Uninstall Magisk in"
 text_choice=CHOICE
 text_run_with_root="Run script with root access"
 text_cannot_install_magisk="Unable to install Magisk!"
+text_cannot_uninstall_magisk="Unable to uninstall Magisk!"
 text_added_bs_module="Added Bluestacks Fix Magisk modules"
 text_magisk_patched_ramdisk="Magisk patched ramdisk image detected"
 text_saved_ramdisk_info="Saved ramdisk information to" 
@@ -266,6 +267,7 @@ text_uninstall_magisk_in="Gỡ cài đặt Magisk trong"
 text_choice="CHỌN"
 text_run_with_root="Chạy script với quyền root"
 text_cannot_install_magisk="Không thể cài đặt Magisk!"
+text_cannot_uninstall_magisk="Không thể gỡ cài đặt Magisk!"
 text_added_bs_module="Đã thêm Magisk mô-đun Bluestacks Fix"
 text_magisk_patched_ramdisk="Đã phát hiện ramdisk đã vá với Magisk "
 text_saved_ramdisk_info="Đã lưu thông tin ramdisk vào"
@@ -1462,7 +1464,17 @@ echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
 need_root_access
+
 [ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && abort "$text_uninstall_fail"
+
+MAGISKCOREDIR=/magisk
+[ ! -d "/magisk" ] && MAGISKCOREDIR=/system/etc/magisk
+
+rm -rf "$MAGISKCOREDIR/.rw" 2>/dev/null
+touch "$MAGISKCOREDIR/.rw" 2>/dev/null  || abortc light_red "$text_cannot_uninstall_magisk"
+rm -rf "$MAGISKCOREDIR/.rw" 2>/dev/null
+
+
 echo "- $text_mount_rw_system"
 mount_rw_system
 $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
