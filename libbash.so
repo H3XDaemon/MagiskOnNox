@@ -1055,7 +1055,7 @@ magiskloader="
               oneshot
 
           on property:sys.boot_completed=1
-              start magisk_boot_complete
+              start $magisk_boot_complete
 
           service $magisk_boot_complete $MAGISKTMP/magisk --boot-complete
               user root
