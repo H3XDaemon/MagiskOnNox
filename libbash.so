@@ -1122,12 +1122,12 @@ mkdir -p "$TMPDIR/magisktool"
  
 
 
-$bb unzip -oj "$APKFILE" "lib/$ABI/*" -x "lib/$ABI/libmagiskboot.so" -d "$TMPDIR/magisk" &>/dev/null
+$bb unzip -oj "$APKFILE" "lib/$ABI/*" -d "$TMPDIR/magisk" &>/dev/null
 chmod -R 777 "$TMPDIR/magisk"
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
 
 if [ "$IS64BIT" == "true" ]; then
-$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -x "lib/$ABI32/libmagiskboot.so" -d "$TMPDIR/magisk32" &>/dev/null
+$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -d "$TMPDIR/magisk32" &>/dev/null
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
 chmod -R 777 "$TMPDIR/magisk32"
 fi
