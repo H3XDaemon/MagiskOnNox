@@ -900,6 +900,7 @@ done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
 cp -af ./loadpolicy.sh \$MAGISKTMP
+cp -af ./assets/* \$MAGISKBIN
 
 API=\$(getprop ro.build.version.sdk)
   ABI=\$(getprop ro.product.cpu.abi)
@@ -1167,6 +1168,8 @@ fi
 
 )
 
+mkdir -p "$MAGISKCORE/assets"
+$bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d "$MAGISKCORE/assets" &>/dev/null
 
 }
 
