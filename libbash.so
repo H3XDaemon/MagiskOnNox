@@ -16,7 +16,7 @@ RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;3
 
 test -z "$USER_ID" && USER_ID="$(id -u)"
 
-OVERLAYVER=10026
+OVERLAYVER=10029
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
