@@ -16,7 +16,7 @@ RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;3
 
 test -z "$USER_ID" && USER_ID="$(id -u)"
 
-OVERLAYVER=10029
+OVERLAYVER=10030
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
@@ -1663,11 +1663,18 @@ VAR_OSROOT="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
 RAMDISK="$VAR_RAMDISK"
 if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
+( echo -n "${text_use_current_ramdisk_info}? <Y/n> "
+read opt
+if [ "$opt" == "Y" -o "$opt" == "y" ]; then
 mount_disk
 ( patch_ramdisk "$RAMDISK" "true" )
-umount_disk
 ERR_CODE=$?
-if [ "$ERR_CODE" == "1" ]; then
+umount_disk
+exit $ERR_CODE 
+else
+exit 1
+fi )
+if [ "$?" == "1" ]; then
 table_list
 patch_ramdisk "$RAMDISK" "true"
 umount_disk
@@ -1684,11 +1691,18 @@ VAR_OSROOT="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
 RAMDISK="$VAR_RAMDISK"
 if [ "$VAR_OSROOT" ] && [ "$VAR_RAMDISK" ]; then
+( echo -n "${text_use_current_ramdisk_info}? <Y/n> "
+read opt
+if [ "$opt" == "Y" -o "$opt" == "y" ]; then
 mount_disk
 ( unpatch_ramdisk "$RAMDISK" "true" )
 ERR_CODE=$?
 umount_disk
-if [ "$ERR_CODE" == "1" ]; then
+exit $ERR_CODE
+else
+exit 1
+fi )
+if [ "$?" == "1" ]; then
 table_list
 unpatch_ramdisk "$RAMDISK" "true"
 umount_disk
@@ -1929,12 +1943,6 @@ RESET_DISKINFO="$1"
 mkdir -p "$DISKINFO"
 BLOCKDEV="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
-echo -n "${text_use_current_ramdisk_info}? <Y/n> "
-read opt
-if [ "$opt" != "Y" -o "$opt" != "y" ]; then
-unset BLOCKDEV
-unset VAR_RAMDISK
-fi
 if [ -z "$BLOCKDEV" ]; then
     table_blockdev
 else
