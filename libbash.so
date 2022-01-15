@@ -65,6 +65,10 @@ Available option:
 }
 
 ui_print(){ echo -e "$1"; }
+cre(){
+echo -ne "${GRAY}@$1${RC}"
+}
+
 
 
 text_press_enter_menu="PRESS ENTER TO BACK TO MENU"
@@ -112,6 +116,7 @@ text_saved_ramdisk_info="Saved ramdisk information to"
 text_unsupport_ramdisk_format="Unsupported ramdisk format"
 text_tell_remove_rusty_magisk="You may have rust-magisk installed, please remove it if present!!!"
 text_magisk_tmpfs_directory="Magisk tmpfs path"
+text_use_current_ramdisk_info="Do you want to use the current ramdisk information"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -135,6 +140,12 @@ pd none "- If you are using ${BPURPLE}Android x86${RC} (BlissOS)"
 pd none "You can press ${BGREEN}Alt+F1${RC} and type this command:"
 
 
+}
+
+print_info(){
+p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" || pd light_green "$SDK"
+p none "   System-as-root: "; [ "$SYSTEM_AS_ROOT" == "true" ] && pd light_green "$SYSTEM_AS_ROOT" || pd light_red "$SYSTEM_AS_ROOT"
 }
 
 
@@ -161,8 +172,7 @@ pd gray  "=============================================="
 echo "   Magisk on Nox - Installer Script"
 echo "   by HuskyDG"
 # please don't change this or use "by HuskyDG + your name" for credits :((
-p none "   Magisk: "; [ "$(which magisk)" ] && [ "$(magisk -v)" ] && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
-p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommended}: Android 9 (NoxPlayer, BlissOS 11)" || pd light_green "$SDK"
+echo -e "$(print_info)"
 pd gray "=============================================="
 echo "  1 - Install/Update Magisk"
 pd gray "      Integrate Magisk root into Android x86 emulator"
@@ -199,6 +209,14 @@ p none "[CHOICE]: "
 
 }
 
+print_magisk_builds(){
+echo "  1 - Canary `cre topjohnwu`"
+echo "  2 - Alpha `cre vvb2060`"
+echo "  3 - Canary v23001 `cre topjohnwu`"
+echo "  4 - Stable v23.0 `cre topjohnwu`"
+echo "  5 - Minimal Stable (Bluestacks Nougat) `cre topjohnwu`"
+}
+
 
 print_menu_install(){
 
@@ -206,15 +224,11 @@ pd gray "=============================================="
 echo "   Install/Update Magisk"
 pd gray "=============================================="
 pd light_cyan "ONLINE"
-echo "  1 - Lastest Canary"
-echo "  2 - Lastest Alpha"
-echo "  3 - Canary v23001 (MEmu, LD Player)"
-echo "  4 - Stable v23.0 (MEmu, LD Player)"
-echo "  5 - Minimal Stable (Bluestacks Nougat)"
+print_magisk_builds
 pd light_cyan "OFFLINE"
 echo "  a - Alpha 23016"
 echo "  x - Choose and install from another Magisk APK"
-pd green "* You will download magisk.apk and install Magisk"
+pd green "* Please check my wiki page to select suitable Magisk build"
 p none "[CHOICE]: "
 
 }
@@ -274,7 +288,7 @@ text_saved_ramdisk_info="Đã lưu thông tin ramdisk vào"
 text_unsupport_ramdisk_format="Định dạng ramdisk không được hỗ trợ"
 text_tell_remove_rusty_magisk="Bạn có thể đã cài rusty-magisk, vui lòng hãy gỡ nó nếu có!!!"
 text_magisk_tmpfs_directory="Đường dẫn Magisk tmpfs"
-
+text_use_current_ramdisk_info="Bạn có muốn sử dụng thông tin ramdisk hiện tại?"
 
 
 print_ramdisk_method(){
@@ -305,10 +319,8 @@ pd gray  "=============================================="
 echo "   Magisk on Android x86"
 echo "   by HuskyDG"
 # please don't change this or use "by HuskyDG + your name" for credits :((
-p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
-p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" && pd light_red "  ${text_recommended}: Android 9 (NoxPlayer, BlissOS 11)" || pd light_green "$SDK"
+echo -e "$(print_info)"
 pd gray "=============================================="
-pd light_cyan "MAGISK"
 echo "  1 - Cài đặt hoặc cập nhật Magisk"
 pd gray "      Triển khai Magisk root vào Android-x86"
 echo "  2 - Gỡ cài đặt Magisk"
@@ -338,22 +350,18 @@ pd gray "=============================================="
 echo "   Install/Update Magisk"
 pd gray "=============================================="
 pd light_cyan "TRỰC TUYẾN"
-echo "  1 - Canary mới nhất"
-echo "  2 - Alpha mới nhất"
-echo "  3 - Canary v23001 (MEmu, LD Player)"
-echo "  4 - Stable v23.0 (MEmu, LD Player)"
-echo "  5 - Minimal Stable (Bluestacks Nougat)"
+print_magisk_builds
 pd light_cyan "NGOẠI TUYẾN"
 echo "  a - Alpha 23016"
 echo "  x - Chọn và cài đặt từ Magisk APK khác"
-pd green "* Bạn sẽ tải magisk.apk và cài đặt Magisk"
+pd green "* Vui lòng kiểm tra trang wiki của tôi để chọn bản dựng Magisk phù hợp"
 p none "[CHỌN]: "
 
 }
 
 print_method(){
 pd gray "=============================================="
-echo "   Install/Update Magisk"
+echo "   Cài đặt hoặc cập nhật Magisk"
 pd gray "=============================================="
 pd light_cyan "Phương thức cài đặt Magisk"
 echo "  1 - Cài đặt Magisk vào \"/system\""
@@ -599,7 +607,7 @@ MAGISKCORE="/system/etc/magisk"
 
 abort(){
 ERR_CODE="$2"
-pd "$1"; 
+echo "$1"; 
 test -z "$ERR_CODE" && ERR_CODE=1
 exit "$ERR_CODE"
 }
@@ -713,7 +721,7 @@ mkdir /.backup_sbin
 ln /sbin/* /.backup_sbin
 mnt_tmpfs /sbin
 clone /.backup_sbin /sbin"
-    remount_rootfs="
+    remove_backup="
 rm -rf /.backup_sbin 
 mount -o ro,remount /"
     ;;
@@ -962,11 +970,17 @@ fi
 write_log \"\$TEXT_LOG\" \"magiskpolicy: patch selinux rules failed with \$?\" 
 $LOG_MAGISK
 
+#remount system read-only
+$remove_backup
+mount -o ro,remount /
+mount -o ro,remount /system
+mount -o ro,remount /vendor
+mount -o ro,remount /product
+mount -o ro,remount /system_ext
 touch /dev/.overlay_unblock
 UID_MYAPP=\$(ls -ld \"$priv_dir\" | awk '{ print \$3 }') || UID_MYAPP=root
 chown \$UID_MYAPP:\$UID_MYAPP /data/.magisk_binary
 
-$remount_rootfs
 sleep 3
 exit_magisk(){
 echo -n >/dev/.magisk_unblock
@@ -1192,7 +1206,7 @@ mkdir -p "$TMPDIR"
 echo "- $text_unpack_ramdisk"
 mkdir -p "$TMPDIR/ramdisk"
 
-( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abort "! $text_unpack_ramdisk_fail"
+( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abortc light_red "! $text_unpack_ramdisk_fail"
 echo "- $text_unpatch_ramdisk"
 # restore init.rc
 if [ -f "$TMPDIR/ramdisk/magisk/init.rc" ]; then
@@ -1213,7 +1227,7 @@ else
 [ -f "${RAMDISK}.bak" ] || mv "${RAMDISK}" "${RAMDISK}.bak"
 NEWRAMDISK="$RAMDISK"
 fi
-( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abort "! $text_repack_ramdisk_fail"
+( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abortc light_red "! $text_repack_ramdisk_fail"
 rm -rf /data/.magisk_binary 2>/dev/null
 clean_flash
 echo "- $text_done"
@@ -1257,7 +1271,7 @@ echo "- $text_unpack_ramdisk"
 
 mkdir -p "$TMPDIR/ramdisk"
 
-( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abort "! $text_unpack_ramdisk_fail"
+( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abortc light_red "! $text_unpack_ramdisk_fail"
 echo "- $text_patch_ramdisk"
 # ramdisk was unpack to $TMPDIR/ramdisk
 [ -d "$TMPDIR/ramdisk/sbin" ] || magisk_loader 3
@@ -1317,7 +1331,7 @@ else
 [ -f "${RAMDISK}.bak" ] || mv "${RAMDISK}" "${RAMDISK}.bak"
 NEWRAMDISK="$RAMDISK"
 fi
-( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abort "! $text_repack_ramdisk_fail"
+( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abortc light_red "! $text_repack_ramdisk_fail"
 rm -rf /data/.magisk_binary
 clean_flash
 echo "- $text_done"
@@ -1371,12 +1385,7 @@ if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; th
 MAGISKBASE="/system/etc/magisk"
 magisk_loader
 elif [ -d "/sbin" ]; then
-# legacy SAR
-MAGISKBASE="/magisk"
-MAGISKCORE="/magisk"
-magisk_loader 2
-else
-# Android Q without sbin
+# SAR
 MAGISKBASE="/magisk"
 MAGISKCORE="/magisk"
 magisk_loader 3
@@ -1384,7 +1393,6 @@ fi
 
 if [ -e "/init" ] && [ -e "/init.real" ]; then
 pd light_red "$text_tell_remove_rusty_magisk"
-sleep 1
 # /dev mode to not conflit with rusty-Magisk
 magisk_loader 3
 fi
@@ -1468,7 +1476,7 @@ echo "      Magisk uninstaller"
 echo "******************************"
 need_root_access
 
-[ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && abort "$text_uninstall_fail"
+[ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && abortc light_red "$text_uninstall_fail"
 
 MAGISKCOREDIR=/magisk
 [ ! -d "/magisk" ] && MAGISKCOREDIR=/system/etc/magisk
@@ -1921,6 +1929,12 @@ RESET_DISKINFO="$1"
 mkdir -p "$DISKINFO"
 BLOCKDEV="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
+echo -n "${text_use_current_ramdisk_info}? <Y/n> "
+read opt
+if [ "$opt" != "Y" -o "$opt" != "y" ]; then
+unset BLOCKDEV
+unset VAR_RAMDISK
+fi
 if [ -z "$BLOCKDEV" ]; then
     table_blockdev
 else
