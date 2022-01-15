@@ -6,16 +6,18 @@
 #
 # Support: https://launchpad.net/mksh
 
-set +o nohup
 
-if (( USER_ID )); then export PS1='$'; else export PS1='#'; fi
-export PS4='[$EPOCHREALTIME] '; export PS1='${|
-	local e=$?
-   HOSTNAME="HuskyDG"
-	(( e )) && REPLY+="$e|"
-
-	return $e
-}$HOSTNAME:${PWD:-?} '"$PS1 "
+AGVARR="$@"
+SCRIPT="$0"
+AGV1="$1"
+AGV2="$2"
+AGV3="$3"
+MYSCRIPT="$(realpath "$0")" 2>/dev/null
+if [ "$MYSCRIPT" ]; then
+MYPATH="${MYSCRIPT%/*}"
+PATH="$MYPATH:$PATH"
+cmds="$SCRIPT $AGVARR"
+fi
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -41,6 +43,9 @@ end_code="\033[0m"
 echo -en "$code$TEXT$end_code"
 }
 
+
+RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
+
 pd(){
 p "$1" "$2"; echo
 }
@@ -49,15 +54,33 @@ inmagisk(){
 libbash.so option "$@" 2>/dev/null
 }
 
-help(){
-echo "Magisk Installer script for emulator
-usage: inmagisk [OPTION]
-Available option:
- install                       Open Menu for install Magisk
- install:<build>               Install/Update Magisk
- uninstall                     Uninstall Magisk and its modules"
-
+menu(){
+inmagisk "$@" 2>/dev/null
 }
 
-p none "Type "; p light_purple "inmagisk"; p none " to open "; pd light_green "Magisk Installer Script";
+m(){
+inmagisk "$@" 2>/dev/null
+}
+
+
+magiskhide(){ (
+VAR_ARRAY="$@"
+MAGISK_VERSION="$(magisk -V)" || exit 1
+MAGISKHIDE="--denylist"
+[ "$MAGISK_VERSION" -lt "23010" ] && MAGISKHIDE="magiskhide"
+magisk $MAGISKHIDE "$@"
+) }
+
+denylist(){ ( magiskhide "$@"; ) }
+
+help(){
+echo "$(inmagisk help)
+
+MagiskHide / DenyList ConFig
+usage: magiskhide [option]...
+   or: denylist [option]...
+shortcut for \"magisk --denylist\" if Magisk version is 23010+"
+}
+
+p none "Type "; p light_purple "m"; p none " to open "; pd light_green "Magisk Installer Script";
 p none "Website: "; pd light_green "http://github.com/HuskyDG/MagiskOnNox"
