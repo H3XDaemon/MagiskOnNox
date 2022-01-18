@@ -16,7 +16,7 @@ RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;3
 
 test -z "$USER_ID" && USER_ID="$(id -u)"
 
-OVERLAYVER=10030
+OVERLAYVER=10031
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
@@ -50,6 +50,9 @@ SYSTEM_AS_ROOT=true
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 SYSTEM_AS_ROOT=false
 fi
+
+GEARHOME="/data/ghome"
+GEARBOOT="$GEARHOME/gearboot/overlay/rusty-magisk/init"
 
 
 magisk_name="magisk32"
@@ -98,14 +101,15 @@ text_repack_ramdisk="Repack new ramdisk image"
 text_repack_ramdisk_fail="Unable to repack new ramdisk image"
 text_enter_path_ramdisk="Enter path to your ramdisk"
 text_new_ramdisk="New ramdisk image was saved to"
-text_uninstall_fail="! No Magisk found in system"
+text_uninstall_fail="! No Magisk found on system or GearLock"
 text_cannot_mount_part="Unable to mount the partition!"
 text_wrong_input="Wrong input, please enter again correctly"
 text_enter_part="Enter the ${BGREEN}partition${RC} number where you got this ${BPURPLE}Android-x86 OS${RC} installed"
 text_enter_ramdisk="Enter the ${BGREEN}ramdisk.img${RC} number from this ${BPURPLE}Android-x86 OS${RC}"
 text_unpatch_ramdisk="Remove patch with magisk from ramdisk"
 text_backup_not_exist="Backup not exist, cannot uninstall"
-text_uninstall_magisk_in="Uninstall Magisk in"
+text_uninstall_magisk_in="Uninstall Magisk from system and GearLock"
+text_restore_original_ramdisk="Restore ramdisk back to original"
 text_choice=CHOICE
 text_run_with_root="Run script with root access"
 text_cannot_install_magisk="Unable to install Magisk!"
@@ -117,6 +121,7 @@ text_unsupport_ramdisk_format="Unsupported ramdisk format"
 text_tell_remove_rusty_magisk="You may have rust-magisk installed, please remove it if present!!!"
 text_magisk_tmpfs_directory="Magisk tmpfs path"
 text_use_current_ramdisk_info="Do you want to use the current ramdisk information"
+text_install_gearlock="Please install GearLock first"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -196,15 +201,17 @@ pd gray "=============================================="
 pd light_cyan "Install Magisk method"
 echo "  1 - Install Magisk into \"/system\""
 pd gray "      The system partition must be mounted as read-write"
-pd gray "      Recommended for Android Emulator (NoxPlayer, MEmu, ...)"
+pd gray "      Recommended for Android Emulator such as NoxPlayer, MEmu, ..."
 echo "  2 - Install Magisk into ramdisk image (systemless)"
 pd gray "      Use this option if you can find ramdisk.img"
-pd gray "      Recommended for Android x86 project (BlissOS)"
-pd gray "      Only compatible with legacy rootfs (Android 9 and below)"
-echo "  3 - Update binary file into \"/data\""
-pd gray "     Update Magisk without having to modify system/ramdisk again"
-pd gray "     Magisk must be installed by this script"
-pd light_red "* Remove rusty-magisk if you have it installed"
+pd gray "      Do not support system-as-root"
+echo "  3 - Install Magisk by using GearLock (systemless)"
+pd gray "      Use GearLock to active Magisk"
+pd gray "      Recommended for Android x86 project"
+echo "  4 - Update binary file into \"/data\""
+pd gray "      Update Magisk without having to modify system/ramdisk again"
+pd gray "      Magisk must be installed by this script"
+pd light_red "* Note: Uninstall rusty-magisk to avoid conflicts"
 p none "[CHOICE]: "
 
 }
@@ -277,7 +284,8 @@ text_enter_ramdisk="Nhập số tương ứng với ${BGREEN}ramdisk.img${RC} t�
 text_unpatch_ramdisk="Loại bỏ bản vá với magisk khỏi ramdisk"
 text_unpatch_ramdisk="Loại bỏ bản vá Magisk khỏi ramdisk"
 text_backup_not_exist="Bản sao lưu không tồn tại, không thể gỡ"
-text_uninstall_magisk_in="Gỡ cài đặt Magisk trong"
+text_uninstall_magisk_in="Gỡ bỏ Magisk khỏi hệ thống và GearLock"
+text_restore_original_ramdisk="Khôi phục ramdisk trở lại ban đầu"
 text_choice="CHỌN"
 text_run_with_root="Chạy script với quyền root"
 text_cannot_install_magisk="Không thể cài đặt Magisk!"
@@ -289,6 +297,7 @@ text_unsupport_ramdisk_format="Định dạng ramdisk không được hỗ trợ
 text_tell_remove_rusty_magisk="Bạn có thể đã cài rusty-magisk, vui lòng hãy gỡ nó nếu có!!!"
 text_magisk_tmpfs_directory="Đường dẫn Magisk tmpfs"
 text_use_current_ramdisk_info="Bạn có muốn sử dụng thông tin ramdisk hiện tại?"
+text_install_gearlock="Hãy cài đặt GearLock trước đã"
 
 
 print_ramdisk_method(){
@@ -366,15 +375,17 @@ pd gray "=============================================="
 pd light_cyan "Phương thức cài đặt Magisk"
 echo "  1 - Cài đặt Magisk vào \"/system\""
 pd gray "      Phân vùng hệ thống có thể gắn kết đọc ghi"
-pd gray "      Khuyên dùng cho các giả lập Android (NoxPlayer, MEmu, ...)"
+pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MEmu, ..."
 echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
 pd gray "      Sử dụng tùy chọn này nếu bạn tìm thấy Ramdisk"
-pd gray "      Khuyên dùng cho Android x86 project (BlissOS)"
-pd gray "      Chỉ tương thích với legacy rootfs (Android 9 trở xuống)"
-echo "  3 - Cập nhật nhị phân vào trong \"/data\""
+pd gray "      Không hỗ trợ system-as-root"
+echo "  3 - Cài đặt Magisk bằng cách sử dụng GearLock (systemless)"
+pd gray "      Cần có GearLock, sử dụng GearLock để kích hoạt Magisk"
+pd gray "      Khuyên dùng cho Android x86 project"
+echo "  4 - Cập nhật nhị phân vào trong \"/data\""
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
 pd gray "      Magisk phải được cài đặt bởi script này"
-pd light_red "* Gỡ rusty-magisk nếu bạn đã cài đặt nó"
+pd light_red "* Lưu ý: Gỡ bỏ rusty-magisk để tránh bị xung đột"
 p none "[CHỌN]: "
 
 }
@@ -584,7 +595,8 @@ umount -l /system/addon.d/*
 umount -l /system/etc/magisk
 umount -l /system/etc/init
 umount -l /system/etc/magisk/*
-umount -l /system/etc/init/* ) &
+umount -l /system/etc/init/* 
+ ) &
 
 # no need to use Magisk's mirror anymore
 
@@ -751,7 +763,7 @@ unset ADD_FORCE_MAGISKHIDE
 CDMAGISKUPDATE="[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary
 chcon u:object_r:app_data_file:s0 /data/.magisk_binary"
 RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
-              rmdir /data/.rusty-magisk
+              exec u:r:su:s0 -- rm -rf /data/.rusty-magisk
               rm /data/.rusty-magisk/magisk.apk
               rm /data/.rusty-magisk/magisk
               rm /data/ghome/.local/bin/rusty-magisk"
@@ -1376,16 +1388,28 @@ chmod -R 750 /data/.magisk_binary
 
 }
 
-
-
-
-install_magisk(){
-value1="$1"
-
+install_magisk_gearlock(){
 echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
+[ ! -d "$GEARHOME" ] && abortc light_red "$text_install_gearlock !"
+mkdir -p "$GEARBOOT"
+GEARLOCK=true
+first_setup
+mkdir -p "$MAGISKCORE"
+setup_magisk_env
+echo "- $text_install Magisk loader..."
+rm -rf $MAGISKCORE/overlay.sh
+echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
+rm -rf "$GEARBOOT/init.superuser.rc"
+echo "$magiskloader" >"$GEARBOOT/init.superuser.rc"
+rm -rf "$MAGISKCORE/loadpolicy.sh"
+echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
+clean_flash
+echo "- $text_done"
+}
 
+first_setup(){
 need_root_access
 
 [ ! -f "$APKFILE" ] && abortc light_red "! File does not exist"
@@ -1393,13 +1417,20 @@ need_root_access
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
 MAGISKBASE="/system/etc/magisk"
-magisk_loader
+SYSTEMTYPE=1
 elif [ -d "/sbin" ]; then
 # SAR
 MAGISKBASE="/magisk"
 MAGISKCORE="/magisk"
-magisk_loader 3
+SYSTEMTYPE=3
 fi
+
+if [ "$GEARLOCK" == "true" ]; then
+MAGISKBASE="$GEARHOME/.local/magisk"
+MAGISKCORE="$GEARHOME/.local/magisk"
+fi
+
+magisk_loader "$SYSTEMTYPE"
 
 if [ -e "/init" ] && [ -e "/init.real" ]; then
 pd light_red "$text_tell_remove_rusty_magisk"
@@ -1408,21 +1439,9 @@ magisk_loader 3
 fi
 echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
 
-echo "- $text_mount_rw_system"
-mount_rw_system
-$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
+}
 
-umount -l /system/bin
-umount -l /system/bin/*
-test ! -f /system/bin/._orig_su && rm -rf /system/bin/._orig_su
-mv -f /system/bin/su /system/bin/._orig_su
-
-echo "- $text_setup"
-rm -rf "$MAGISKCORE"
-mkdir -p "$MAGISKCORE"
-chown root:root "$MAGISKCORE"
-chmod 750 "$MAGISKCORE"
-
+setup_magisk_env(){
 chmod 777 $bb
 mkdir $TMPDIR
 
@@ -1445,6 +1464,33 @@ $bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/
 mkdir $NVBASE/modules 2>/dev/null
 mkdir $POSTFSDATAD 2>/dev/null
 mkdir $SERVICED 2>/dev/null
+}
+
+
+
+install_magisk(){
+GEARLOCK=false
+
+echo "******************************"
+echo "      Magisk installer"
+echo "******************************"
+
+first_setup
+
+echo "- $text_mount_rw_system"
+mount_rw_system
+$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
+
+umount -l /system/bin
+umount -l /system/bin/*
+
+echo "- $text_setup"
+rm -rf "$MAGISKCORE"
+mkdir -p "$MAGISKCORE"
+chown root:root "$MAGISKCORE"
+chmod 750 "$MAGISKCORE"
+
+setup_magisk_env
 
 
 echo "- $text_install Magisk loader..."
@@ -1486,7 +1532,7 @@ echo "      Magisk uninstaller"
 echo "******************************"
 need_root_access
 
-[ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && abortc light_red "$text_uninstall_fail"
+[ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && [ ! -d "$GEARBOOT/init.superuser.rc" ] && abortc light_red "$text_uninstall_fail"
 
 MAGISKCOREDIR=/magisk
 [ ! -d "/magisk" ] && MAGISKCOREDIR=/system/etc/magisk
@@ -1500,8 +1546,8 @@ echo "- $text_mount_rw_system"
 mount_rw_system
 $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 echo "- Remove Magisk..."
-for fun in /system/etc/magisk /system/etc/init/magisk.rc; do
-rm -rf "/$fun"
+for fun in /system/etc/magisk /system/etc/init/magisk.rc $GEARBOOT $GEARHOME/.local/bin/rusty-magisk $GEARHOME/.local/magisk; do
+rm -rf "$fun"
 done
 ADDOND=/system/addon.d/99-magisk.sh
 if [ -f $ADDOND ]; then
@@ -1635,8 +1681,8 @@ if [ "$install_offline" == "true" ]; then
 mirror_git="https://gh.api.99988866.xyz/"
  
 
-    $bb wget -O "$DLPATH/app.tmp" "$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
-    [ -f "$DLPATH/app.apk" ] || $bb wget -O "$DLPATH/app.tmp" "$mirror_git$URL" &>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    $bb wget -O "$DLPATH/app.tmp" "$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    [ -f "$DLPATH/app.apk" ] || $bb wget -O "$DLPATH/app.tmp" "$mirror_git$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
     [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
     APKFILE="$DLPATH/app.apk"
     $install_command "$RAMDISK"
@@ -1657,6 +1703,9 @@ case "$method" in
     patch_ramdisk_method
     ;;
 3)
+    install_command="install_magisk_gearlock"
+    ;;
+4)
     install_command="update_magiskbin"
     ;;
 *)
@@ -1811,8 +1860,8 @@ clear
 pd gray "=============================================="
 echo "   Uninstall Magisk"
 pd gray "=============================================="
-echo "   1 - $text_uninstall_magisk_in \"/system\""
-echo "   2 - $text_uninstall_magisk_in ramdisk"
+echo "   1 - $text_uninstall_magisk_in"
+echo "   2 - $text_restore_original_ramdisk"
 echo -n "[$text_choice]: "
 read c
 case "$c" in
@@ -1856,6 +1905,14 @@ OSROOT=/dev/os_disk
 umount -l /dev/os_disk
 rm -rf /dev/os_disk
 mkdir /dev/os_disk
+GEARROOT="$(mount | grep "^${VAR_OSROOT}" | awk '{ print $3 }')"
+if [ "$GEARROOT" ]; then
+for block in $GEARROOT; do
+echo -ne "Unmount ${BPURPLE}${block}${RC}... "
+umount -l "$block" && echo -e "${BGREEN}SUCCESS!${RC}" || echo -e "${BRED}FAILED!${RC}"
+done
+fi
+
 echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
 mount -o ro "$VAR_OSROOT" "/dev/os_disk"
 mount -t ext4 "$VAR_OSROOT" "/dev/os_disk"
