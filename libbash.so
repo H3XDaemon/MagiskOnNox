@@ -750,6 +750,11 @@ unset FORCE_MAGISKHIDE
 unset ADD_FORCE_MAGISKHIDE
 CDMAGISKUPDATE="[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary
 chcon u:object_r:app_data_file:s0 /data/.magisk_binary"
+RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
+              rmdir /data/.rusty-magisk
+              rm /data/.rusty-magisk/magisk.apk
+              rm /data/.rusty-magisk/magisk
+              rm /data/ghome/.local/bin/rusty-magisk"
 
 if [ "$MINIMAL_MAGISK" == "true" ]; then
 LOG_MAGISK="
@@ -840,6 +845,7 @@ mnt_tmpfs \"\$TO/\$obj\"
 else
 mnt_bind \"\$FROM/\$obj\" \"\$TO/\$obj\" 2>/dev/null
 fi ) &
+sleep 0.05
 done
 ) }
 
@@ -848,12 +854,13 @@ overlay(){ (
 FOLDER=\"\$1\";
 TMPFOLDER=\"/dev/vm-overlay\"
 #_____
-PAYDIR=\"\$TMPFOLDER/\$RANDOM_\$(date | base64)\"
+PAYDIR=\"\$TMPFOLDER_\${RANDOM}_\$(date | base64)\"
 mkdir -p \"\$PAYDIR\"
 mnt_tmpfs \"\$PAYDIR\"
 #_________
 clone \"\$FOLDER\" \"\$PAYDIR\"
-mnt_bind \"\$PAYDIR\" \"\$FOLDER\"
+mount --move \"\$PAYDIR\" \"\$FOLDER\"
+rm -rf \"\$PAYDIR\"
 #______________
 ) }
 
@@ -868,6 +875,7 @@ fi
 # umount previous /sbin tmpfs overlay
 
 count=0
+( /sbin/magisk --stop ) &
 
 until ! mount | grep -q \" /sbin \"; do
 [ "$count" -gt "10" ] && break
@@ -1037,9 +1045,10 @@ magiskloader="
 
          on early-init
              export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin
-
+              
 
           on post-fs-data
+$RM_RUSTY_MAGISK
               start logd
               start adbd
               rm /dev/.overlay_unblock
@@ -1098,6 +1107,7 @@ magiskloader="
           on post-fs-data
               start logd
               start adbd
+$RM_RUSTY_MAGISK
               
           on property:sys.boot_completed=1
           
