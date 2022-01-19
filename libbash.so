@@ -1277,6 +1277,7 @@ true
 }
 
 check_magisk_apk(){
+[ ! -f "$APKFILE" ] && abortc light_red "! File does not exist"
 unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 
 MAGISK_VER=""
@@ -1433,7 +1434,7 @@ echo "- $text_done"
 first_setup(){
 need_root_access
 
-[ ! -f "$APKFILE" ] && abortc light_red "! File does not exist"
+check_magisk_apk
 
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
