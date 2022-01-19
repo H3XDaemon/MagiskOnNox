@@ -1897,6 +1897,25 @@ esac
 }
 
 
+try_mount_it(){
+echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
+mount -o ro "$VAR_OSROOT" "/dev/os_disk"
+mount -t ext4 "$VAR_OSROOT" "/dev/os_disk"
+mount -o rw,remount "/dev/os_disk" && IS_MOUNT=true
+mount.ntfs "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
+$IS_MOUNT || echo -e "${BRED}$text_cannot_mount_part${RC}" 
+}
+
+try_umount_it(){
+if [ "$GEARROOT" ]; then
+for block in $GEARROOT; do
+if [ "$block" != "/system" ]; then
+echo -ne "Unmount ${BPURPLE}${block}${RC}... "
+umount -l "$block" && echo -e "${BGREEN}SUCCESS!${RC}" || echo -e "${BRED}FAILED!${RC}"
+fi
+done
+fi
+}
 
 
 mount_disk(){
@@ -1906,19 +1925,11 @@ umount -l /dev/os_disk
 rm -rf /dev/os_disk
 mkdir /dev/os_disk
 GEARROOT="$(mount | grep "^${VAR_OSROOT}" | awk '{ print $3 }')"
-if [ "$GEARROOT" ]; then
-for block in $GEARROOT; do
-echo -ne "Unmount ${BPURPLE}${block}${RC}... "
-umount -l "$block" && echo -e "${BGREEN}SUCCESS!${RC}" || echo -e "${BRED}FAILED!${RC}"
-done
+try_mount_it
+if [ "$IS_MOUNT" == "false" ]; then
+try_umount_it
+try_mount_it
 fi
-
-echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
-mount -o ro "$VAR_OSROOT" "/dev/os_disk"
-mount -t ext4 "$VAR_OSROOT" "/dev/os_disk"
-mount -o rw,remount "/dev/os_disk" && IS_MOUNT=true
-mount.ntfs "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
-$IS_MOUNT || echo -e "${BRED}$text_cannot_mount_part${RC}" 
 }
 
 umount_disk(){
@@ -1944,7 +1955,7 @@ elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
 else
 # mount the partition for us
     mount_disk
-    $IS_MOUNT && break || echo -e "${RED}! $text_cannot_mount_part${RC}"
+    $IS_MOUNT && break
 fi
 done
 }
