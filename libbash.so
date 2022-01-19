@@ -122,6 +122,8 @@ text_tell_remove_rusty_magisk="You may have rust-magisk installed, please remove
 text_magisk_tmpfs_directory="Magisk tmpfs path"
 text_use_current_ramdisk_info="Do you want to use the current ramdisk information"
 text_install_gearlock="Please install GearLock first"
+text_building_gxp="Build GearLock extension"
+text_saved_magisk_gxp_to="Saved extension to"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -134,6 +136,13 @@ print_unpatch_ramdisk(){
 pd "light_cyan" "Remove Magisk in ramdisk"
 echo "  1 - Direct uninstall"
 echo "  2 - Select ramdisk image and patch"
+echo -n "[CHOICE]: "
+}
+
+print_gxp_method(){
+pd "light_cyan" "Install Magisk by using GearLock"
+echo "  1 - Direct install"
+echo "  2 - Export GearLock extension (GXP)"
 echo -n "[CHOICE]: "
 }
 
@@ -221,7 +230,7 @@ echo "  1 - Canary `cre topjohnwu`"
 echo "  2 - Alpha `cre vvb2060`"
 echo "  3 - Canary v23001 `cre topjohnwu`"
 echo "  4 - Stable v23.0 `cre topjohnwu`"
-echo "  5 - Minimal Stable (Bluestacks Nougat) `cre topjohnwu`"
+echo "  5 - Minimal Stable `cre topjohnwu`"
 }
 
 
@@ -298,12 +307,21 @@ text_tell_remove_rusty_magisk="Bạn có thể đã cài rusty-magisk, vui lòng
 text_magisk_tmpfs_directory="Đường dẫn Magisk tmpfs"
 text_use_current_ramdisk_info="Bạn có muốn sử dụng thông tin ramdisk hiện tại?"
 text_install_gearlock="Hãy cài đặt GearLock trước đã"
+text_building_gxp="Xây dựng phần mở rộng GearLock"
+text_saved_magisk_gxp_to="Saved extension to"
 
 
 print_ramdisk_method(){
 pd "light_cyan" "Cài đặt Magisk vào đĩa ảnh ramdisk"
 echo "  1 - Cài đặt trực tiếp"
 echo "  2 - Chọn đĩa ảnh ramdisk và vá"
+echo -n "[CHỌN]: "
+}
+
+print_gxp_method(){
+pd "light_cyan" "Cài đặt Magisk bằng GearLock"
+echo "  1 - Cài đặt trực tiếp"
+echo "  2 - Tạo tệp mở rộng GearLock (GXP)"
 echo -n "[CHỌN]: "
 }
 
@@ -379,7 +397,7 @@ pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MEmu, 
 echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
 pd gray "      Sử dụng tùy chọn này nếu bạn tìm thấy Ramdisk"
 pd gray "      Không hỗ trợ system-as-root"
-echo "  3 - Cài đặt Magisk bằng cách sử dụng GearLock (systemless)"
+echo "  3 - Cài đặt Magisk bằng GearLock (systemless)"
 pd gray "      Cần có GearLock, sử dụng GearLock để kích hoạt Magisk"
 pd gray "      Khuyên dùng cho Android x86 project"
 echo "  4 - Cập nhật nhị phân vào trong \"/data\""
@@ -545,6 +563,7 @@ link "libapp.so" "magisk.apk"
 link "libbusybox.so" "busybox"
 link "liblegacy.so" "legacy.zip"
 link "libbash.so" "menu"
+link "libgxp.so" "gearlock_extension.zip"
 
 CACHEDIR="$DLPATH/tmp"
 DISKINFO="/data/adb/diskinfo"
@@ -568,6 +587,8 @@ if [ "$USER_ID" != "0" ]; then
             read
         fi
         exit
+    elif ! [ "$ROOT" == "N" -o "$ROOT" == "n" ]; then
+    exit 0
     fi
 fi
 while true; do main; done
@@ -611,11 +632,15 @@ SYSTEMROOTDIR="/"
 ARG1="$1"
 JOBPWD="${0%/*}"
 bb=/data/local/tmp/busybox
-TMPDIR="$CACHEDIR"
-[ "$USER_ID" == "0" ] && TMPDIR=/dev/tmp
 APKFILE="$JOBPWD/magisk.apk"
 MAGISKCORE="/system/etc/magisk"
 
+get_tmpdir(){
+
+TMPDIR="$CACHEDIR"
+[ "$USER_ID" == "0" ] && TMPDIR=/dev/tmp
+}
+get_tmpdir
 
 abort(){
 ERR_CODE="$2"
@@ -624,17 +649,10 @@ test -z "$ERR_CODE" && ERR_CODE=1
 exit "$ERR_CODE"
 }
 
-link(){ (
-agv1="$1"; agv2="$2"
-[ ! -f "$DLPATH/$agv2" ] && rm -rf "$DLPATH/$agv2" 2>/dev/null
-ln -s "$(which "$agv1")" "$DLPATH/$agv2" 2>/dev/null
-) }
 
-link "libapp.so" "magisk.apk"
-link "libbusybox.so" "busybox"
-link "liblegacy.so" "legacy.zip"
-link "libbash.so" "menu"
+
 bb="$DLPATH/busybox"
+gxp_template="$DLPATH/gearlock_extension.zip"
 
 busybox_bin(){
 
@@ -701,7 +719,7 @@ list_pick=$HEX; C=$HEXC
 }
 
 random_str(){
-random_length=$(random 1 custom 23456789 8);
+random_length=$(random 1 custom 56789 5);
 random $random_length custom "qwertyuiopasdfghjklzxcvbnm0123456789QWERTYUIOPASDFGHJKLZXCVBNM" 63 | base64 | sed "s/=//g"
 }
 
@@ -1159,12 +1177,12 @@ mkdir -p "$TMPDIR/magisktool"
  
 
 
-$bb unzip -oj "$APKFILE" "lib/$ABI/*" -d "$TMPDIR/magisk" &>/dev/null
+unzip -oj "$APKFILE" "lib/$ABI/*" -d "$TMPDIR/magisk" &>/dev/null
 chmod -R 777 "$TMPDIR/magisk"
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
 
 if [ "$IS64BIT" == "true" ]; then
-$bb unzip -oj "$APKFILE" "lib/$ABI32/*" -d "$TMPDIR/magisk32" &>/dev/null
+unzip -oj "$APKFILE" "lib/$ABI32/*" -d "$TMPDIR/magisk32" &>/dev/null
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk32/magiskinit"
 chmod -R 777 "$TMPDIR/magisk32"
 fi
@@ -1205,7 +1223,7 @@ fi
 )
 
 mkdir -p "$MAGISKCORE/assets"
-$bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d "$MAGISKCORE/assets" &>/dev/null
+unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d "$MAGISKCORE/assets" &>/dev/null
 
 }
 
@@ -1258,6 +1276,15 @@ true
 
 }
 
+check_magisk_apk(){
+unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
+
+MAGISK_VER=""
+MAGISK_VER_CODE=""
+[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
+( . $TMPDIR/util_functions.sh
+pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)" )
+}
 
 patch_ramdisk(){
 RAMDISK="$1"
@@ -1279,13 +1306,7 @@ mkdir -p "$TMPDIR"
 
 magisk_loader
 
-$bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
-
-MAGISK_VER=""
-MAGISK_VER_CODE=""
-[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
-( . $TMPDIR/util_functions.sh
-pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)" )
+check_magisk_apk
 
 echo "- $text_unpack_ramdisk"
 
@@ -1369,7 +1390,7 @@ rm -rf "$TMPDIR"
 mkdir -p "$TMPDIR"
 [ ! -f "$APKFILE" ] && abortc light_red "! Magisk APK does not exist"
 
-$bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
+unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 
 MAGISK_VER=""
 MAGISK_VER_CODE=""
@@ -1379,7 +1400,7 @@ pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 
 ( MAGISKCORE="/data/.magisk_binary"; extract_magisk_apk
 mkdir -p $MAGISKBIN 2>/dev/null
-$bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
+unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
 mkdir $NVBASE/modules 2>/dev/null
 mkdir $POSTFSDATAD 2>/dev/null
 mkdir $SERVICED 2>/dev/null )
@@ -1441,16 +1462,9 @@ echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
 
 }
 
-setup_magisk_env(){
-chmod 777 $bb
-mkdir $TMPDIR
 
-$bb unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
-MAGISK_VER=""
-MAGISK_VER_CODE=""
-[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
-. $TMPDIR/util_functions.sh
-pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
+
+setup_magisk_env(){
 
 
 api_level_arch_detect
@@ -1460,11 +1474,52 @@ echo "- $text_extract_magisk_apk"
 extract_magisk_apk
 
 mkdir -p $MAGISKBIN 2>/dev/null
-$bb unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
+unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
 mkdir $NVBASE/modules 2>/dev/null
 mkdir $POSTFSDATAD 2>/dev/null
 mkdir $SERVICED 2>/dev/null
 }
+
+
+
+
+build_gxp(){
+GEARLOCK=true
+echo "******************************"
+echo "      Magisk installer"
+echo "******************************"
+get_tmpdir
+MAGISKBASE="$GEARHOME/.local/magisk"
+MAGISKCORE="$TMPDIR/gxp/gearlock/magisk"
+rm -rf "$TMPDIR"
+mkdir -p "$MAGISKCORE"
+check_magisk_apk
+magisk_loader 3
+echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
+unzip -o "$gxp_template" -d "$TMPDIR/gxp" &>/dev/null
+extract_magisk_apk
+echo "- $text_install Magisk loader..."
+rm -rf $MAGISKCORE/overlay.sh
+echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
+rm -rf "$TMPDIR/gxp/gearlock/magisk.rc"
+echo "$magiskloader" >"$TMPDIR/gxp/gearlock/magisk.rc"
+rm -rf "$MAGISKCORE/loadpolicy.sh"
+echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
+echo "- $text_building_gxp"
+cd "$TMPDIR/gxp" || abortc light_red "$text_cannot_install_magisk"
+libzip.so -r "$TMPDIR/gxp.zip" "./" &>/dev/null
+[ ! -d "/sdcard/Magisk" ] && rm -rf "/sdcard/Magisk"
+mkdir -p "/sdcard/Magisk"
+EXTENSION_ZIP="/sdcard/Magisk/magisk-extension-$RANDOM$RANDOM.gxp"
+rm -rf "$EXTENSION_ZIP"
+cp "$TMPDIR/gxp.zip" "$EXTENSION_ZIP"
+echo "- $text_saved_magisk_gxp_to"
+echo "  $EXTENSION_ZIP"
+clean_flash
+echo "- $text_done"
+
+}
+
 
 
 
@@ -1681,8 +1736,8 @@ if [ "$install_offline" == "true" ]; then
 mirror_git="https://gh.api.99988866.xyz/"
  
 
-    $bb wget -O "$DLPATH/app.tmp" "$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
-    [ -f "$DLPATH/app.apk" ] || $bb wget -O "$DLPATH/app.tmp" "$mirror_git$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    wget -O "$DLPATH/app.tmp" "$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
+    [ -f "$DLPATH/app.apk" ] || wget -O "$DLPATH/app.tmp" "$mirror_git$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
     [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
     APKFILE="$DLPATH/app.apk"
     $install_command "$RAMDISK"
@@ -1703,7 +1758,7 @@ case "$method" in
     patch_ramdisk_method
     ;;
 3)
-    install_command="install_magisk_gearlock"
+    gearlock_method
     ;;
 4)
     install_command="update_magiskbin"
@@ -1788,6 +1843,25 @@ case "$c" in
         p none "> "
         read RAMDISK
         install_command="patch_ramdisk"
+        ;;
+      *)
+        nomethod=true
+        ;;
+esac
+}
+
+gearlock_method(){
+RAMDISK=""
+print_gxp_method
+read c
+case "$c" in
+    1)
+        need_root_access
+        install_command="install_magisk_gearlock"
+        ;;
+     2)
+        
+        install_command="build_gxp"
         ;;
       *)
         nomethod=true
@@ -1895,6 +1969,7 @@ case "$c" in
        ;;
 esac
 }
+
 
 
 try_mount_it(){
@@ -2013,7 +2088,8 @@ echo "$MODPROP" >$MODDIR/module.prop
 echo "$MODPROP" >$MODDIR2/module.prop
 echo -n >$MODDIR/update
 pd light_green "$text_added_bs_module"
-) 2>/dev/null }
+) 2>/dev/null 
+}
 
 
 table_list(){
