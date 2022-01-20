@@ -1467,8 +1467,10 @@ rm -rf \\
 /data/adb/post-fs-data.d /data/adb/service.d /data/adb/modules* \\
 /data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk /data/.magisk_binary /magisk \\
 /data/ghome/unins/Magisk_* /system/ghome/unins/Magisk_*
-
-
+if test "\$BOOTCOMP" == "yes"; then
+echo "- The device will reboot after a few seconds"
+(sleep 8; reboot) &
+fi
 
 EOF
 }
@@ -1496,8 +1498,9 @@ mkdir -p "$TMPDIR"
 first_setup
 rm -rf $GEARHOME/unins/Magisk_* 2>/dev/null
 echo "$(extension_info)
+
 do_unins_custom(){
-$(extension_uninstall)
+$(extension_unins)
 }">"$GEARHOME/unins/Magisk_extension_$MAGISK_VER"
 setup_magisk_env
 echo "- $text_install Magisk loader..."
@@ -2328,4 +2331,4 @@ if [ "$AGV1" != "noexec" ]; then
     else
         open_main
     fi
-fi; true
+fi; clean_flash 2>/dev/null; true
