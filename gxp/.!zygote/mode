@@ -1,0 +1,7 @@
+0755 "!zygote.sh"
+0755 "uninstall.sh"
+0775 ".!zygote"
+0664 ".!zygote/mode"
+0755 "gearlock"
+0755 "gearlock/magisk"
+0755 "gearlock/magisk.rc"
