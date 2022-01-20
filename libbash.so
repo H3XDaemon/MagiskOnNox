@@ -140,8 +140,8 @@ echo -n "[CHOICE]: "
 }
 
 blissos_open_menu(){
-echo "- If you are using ${BPURPLE}Bluestacks${RC} emulator"
-echo "You can use ${BGREEN}BSTweaker 6.8.5+${RC} to enable Root access"
+echo -e "- If you are using ${BPURPLE}Bluestacks${RC} emulator"
+echo -e "You can use ${BGREEN}BSTweaker 6.8.5+${RC} to enable Root access"
 
 pd none "- If you are using ${BPURPLE}Android x86${RC} (BlissOS)"
 pd none "You can press ${BGREEN}Alt+F1${RC} and type this command:"
@@ -594,7 +594,7 @@ if [ "$USER_ID" != "0" ]; then
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
             pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
-            read
+            
         fi
         exit
     fi
