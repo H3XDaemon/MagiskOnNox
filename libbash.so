@@ -1,5 +1,4 @@
 #!/system/bin/sh
-
 AGVARR="$@"
 SCRIPT="$0"
 AGV1="$1"
@@ -9,6 +8,7 @@ AGV4="$4"
 AGV5="$5"
 MYSCRIPT="$(realpath "$0")"
 MYPATH="${MYSCRIPT%/*}"
+busybox="$MYPATH/libbusybox.so"
 PATH="$MYPATH:$PATH"
 cmds="$SCRIPT $AGVARR"
 
@@ -51,9 +51,10 @@ if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; th
 SYSTEM_AS_ROOT=false
 fi
 
+gearlock_var(){
 GEARHOME="/data/ghome"
 GEARBOOT="$GEARHOME/gearboot/overlay/rusty-magisk/init"
-
+}
 
 magisk_name="magisk32"
 [ "$IS64BIT" == true ] && magisk_name="magisk64"
@@ -89,7 +90,7 @@ text_install_app="Install Magisk app"
 text_install_app_sug="Please install Magisk app by yourself"
 text_install="Install"
 text_setup="Initialize Magisk Core"
-text_rm_magisk_files="Removing Magisk files"
+text_rm_magisk_files="Cleaning trash files"
 text_extract_magisk_apk="Extract Magisk APK"
 text_failed_mount_system="Looks like the system partition is locked at read-only"
 text_enter_magisk_apk="Enter path to your Magisk APK"
@@ -124,6 +125,9 @@ text_use_current_ramdisk_info="Do you want to use the current ramdisk informatio
 text_install_gearlock="Please install GearLock first"
 text_building_gxp="Build GearLock extension"
 text_saved_magisk_gxp_to="Saved extension to"
+text_uninstalling_magisk="Uninstall Magisk and its related files"
+text_system_not_writeable="System is not writeable! Cannot completely uninstall."
+text_grant_inter_access_permission="Please grant app the permission to access Internal Storage"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -214,7 +218,7 @@ pd gray "      Recommended for Android Emulator such as NoxPlayer, MEmu, ..."
 echo "  2 - Install Magisk into ramdisk image (systemless)"
 pd gray "      Use this option if you can find ramdisk.img"
 pd gray "      Do not support system-as-root"
-echo "  3 - Install Magisk by using GearLock (systemless)"
+echo "  3 - Install Magisk by using GearLock (system/systemless)"
 pd gray "      Use GearLock to active Magisk"
 pd gray "      Recommended for Android x86 project"
 echo "  4 - Update binary file into \"/data\""
@@ -273,7 +277,7 @@ text_install_app="Cài đặt ứng dụng Magisk"
 text_install_app_sug="Vui lòng cài đặt ứng dụng Magisk thủ công"
 text_install="Cài đặt"
 text_setup="Thiết lập lõi Magisk"
-text_rm_magisk_files="Loại bỏ các tập tin Magisk"
+text_rm_magisk_files="Dọn dẹp các tập tin rác"
 text_extract_magisk_apk="Giải nén Magisk APK"
 text_failed_mount_system="Gắn kết phân vùng system thất bại"
 text_enter_magisk_apk="Nhập đường dẫn tới tệp Magisk APK của bạn"
@@ -308,7 +312,12 @@ text_magisk_tmpfs_directory="Đường dẫn Magisk tmpfs"
 text_use_current_ramdisk_info="Bạn có muốn sử dụng thông tin ramdisk hiện tại?"
 text_install_gearlock="Hãy cài đặt GearLock trước đã"
 text_building_gxp="Xây dựng phần mở rộng GearLock"
-text_saved_magisk_gxp_to="Saved extension to"
+text_saved_magisk_gxp_to="Đã lưu phần mở rộng vào"
+text_uninstalling_magisk="Đang gỡ bỏ Magisk và các tệp liên quan"
+text_system_not_writeable="Hệ thống không thể ghi! Không thể gỡ bỏ hoàn toàn"
+text_grant_inter_access_permission="Vui lòng cung cấp cho ứng dụng quyền truy cập Bộ nhớ trong"
+
+
 
 
 print_ramdisk_method(){
@@ -340,8 +349,6 @@ echo " NẾU HỆ THỐNG KHÔNG PHẢN HỒI, VUI LÒNG KHỞI ĐỘNG LẠI"
 }
 
 print_menu(){
-hasMagisk=false
-[ "$(which magisk)" ] && [ "$(magisk -v)" ] && hasMagisk=true
 pd gray  "=============================================="
 echo "   Magisk on Android x86"
 echo "   by HuskyDG"
@@ -364,8 +371,8 @@ p none "[CHỌN]: "
 }
 
 blissos_open_menu(){
-echo "- Nếu bạn đang sử dụng giả lập ${BPURPLE}Bluestacks${RC}"
-echo "Bạn có thể sử dụng ${BGREEN}BSTweaker 6.8.5+${RC} để bật quyền Root"
+echo -e "- Nếu bạn đang sử dụng giả lập ${BPURPLE}Bluestacks${RC}"
+echo -e "Bạn có thể sử dụng ${BGREEN}BSTweaker 6.8.5+${RC} để bật quyền Root"
 
 pd none "- Nếu bạn đang sử dụng ${BPURPLE}Android x86${RC} như BlissOS";
 pd none "Bạn có thể nhấn ${BGREEN}ALT+F1${RC} và gõ dòng lệnh:"
@@ -397,7 +404,7 @@ pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MEmu, 
 echo "  2 - Cài đặt Magisk vào ramdisk.img (systemless)"
 pd gray "      Sử dụng tùy chọn này nếu bạn tìm thấy Ramdisk"
 pd gray "      Không hỗ trợ system-as-root"
-echo "  3 - Cài đặt Magisk bằng GearLock (systemless)"
+echo "  3 - Cài đặt Magisk bằng GearLock (system/systemless)"
 pd gray "      Cần có GearLock, sử dụng GearLock để kích hoạt Magisk"
 pd gray "      Khuyên dùng cho Android x86 project"
 echo "  4 - Cập nhật nhị phân vào trong \"/data\""
@@ -565,8 +572,19 @@ link "liblegacy.so" "legacy.zip"
 link "libbash.so" "menu"
 link "libgxp.so" "gearlock_extension.zip"
 
-CACHEDIR="$DLPATH/tmp"
+CACHEDIR="$priv_dir/cache/$$"
 DISKINFO="/data/adb/diskinfo"
+APKFILE="$JOBPWD/magisk.apk"
+MAGISKCORE="/system/etc/magisk"
+
+busybox_bin(){
+mkdir -p "$DLPATH/bin"
+"$busybox" busybox --install -s "$DLPATH/bin"
+PATH="$DLPATH/bin:$PATH"
+}
+hasMagisk=false
+[ ! -z "$(which magisk)" ] && [ ! -z "$(magisk -v)" ] && hasMagisk=true
+busybox_bin 2>/dev/null
 
 if [ "$AGV1" == "option" ] && [ "$AGV2" == "help" ]; then
 help; exit
@@ -577,21 +595,27 @@ if [ "$USER_ID" != "0" ]; then
     read ROOT
     if [ "$ROOT" == "Y" -o "$ROOT" == "y" ]; then
         pd yellow "$text_obtain_root..."
-        ( su -c "$cmds" || /system/xbin/su -c "$cmds" || /system/bin/su -c "$cmds" || /sbin/su -c "$cmds" ) 2>/dev/null
+        ( for su in su /sbin/su /system/bin/su /systen/xbin/su; do
+$su -c "$busybox" sh -o standalone "$SCRIPT" "$AGV1" "$AGV2" "$AGV3" "$AGV4" "$AGV5";
+[ "$?" == 0 ] && break
+done ) 2>/dev/null
         ERR_CODE="$?"
         if [ "$ERR_CODE" != 0 ]; then
             
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
             pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
-            read
+            
         fi
         exit
     elif ! [ "$ROOT" == "N" -o "$ROOT" == "n" ]; then
     exit 0
     fi
 fi
-while true; do main; done
+ls /sdcard/ &>/dev/null || abortc light_red "$text_grant_inter_access_permission"
+while true; do 
+main; 
+done
 }
 
 fi
@@ -617,6 +641,8 @@ umount -l /system/etc/magisk
 umount -l /system/etc/init
 umount -l /system/etc/magisk/*
 umount -l /system/etc/init/* 
+umount -l /magisk
+umount -l /magisk/*
  ) &
 
 # no need to use Magisk's mirror anymore
@@ -632,13 +658,12 @@ SYSTEMROOTDIR="/"
 ARG1="$1"
 JOBPWD="${0%/*}"
 bb=/data/local/tmp/busybox
-APKFILE="$JOBPWD/magisk.apk"
-MAGISKCORE="/system/etc/magisk"
 
 get_tmpdir(){
 
 TMPDIR="$CACHEDIR"
 [ "$USER_ID" == "0" ] && TMPDIR=/dev/tmp
+
 }
 get_tmpdir
 
@@ -651,26 +676,15 @@ exit "$ERR_CODE"
 
 
 
-bb="$DLPATH/busybox"
+
+
 gxp_template="$DLPATH/gearlock_extension.zip"
-
-busybox_bin(){
-
-mkdir -p "$DLPATH/bin"
-"$bb" --install -s "$DLPATH/bin"
-PATH="$DLPATH/bin:$PATH"
-rm -rf "$DLPATH/disable"
-
-
-}
-
-busybox_bin 2>/dev/null
 
 unshare_environment(){
 if [ ! "$UNSHARE_MM" == "1" ]; then
 export UNSHARE_MM=1
 export ASH_STANDALONE=1
-"$bb" unshare -m sh -c "$cmds"
+"$busybox" unshare -m "$busybox" sh -o standalone "$SCRIPT" "$AGV1" "$AGV2" "$AGV3" "$AGV4" "$AGV5"
 exit
 fi
 }
@@ -1176,7 +1190,6 @@ mkdir -p "$TMPDIR/magisk"
 mkdir -p "$TMPDIR/magisktool"
  
 
-
 unzip -oj "$APKFILE" "lib/$ABI/*" -d "$TMPDIR/magisk" &>/dev/null
 chmod -R 777 "$TMPDIR/magisk"
 ln -s "./libmagiskinit.so" "$TMPDIR/magisk/magiskinit"
@@ -1198,14 +1211,14 @@ done
 ( cd "$TMPDIR/magisk"
 for file in lib*.so; do
   chmod 755 $file
-  mv "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
+  cp -f "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
 done
 
 if [ "$IS64BIT" == "true" ]; then
 cd "$TMPDIR/magisk32"
 for file in lib*.so; do
   chmod 755 $file
-  [ ! -f "$MAGISKCORE/${file:3:${#file}-6}" ] && mv "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
+  [ ! -f "$MAGISKCORE/${file:3:${#file}-6}" ] && cp -f "$file" "$MAGISKCORE/${file:3:${#file}-6}" && echo "  add magisk binary: ${file:3:${#file}-6}"
 done
 
 fi
@@ -1283,8 +1296,10 @@ unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
 MAGISK_VER=""
 MAGISK_VER_CODE=""
 [ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
-( . $TMPDIR/util_functions.sh
-pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)" )
+MAGISK_VERINFO="$( . $TMPDIR/util_functions.sh; echo "$MAGISK_VER $MAGISK_VER_CODE"; )"
+MAGISK_VER="$(echo "$MAGISK_VERINFO" | awk '{ print $1 }')"
+MAGISK_VER_CODE="$(echo "$MAGISK_VERINFO" | awk '{ print $2 }')"
+pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
 }
 
 patch_ramdisk(){
@@ -1389,15 +1404,7 @@ rm -rf /data/.magisk_binary
 mkdir -p /data/.magisk_binary
 rm -rf "$TMPDIR"
 mkdir -p "$TMPDIR"
-[ ! -f "$APKFILE" ] && abortc light_red "! Magisk APK does not exist"
-
-unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$TMPDIR" &>/dev/null
-
-MAGISK_VER=""
-MAGISK_VER_CODE=""
-[ -f "$TMPDIR/util_functions.sh" ] || abortc light_red "This apk is not Magisk app" 2
-. $TMPDIR/util_functions.sh
-pd green "** Magisk version: $MAGISK_VER ($MAGISK_VER_CODE)"
+check_magisk_apk
 
 ( MAGISKCORE="/data/.magisk_binary"; extract_magisk_apk
 mkdir -p $MAGISKBIN 2>/dev/null
@@ -1407,18 +1414,91 @@ mkdir $POSTFSDATAD 2>/dev/null
 mkdir $SERVICED 2>/dev/null )
 
 chmod -R 750 /data/.magisk_binary
+clean_flash
 
 }
+
+extension_info(){
+cat <<EOF
+#######################################################################################################
+#####=============================== Package/Extension Information ===============================#####
+NAME="Magisk_extension" #Package/Extension Name
+
+TYPE="Extension" #Specify (Package / Extension)
+
+AUTHOR="HuskyDG" #Your name as the Developer/Owner/Packer
+
+VERSION="$MAGISK_VER" #Specify the Version of this package/extension
+
+SHORTDESC="An extension to provide Magisk for Android x86" #Provide a short description about this package/extension
+
+C_EXTNAME="Magisk_extension" #For Specifing a custom name for your extension script (\$NAME is used if not defined)
+#######################################################################################################
+######=============================== Package/Extension Functions ===============================######
+
+REQSYNC="yes" #Require Sync (Deafult - yes)
+
+REQREBOOT="no" #(Deafult - no) Use if your package/extension modifies any major system file
+
+GEN_UNINS="yes" #(Deafult - yes) If you want GearLock to generate a uninstallation script itself
+
+SHOW_PROG="yes" #(Default - yes) Whether to show extraction progress while loading the pkg/extension
+
+DEF_HEADER="yes" #(Default -yes) Whether to use the default header which print's the info during zygote
+
+######=============================== Package/Extension Functions ===============================######
+#######################################################################################################
+EOF
+}
+
+extension_unins(){
+cat <<EOF
+
+
+GEARHOME="\$GHOME"
+GEARBOOT="\$GEARHOME/gearboot/overlay/rusty-magisk/init"
+
+rm -rf "\$GEARBOOT" 2>/dev/null
+rm -rf "\$GEARHOME/.local/magisk" 2>/dev/null
+rm -rf \$GEARHOME/unins/Magisk_* 2>/dev/null
+rm -rf \\
+/cache/*magisk* /cache/unblock /data/*magisk* /data/cache/*magisk* /data/property/*magisk* \\
+/data/Magisk.apk /data/busybox /data/custom_ramdisk_patch.sh /data/adb/*magisk* \\
+/data/adb/post-fs-data.d /data/adb/service.d /data/adb/modules* \\
+/data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk /data/.magisk_binary /magisk \\
+/data/ghome/unins/Magisk_* /system/ghome/unins/Magisk_*
+
+
+
+EOF
+}
+
 
 install_magisk_gearlock(){
 echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
-[ ! -d "$GEARHOME" ] && abortc light_red "$text_install_gearlock !"
+SYSTEMLESS=true
+gearlock_var
+if [ -d "$GEARHOME" ]; then
+true # stub
+elif [ -d "/system/ghome" ]; then
+GEARHOME="/system/ghome"
+SYSTEMLESS=false
+else
+abortc light_red "$text_install_gearlock !"
+fi
+echo "- GearLock Home: $GEARHOME"
+$SYSTEMLESS && echo "- Systemless mode!"
 mkdir -p "$GEARBOOT"
 GEARLOCK=true
+mkdir -p "$TMPDIR"
 first_setup
-mkdir -p "$MAGISKCORE"
+rm -rf $GEARHOME/unins/Magisk_* 2>/dev/null
+echo "$(extension_info)
+do_unins_custom(){
+$(extension_uninstall)
+}">"$GEARHOME/unins/Magisk_extension_$MAGISK_VER"
 setup_magisk_env
 echo "- $text_install Magisk loader..."
 rm -rf $MAGISKCORE/overlay.sh
@@ -1460,25 +1540,18 @@ pd light_red "$text_tell_remove_rusty_magisk"
 magisk_loader 3
 fi
 echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
-
+rm -rf "$MAGISKCORE"
+mkdir -p "$MAGISKCORE"
 }
 
 
 
 setup_magisk_env(){
 
-
-api_level_arch_detect
-
 echo "- $text_extract_magisk_apk"
 
 extract_magisk_apk
 
-mkdir -p $MAGISKBIN 2>/dev/null
-unzip -oj "$APKFILE" 'assets/*' -x 'assets/chromeos/*' -d $MAGISKBIN &>/dev/null
-mkdir $NVBASE/modules 2>/dev/null
-mkdir $POSTFSDATAD 2>/dev/null
-mkdir $SERVICED 2>/dev/null
 }
 
 
@@ -1490,7 +1563,7 @@ echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
 get_tmpdir
-MAGISKBASE="$GEARHOME/.local/magisk"
+MAGISKBASE="PLACEHOLDER_MAGISKBASE"
 MAGISKCORE="$TMPDIR/gxp/gearlock/magisk"
 rm -rf "$TMPDIR"
 mkdir -p "$MAGISKCORE"
@@ -1506,12 +1579,14 @@ rm -rf "$TMPDIR/gxp/gearlock/magisk.rc"
 echo "$magiskloader" >"$TMPDIR/gxp/gearlock/magisk.rc"
 rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
+extension_info > "$TMPDIR/gxp/!zygote.sh"
+extension_unins >"$TMPDIR/gxp/uninstall.sh"
 echo "- $text_building_gxp"
 cd "$TMPDIR/gxp" || abortc light_red "$text_cannot_install_magisk"
 libzip.so -r "$TMPDIR/gxp.zip" "./" &>/dev/null
 [ ! -d "/sdcard/Magisk" ] && rm -rf "/sdcard/Magisk"
 mkdir -p "/sdcard/Magisk"
-EXTENSION_ZIP="/sdcard/Magisk/magisk-extension-$RANDOM$RANDOM.gxp"
+EXTENSION_ZIP="/sdcard/Magisk/magisk-extension-$MAGISK_VER.gxp"
 rm -rf "$EXTENSION_ZIP"
 cp "$TMPDIR/gxp.zip" "$EXTENSION_ZIP"
 echo "- $text_saved_magisk_gxp_to"
@@ -1587,36 +1662,66 @@ echo "******************************"
 echo "      Magisk uninstaller"
 echo "******************************"
 need_root_access
+FOUND_MAGISK=false
+SYSTEMLESS=true
+FILE_LIST1="
+/data/ghome/gearboot/overlay/rusty-magisk/init
+/data/ghome/.local/magisk
+"
 
-[ ! -d "/system/etc/magisk" ] && [ ! -d "/magisk" ] && [ ! -d "$GEARBOOT/init.superuser.rc" ] && abortc light_red "$text_uninstall_fail"
+for file in $FILE_LIST1; do
+test -d $file && FOUND_MAGISK=true
+done
+
+FILE_LIST2="
+/system/ghome/gearboot/overlay/rusty-magisk/init
+/system/ghome/.local/magisk
+/magisk
+/system/etc/magisk
+"
+
+for file in $FILE_LIST2; do
+test -d $file && FOUND_MAGISK=true && SYSTEMLESS=false
+done
+
+$FOUND_MAGISK || abortc light_red "$text_uninstall_fail"
+
+if [ "$SYSTEMLESS" == "false" ]; then
+echo "- $text_mount_rw_system"
+mount_rw_system
+$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 
 MAGISKCOREDIR=/magisk
 [ ! -d "/magisk" ] && MAGISKCOREDIR=/system/etc/magisk
 
 rm -rf "$MAGISKCOREDIR/.rw" 2>/dev/null
-touch "$MAGISKCOREDIR/.rw" 2>/dev/null  || abortc light_red "$text_cannot_uninstall_magisk"
+touch "$MAGISKCOREDIR/.rw" 2>/dev/null  || abortc light_red "$text_system_not_writeable"
 rm -rf "$MAGISKCOREDIR/.rw" 2>/dev/null
 
+fi
 
-echo "- $text_mount_rw_system"
-mount_rw_system
-$IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
-echo "- Remove Magisk..."
-for fun in /system/etc/magisk /system/etc/init/magisk.rc $GEARBOOT $GEARHOME/.local/bin/rusty-magisk $GEARHOME/.local/magisk; do
+echo "- $text_uninstalling_magisk..."
+
+for fun in $FILE_LIST1 $FILE_LIST2 /system/etc/init/magisk.rc; do
 rm -rf "$fun"
 done
+
 ADDOND=/system/addon.d/99-magisk.sh
 if [ -f $ADDOND ]; then
   rm -f "/$ADDOND"
 fi
-echo "- $text_mount_ro_system"
-mount_ro_system
 echo "- $text_rm_magisk_files"
 rm -rf \
 /cache/*magisk* /cache/unblock /data/*magisk* /data/cache/*magisk* /data/property/*magisk* \
 /data/Magisk.apk /data/busybox /data/custom_ramdisk_patch.sh /data/adb/*magisk* \
 /data/adb/post-fs-data.d /data/adb/service.d /data/adb/modules* \
-/data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk /data/.magisk_binary /magisk
+/data/unencrypted/magisk /metadata/magisk /persist/magisk /mnt/vendor/persist/magisk /data/.magisk_binary /magisk \
+/data/ghome/unins/Magisk_* /system/ghome/unins/Magisk_*
+
+if [ "$SYSTEMLESS" == "false" ]; then
+echo "- $text_mount_ro_system"
+mount_ro_system
+fi
 cd /
   echo "********************************************"
   warn_reboot
