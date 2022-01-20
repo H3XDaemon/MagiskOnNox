@@ -12,12 +12,13 @@ SCRIPT="$0"
 AGV1="$1"
 AGV2="$2"
 AGV3="$3"
-MYSCRIPT="$(realpath "$0")" 2>/dev/null
+export MYSCRIPT="$(realpath "$0")" 2>/dev/null
 if [ "$MYSCRIPT" ]; then
-MYPATH="${MYSCRIPT%/*}"
-PATH="$MYPATH:$PATH"
+export MYPATH="${MYSCRIPT%/*}"
 cmds="$SCRIPT $AGVARR"
 fi
+priv_dir=/data/data/io.github.huskydg.magiskonnox
+
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -44,23 +45,55 @@ echo -en "$code$TEXT$end_code"
 }
 
 
+
 RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
 
 pd(){
 p "$1" "$2"; echo
 }
 
-inmagisk(){
-libbash.so option "$@" 2>/dev/null
+DLPATH="$priv_dir/magisk"
+
+export OLDPATH="$PATH"
+export busybox="MYPATH/libbusybox.so"
+
+
+( cd "$priv_dir"
+
+if [ ! -d "$DLPATH" ]; then
+rm -rf "$DLPATH" 2>/dev/null
+mkdir -p "$DLPATH" 2>/dev/null
+fi
+
+
+
+link(){ (
+agv1="$1"; agv2="$2"
+[ ! -f "$DLPATH/$agv2" ] && rm -rf "$DLPATH/$agv2" 2>/dev/null
+ln -s "$(which "$agv1")" "$DLPATH/$agv2" 2>/dev/null
+) }
+
+link "libapp.so" "magisk.apk"
+link "libbusybox.so" "busybox"
+link "liblegacy.so" "legacy.zip"
+link "libbash.so" "menu"
+link "libgxp.so" "gearlock_extension.zip"
+
+busybox_bin(){
+mkdir -p "$DLPATH/bin"
+"$busybox" busybox --install -s "$DLPATH/bin"
 }
 
-menu(){
-inmagisk "$@" 2>/dev/null
-}
+busybox_bin 2>/dev/null
 
-m(){
-inmagisk "$@" 2>/dev/null
-}
+ )
+
+export PATH="$DLPATH/bin:$DLPATH:$PATH"
+
+export MENU="$MYPATH/libbash.so"
+
+alias inmagisk='"$DLPATH/busybox" sh -o standalone "$DLPATH/menu" option "$@"'
+alias m='inmagisk "$@"'
 
 
 magiskhide(){ (

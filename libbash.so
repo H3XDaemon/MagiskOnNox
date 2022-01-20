@@ -586,33 +586,30 @@ hasMagisk=false
 [ ! -z "$(which magisk)" ] && [ ! -z "$(magisk -v)" ] && hasMagisk=true
 busybox_bin 2>/dev/null
 
+
+open_main(){
 if [ "$AGV1" == "option" ] && [ "$AGV2" == "help" ]; then
 help; exit
 fi
-open_main(){
 if [ "$USER_ID" != "0" ]; then
     p none "$text_run_with_root ? <Y/n> "
     read ROOT
     if [ "$ROOT" == "Y" -o "$ROOT" == "y" ]; then
+    export UNSHARE_MM=0
+    export ASH_STANDALONE=1
         pd yellow "$text_obtain_root..."
-        ( for su in su /sbin/su /system/bin/su /systen/xbin/su; do
-$su -c "$busybox" sh -o standalone "$SCRIPT" "$AGV1" "$AGV2" "$AGV3" "$AGV4" "$AGV5";
-[ "$?" == 0 ] && break
-done ) 2>/dev/null
+        ( su -c "$cmds" || /system/xbin/su -c "$cmds" || /system/bin/su -c "$cmds" || /sbin/su -c "$cmds" ) 2>/dev/null
         ERR_CODE="$?"
         if [ "$ERR_CODE" != 0 ]; then
             
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
             pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
-            
+            read
         fi
         exit
-    elif ! [ "$ROOT" == "N" -o "$ROOT" == "n" ]; then
-    exit 0
     fi
 fi
-ls /sdcard/ &>/dev/null || abortc light_red "$text_grant_inter_access_permission"
 while true; do 
 main; 
 done
@@ -1591,7 +1588,7 @@ libzip.so -r "$TMPDIR/gxp.zip" "./" &>/dev/null
 mkdir -p "/sdcard/Magisk"
 EXTENSION_ZIP="/sdcard/Magisk/magisk-extension-$MAGISK_VER.gxp"
 rm -rf "$EXTENSION_ZIP"
-cp "$TMPDIR/gxp.zip" "$EXTENSION_ZIP"
+cp "$TMPDIR/gxp.zip" "$EXTENSION_ZIP" || abortc light_red "$text_grant_inter_access_permission"
 echo "- $text_saved_magisk_gxp_to"
 echo "  $EXTENSION_ZIP"
 clean_flash
