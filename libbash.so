@@ -933,12 +933,13 @@ mkdir /data/adb/\$mdir 2>/dev/null
 done
 
 for file in magisk32 magisk64 magiskinit; do
-  chmod 755 ./\$file
   TEXT_LOG=\"add \$MAGISKTMP/\$file\"
   cp -af ./\$file \$MAGISKTMP/\$file 2>/dev/null
+  chmod 755 \$MAGISKTMP/\$file
 write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
   TEXT_LOG=\"add \$MAGISKBIN/\$file\"
   cp -af ./\$file \$MAGISKBIN/\$file 2>/dev/null
+  chmod 755 \$MAGISKBIN/\$file
 write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
