@@ -907,6 +907,9 @@ fi
 count=0
 ( /sbin/magisk --stop ) &
 
+umount -l /init.rc
+umount -l /system/etc/init/hw/init.rc
+
 until ! mount | grep -q \" /sbin \"; do
 [ "$count" -gt "10" ] && break
 umount -l /sbin 2>/dev/null
@@ -1442,8 +1445,9 @@ cat <<EOF
 
 
 GEARHOME="\$GHOME"
-GEARBOOT="\$GEARHOME/gearboot/overlay/rusty-magisk/init"
+GEARBOOT="\$GEARHOME/gearboot/overlay/magisk"
 
+rm -rf "\$GEARHOME/gearboot/overlay/rusty-magisk"
 rm -rf "\$GEARBOOT" 2>/dev/null
 rm -rf "\$GEARHOME/.local/magisk" 2>/dev/null
 rm -rf \$GEARHOME/unins/Magisk_* 2>/dev/null
@@ -1654,7 +1658,8 @@ need_root_access
 FOUND_MAGISK=false
 SYSTEMLESS=true
 FILE_LIST1="
-/data/ghome/gearboot/overlay/rusty-magisk/init
+/data/ghome/gearboot/overlay/magisk
+/data/ghome/gearboot/overlay/rusty-magisk
 /data/ghome/.local/magisk
 "
 
@@ -1663,7 +1668,8 @@ test -d $file && FOUND_MAGISK=true
 done
 
 FILE_LIST2="
-/system/ghome/gearboot/overlay/rusty-magisk/init
+/system/ghome/gearboot/overlay/rusty-magisk
+/system/ghome/gearboot/overlay/magisk
 /system/ghome/.local/magisk
 /magisk
 /system/etc/magisk
@@ -1811,7 +1817,6 @@ if [ -e /system/bin/su -o -e /system/xbin/su ]; then
   rm -rf /system/bin/su /system/xbin/su;
 fi;
 
-umount -l /system
 echo "- $text_mount_ro_system"
 mount_ro_system
 }
