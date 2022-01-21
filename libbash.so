@@ -40,11 +40,6 @@ if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; th
 SYSTEM_AS_ROOT=false
 fi
 
-gearlock_var(){
-GEARHOME="/data/ghome"
-GEARBOOT="$GEARHOME/gearboot/overlay/rusty-magisk/init"
-}
-
 magisk_name="magisk32"
 [ "$IS64BIT" == true ] && magisk_name="magisk64"
 
@@ -1471,7 +1466,7 @@ echo "******************************"
 echo "      Magisk installer"
 echo "******************************"
 SYSTEMLESS=true
-gearlock_var
+GEARHOME=/data/ghome
 if [ -d "$GEARHOME" ]; then
 true # stub
 elif [ -d "/system/ghome" ]; then
@@ -1480,13 +1475,27 @@ SYSTEMLESS=false
 else
 abortc light_red "$text_install_gearlock !"
 fi
+GEARBOOT="$GEARHOME/gearboot/overlay/magisk/init"
 echo "- GearLock Home: $GEARHOME"
 $SYSTEMLESS && echo "- Systemless mode!"
-mkdir -p "$GEARBOOT"
 GEARLOCK=true
 mkdir -p "$TMPDIR"
+INITRC=/init.rc
+INITRC2=/system/etc/init/hw/init.rc
+rm -rf "$GEARHOME/gearboot/overlay/rusty-magisk"
+GEAR_INITDIR="$GEARBOOT"
+if [ ! -f "$INITRC" ]; then
+# Android 11 new init.rc
+INITRC="$INITRC2"
+GEAR_INITDIR="$GEARBOOT/system/etc/init/hw"
+fi
+NEW_INITRC="$GEAR_INITDIR/init.rc"
+rm -rf "$GEARBOOT"
+mkdir -p "$GEAR_INITDIR"
 first_setup
 rm -rf $GEARHOME/unins/Magisk_* 2>/dev/null
+
+
 echo "$(extension_info)
 
 do_unins_custom(){
@@ -1496,8 +1505,9 @@ setup_magisk_env
 echo "- $text_install Magisk loader..."
 rm -rf $MAGISKCORE/overlay.sh
 echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
-rm -rf "$GEARBOOT/init.superuser.rc"
-echo "$magiskloader" >"$GEARBOOT/init.superuser.rc"
+touch "$GEARBOOT/init.superuser.rc"
+cp "$INITRC" "$NEW_INITRC"
+echo "$magiskloader" >>"$NEW_INITRC"
 rm -rf "$MAGISKCORE/loadpolicy.sh"
 echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 clean_flash
