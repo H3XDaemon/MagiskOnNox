@@ -182,9 +182,7 @@ echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
 echo "  3 - Install Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
-echo "  4 - Fix Bluestacks cannot load modules"
-pd gray "      Fix the incorrect Bluestacks system that breaks Magisk modules"
-echo "  5 - Remove all other root methods"
+echo "  4 - Remove all other root methods"
 pd gray "      Only use if you cannot find Disable root option"
 echo "----------"
 echo " 0 - Exit menu"
@@ -345,9 +343,7 @@ echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
 echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
-echo "  4 - Sửa Bluestacks không thể tải các mô-đun"
-pd gray "      Sửa hệ thống Bluestacks lỗi gây hỏng mô-đun Magisk"
-echo "  5 - Loại bỏ các phương pháp ROOT khác"
+echo "  4 - Loại bỏ các phương pháp ROOT khác"
 pd gray "      Chỉ sử dụng khi bạn không tìm thấy tùy chọn để tắt Root"
 echo "----------"
 echo " 0 - Thoát khỏi menu"
@@ -764,9 +760,9 @@ esac
 
 LOAD_MODULES_POLICY="for module in \$(ls /data/adb/modules); do
               if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
-                  TEXT_LOG=\"\$module: load sepolicy rules\"
+                  
                   $MAGISKTMP/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
-                  write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
+                  
               fi
           done"
 
@@ -782,8 +778,6 @@ RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
               rm /data/ghome/.local/bin/rusty-magisk"
 
 if [ "$MINIMAL_MAGISK" == "true" ]; then
-LOG_MAGISK="
-true; write_log \"Minimal Magisk: Only MagiskSU and MagiskHide!\""
 LOAD_MODULES_POLICY=""
 ADD_FORCE_MAGISKHIDE="mkdir -p $MAGISKTMP/.magisk/modules
 mkdir -p /data/adb/modules_minimal/force_magiskhide
@@ -811,33 +805,19 @@ overlay_loader="#!$MAGISKBASE/busybox sh
 
 export PATH=/sbin:/system/bin:/system/xbin
 
-MAIN_JOB=\$\$
 rm -rf /data/local/tmp/magisk.log.bak
 mv -f /data/local/tmp/magisk.log /data/local/tmp/magisk.log.bak
 
-echo \"--------- beginning of overlay $OVERLAYVER \" >/data/local/tmp/magisk.log
+echo -n "" >/data/local/tmp/magisk.log
 
 chmod 664 /data/local/tmp/magisk.log
 
-write_log(){
-ERR_CODE=\$?
-NOERR_TEXT=\"\$1\"
-ERR_TEXT=\"\$2\"
-ERR_CHAR=I
-TEXT=\"\$NOERR_TEXT\"
-if [ \"\$ERR_CODE\" != 0 ]; then
-ERR_CHAR=E; TEXT=\"\$ERR_TEXT\"
-fi
-CURRENT_JOB=\$\$
-echo \"\$(date +%m-%d\\ %T.%3N)  \$MAIN_JOB  \$CURRENT_JOB \$ERR_CHAR : \$TEXT \" >>/data/local/tmp/magisk.log
-}
 
 mnt_tmpfs(){ (
 # MOUNT TMPFS ON A DIRECTORY
 MOUNTPOINT=\"\$1\"
 mkdir -p \"\$MOUNTPOINT\"
 mount -t tmpfs -o \"mode=0755\" tmpfs \"\$MOUNTPOINT\" 2>/dev/null
-write_log \"mount : tmpfs -> \$MOUNTPOINT\" \"mount : tmpfs -> \$MOUNTPOINT failed with \$?\" 
 ) }
 
 
@@ -848,15 +828,12 @@ FROM=\"\$1\"; TO=\"\$2\"
 if [ -L \"\$FROM\" ]; then
 SOFTLN=\"\$(readlink \"\$FROM\")\"
 ln -s \"\$SOFTLN\" \"\$TO\"
-write_log \"link : \$FROM -> \$TO\" \"link : \$FROM -> \$TO failed with \$?\" 
 elif [ -d \"\$FROM\" ]; then
 mkdir -p \"\$TO\" 2>/dev/null
 mount --bind \"\$FROM\" \"\$TO\"
-write_log \"mnt_bind : \$FROM -> \$TO\" \"mnt_bind : \$FROM -> \$TO failed with \$?\" 
 else
 echo -n 2>/dev/null >\"\$TO\"
 mount --bind \"\$FROM\" \"\$TO\"
-write_log \"mnt_bind : \$FROM -> \$TO\" \"mnt_bind : \$FROM -> \$TO failed with \$?\" 
 fi
 ) }
 
@@ -908,7 +885,6 @@ umount -l /system/etc/init/hw/init.rc
 until ! mount | grep -q \" /sbin \"; do
 [ "$count" -gt "10" ] && break
 umount -l /sbin 2>/dev/null
-write_log \"umount : /sbin\" \"umount /sbin failed with \$?\" 
 sleep 0.1
 count=$(($count+1))
 test ! -d /sbin && break
@@ -925,22 +901,18 @@ cd $MAGISKBASE
 $CDMAGISKUPDATE
 MAGISKTMP=$MAGISKTMP
 MAGISKBIN=/data/adb/magisk
-TEXT_LOG=\"mkdir \$MAGISKBIN\"
 mkdir -p \$MAGISKBIN 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 for mdir in modules post-fs-data.d service.d; do
+test ! -d /data/adb/\$mdir && rm -rf /data/adb/\$mdir
 mkdir /data/adb/\$mdir 2>/dev/null
 done
 
 for file in magisk32 magisk64 magiskinit; do
-  TEXT_LOG=\"add \$MAGISKTMP/\$file\"
   cp -af ./\$file \$MAGISKTMP/\$file 2>/dev/null
   chmod 755 \$MAGISKTMP/\$file
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
   TEXT_LOG=\"add \$MAGISKBIN/\$file\"
   cp -af ./\$file \$MAGISKBIN/\$file 2>/dev/null
   chmod 755 \$MAGISKBIN/\$file
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
@@ -972,21 +944,11 @@ magisk_name=\"magisk32\"
 [ \"\$IS64BIT\" == true ] && magisk_name=\"magisk64\"
 
 
-TEXT_LOG=\"link ./\$magisk_name -> \$MAGISKTMP/magisk\"
 ln -s ./\$magisk_name \$MAGISKTMP/magisk 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
-TEXT_LOG=\"link ./magisk -> \$MAGISKTMP/su\"
 ln -s ./magisk \$MAGISKTMP/su 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
-TEXT_LOG=\"link ./magisk -> \$MAGISKTMP/resetprop\"
 ln -s ./magisk \$MAGISKTMP/resetprop 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
-TEXT_LOG=\"link ./magisk -> \$MAGISKTMP/magiskhide\"
 ln -s ./magisk \$MAGISKTMP/magiskhide 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
-TEXT_LOG=\"link ./magiskinit -> \$MAGISKTMP/magiskpolicy\"
 ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
-write_log \"\$TEXT_LOG\" \"\$TEXT_LOG failed with \$?\" 
 
 mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
@@ -996,7 +958,6 @@ $ADD_FORCE_MAGISKHIDE
 cd \$MAGISKTMP
 # SELinux stuffs
 ln -sf ./magiskinit magiskpolicy
-TEXT_LOG=\"magiskpolicy: patch selinux rules to allow magisk daemon\"
 if [ -f /vendor/etc/selinux/precompiled_sepolicy ]; then
   ./magiskpolicy --load /vendor/etc/selinux/precompiled_sepolicy --live --magisk 2>&1
 elif [ -f /sepolicy ]; then
@@ -1004,8 +965,6 @@ elif [ -f /sepolicy ]; then
 else
   ./magiskpolicy --live --magisk 2>&1
 fi
-write_log \"\$TEXT_LOG\" \"magiskpolicy: patch selinux rules failed with \$?\" 
-$LOG_MAGISK
 
 #remount system read-only
 $remove_backup
@@ -1014,6 +973,22 @@ mount -o ro,remount /system
 mount -o ro,remount /vendor
 mount -o ro,remount /product
 mount -o ro,remount /system_ext
+
+restorecon -R /data/adb/magisk
+
+( 
+echo \"
+MIRROR_SYSTEM=\\\"\$MAGISKTMP/.magisk/mirror/system\\\"
+test ! -d \\\"\\\$MIRROR_SYSTEM/android/system\\\" && exit
+test \\\"\\\$(cd /system; ls)\\\" == \\\"\\\$(cd \\\"\\\$MIRROR_SYSTEM\\\"; ls)\\\" && exit
+mount --bind \\\"\\\$MIRROR_SYSTEM/android/system\\\" \\\"\\\$MIRROR_SYSTEM\\\"
+\" >/data/adb/post-fs-data.d/bluestacks_fix.sh
+chmod 755 /data/adb/post-fs-data.d/bluestacks_fix.sh
+ )
+
+$LOAD_MODULES_POLICY
+
+
 touch /dev/.overlay_unblock
 UID_MYAPP=\$(ls -ld \"$priv_dir\" | awk '{ print \$3 }') || UID_MYAPP=root
 chown \$UID_MYAPP:\$UID_MYAPP /data/.magisk_binary
@@ -1024,6 +999,7 @@ echo -n >/dev/.magisk_unblock
 }
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
+test ! \"\$(\$MAGISKTMP/magisk -v)\" && exit_magisk
 
 ( while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
   do
@@ -1032,7 +1008,6 @@ echo -n >/dev/.magisk_unblock
 
 echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
 cat /cache/magisk.log >>/data/local/tmp/magisk.log
-cat /data/local/tmp/magisk.log >/cache/magisk.log 
 $FORCE_MAGISKHIDE
 # hide magisk modify init.rc
 sleep 3
@@ -1047,27 +1022,7 @@ $MAGISKTMP/resetprop --delete init.svc.$magisk_overlay ) &
 
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
-
-MAIN_JOB=\$\$
-
-write_log(){
-ERR_CODE=\$?
-NOERR_TEXT=\"\$1\"
-ERR_TEXT=\"\$2\"
-ERR_CHAR=I
-TEXT=\"\$NOERR_TEXT\"
-if [ \"\$ERR_CODE\" != 0 ]; then
-ERR_CHAR=E; TEXT=\"\$ERR_TEXT\"
-fi
-CURRENT_JOB=\$\$
-echo \"\$(date +%m-%d\\ %T.%3N)   \$MAIN_JOB   \$CURRENT_JOB \$ERR_CHAR : \$TEXT \" >>/data/local/tmp/magisk.log
-}
-
-
-          restorecon -R /data/adb/magisk
-          $LOAD_MODULES_POLICY
-
-"
+#stub"
 
 
 magiskloader="
@@ -2248,9 +2203,6 @@ case $option in
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
     ;;
 4)
-    (need_root_access; bluestacks_fix)
-    ;;
-5)
     (need_root_access; unsu)
     ;;
 0)
