@@ -114,6 +114,7 @@ text_system_not_writeable="System is not writeable! Cannot completely uninstall.
 text_grant_inter_access_permission="Please grant app the permission to access Internal Storage"
 text_select_magisk_app="Select Magisk version you want to install"
 text_guide_rm_magisk_app="Type \"rm\" with a number to delete target version"
+text_ask_keep_modules="Do you want to preserve modules (Only remove)?"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -251,6 +252,7 @@ text_press_enter_menu="NHẤN ENTER ĐỂ TRỞ VỀ MENU"
 text_cannot_mm="Không thể cài đặt hoặc ứng dụng đã được cài đặt"
 text_success_mm="Cài đặt thành công!"
 text_warn_uninstall_magisk="Bạn có muốn gỡ cài đặt Magisk?"
+text_ask_keep_modules="Bạn có muốn giữ lại các mô-đun không (Chỉ gỡ Magisk)?"
 text_done="Đã xong!"
 text_saved_magisk_apk_to="Đã lưu Magisk APK vào"
 text_mount_rw_system="Gắn kết phân vùng system (Đọc-ghi)"
@@ -1619,6 +1621,8 @@ for fun in $FILE_LIST1 $FILE_LIST2 /system/etc/init/magisk.rc; do
 rm -rf "$fun"
 done
 
+if $REMOVE_MAGISK_DATA; then
+
 ADDOND=/system/addon.d/99-magisk.sh
 if [ -f $ADDOND ]; then
   rm -f "/$ADDOND"
@@ -1639,6 +1643,7 @@ cd /
   echo "********************************************"
   warn_reboot
   echo "********************************************"
+fi
 (sleep 8; /system/bin/reboot)&
 echo "- $text_done"
 
@@ -1968,12 +1973,16 @@ echo -n "[$text_choice]: "
 read c
 case "$c" in
 1)
-   p none "$text_warn_uninstall_magisk <Y/n> "
+   ( need_root_access; p none "$text_warn_uninstall_magisk <Y/n> "
     read uni
     if [ "$uni" == "y" -o "$uni" == "Y" ]; then
+    p none "$text_ask_keep_modules <Y/n> "
+    REMOVE_MAGISK_DATA=true
+    read uni2
+    [ "$uni2" == "y" -o "$uni2" == "Y" ] && REMOVE_MAGISK_DATA=false
     clear
-    ( uninstall_magisk )
-    fi
+    uninstall_magisk
+    fi )
    ;;
 2)
    unpatch_ramdisk_method
@@ -2158,14 +2167,14 @@ echo "----------"
 echo "     0]. Exit here"
 echo "$text_guide_rm_magisk_app"
 echo -n "[$text_choice]: "
-read -r c
-if [ "$c" == 0 ]; then
+read -r capk
+if [ "$capk" == 0 ]; then
 exit
-elif [ -f "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$c p" 2>/dev/null | cut -d : -f1)" ]; then
-APKFILE="$DLPATH/save/$(echo "$LIST_APK" | sed -n "$c p" 2>/dev/null | cut -d : -f1)"
+elif [ -f "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$capk p" 2>/dev/null | cut -d : -f1)" ]; then
+APKFILE="$DLPATH/save/$(echo "$LIST_APK" | sed -n "$capk p" 2>/dev/null | cut -d : -f1)"
 break
-elif [ "$(echo "$c" | awk '{ print $1 }')" == "rm" ]; then
-rm -rf "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$(echo -n "$c" | awk '{ print $2 }') p" 2>/dev/null | cut -d : -f1)"
+elif [ "$(echo "$capk" | awk '{ print $1 }')" == "rm" ]; then
+rm -rf "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$(echo -n "$capk" | awk '{ print $2 }') p" 2>/dev/null | cut -d : -f1)"
 else
 echo -en "${RED}! $text_wrong_input ...${RC}"; read
 fi
