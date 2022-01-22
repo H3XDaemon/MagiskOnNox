@@ -114,7 +114,7 @@ text_system_not_writeable="System is not writeable! Cannot completely uninstall.
 text_grant_inter_access_permission="Please grant app the permission to access Internal Storage"
 text_select_magisk_app="Select Magisk version you want to install"
 text_guide_rm_magisk_app="Type \"rm\" with a number to delete target version"
-text_ask_keep_modules="Do you want to preserve modules (Only remove)?"
+text_ask_keep_modules="Do you want to preserve modules (Only remove Magisk)?"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
