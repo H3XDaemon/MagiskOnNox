@@ -1,5 +1,5 @@
 #!/system/bin/sh
-AGVARR="$@"; SCRIPT="$0"; AGV1="$1"; AGV2="$2"; AGV3="$3"; AGV4="$4"; AGV5="$5"; exec 2>/dev/null; MYSCRIPT="$(realpath "$0")"; MYPATH="${MYSCRIPT%/*}"; busybox="$MYPATH/libbusybox.so"; PATH="$MYPATH:$PATH"; cmds="$SCRIPT $AGVARR"
+AGVARR="$@"; SCRIPT="$0"; AGV1="$1"; AGV2="$2"; AGV3="$3"; AGV4="$4"; AGV5="$5";  MYSCRIPT="$(realpath "$0")"; MYPATH="${MYSCRIPT%/*}"; busybox="$MYPATH/libbusybox.so"; PATH="$MYPATH:$PATH"; cmds="$SCRIPT $AGVARR"
 
 RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
 
@@ -112,6 +112,8 @@ text_saved_magisk_gxp_to="Saved extension to"
 text_uninstalling_magisk="Uninstall Magisk and its related files"
 text_system_not_writeable="System is not writeable! Cannot completely uninstall."
 text_grant_inter_access_permission="Please grant app the permission to access Internal Storage"
+text_select_magisk_app="Select Magisk version you want to install"
+text_guide_rm_magisk_app="Type \"rm\" with a number to delete target version"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -230,6 +232,7 @@ print_magisk_builds
 pd light_cyan "OFFLINE"
 echo "  a - Alpha 23016"
 echo "  x - Choose and install from another Magisk APK"
+echo "  z - Select downloaded Magisk APK"
 pd green "* Please check my wiki page to select suitable Magisk build"
 p none "[CHOICE]: "
 
@@ -298,8 +301,8 @@ text_saved_magisk_gxp_to="Đã lưu phần mở rộng vào"
 text_uninstalling_magisk="Đang gỡ bỏ Magisk và các tệp liên quan"
 text_system_not_writeable="Hệ thống không thể ghi! Không thể gỡ bỏ hoàn toàn"
 text_grant_inter_access_permission="Vui lòng cung cấp cho ứng dụng quyền truy cập Bộ nhớ trong"
-
-
+text_select_magisk_app="Lựa chọn phiên bản Magisk mà bạn muốn cài đặt"
+text_guide_rm_magisk_app="Gõ \"rm\" với 1 con số để xóa phiên bản tương ứng"
 
 
 print_ramdisk_method(){
@@ -368,6 +371,7 @@ print_magisk_builds
 pd light_cyan "NGOẠI TUYẾN"
 echo "  a - Alpha 23016"
 echo "  x - Chọn và cài đặt từ Magisk APK khác"
+echo "  z - Chọn phiên bản Magisk APK đã tải"
 pd green "* Vui lòng kiểm tra trang wiki của tôi để chọn bản dựng Magisk phù hợp"
 p none "[CHỌN]: "
 
@@ -459,58 +463,6 @@ end_code="\033[0m"
 echo -en "$code$TEXT$end_code"
 }
 
-random(){
-VALUE=$1; TYPE=$2; PICK="$3"; PICKC="$4"
-TMPR=""
-HEX="0123456789abcdef"; HEXC=16
-CHAR="qwertyuiopasdfghjklzxcvbnm"; CHARC=26
-NUM="0123456789"; NUMC=10
-COUNT=$(seq 1 1 $VALUE)
-list_pick=$HEX; C=$HEXC
-[ "$TYPE" == "char" ] &&  list_pick=$CHAR && C=$CHARC 
-[ "$TYPE" == "number" ] && list_pick=$NUM && C=$NUMC 
-[ "$TYPE" == "custom" ] && list_pick="$PICK" && C=$PICKC 
-      for i in $COUNT; do
-          random_pick=$(( $RANDOM % $C))
-          echo -n ${list_pick:$random_pick:1}
-      done
-
-}
-
-
-
-md5code_get(){
-FILE=$1
-if [ -x "$tbox" ]; then
-rawcode=`$tbox md5sum $FILE`
-else
-rawcode=`/system/xbin/busybox md5sum $FILE`
-fi
-for e in $rawcode; do
-echo $e; break
-done
-}
-
-mod_prop(){
-NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
-if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
-touch $FILE 2>/dev/null
-echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>/dev/null
-fi
-}
-
-
-
-del_prop(){
-NAME=$1; FILE="$2"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
-noneprop="$NAME="
-nonepropn="$noneprop\n"
-if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
-sed -i "/${nonepropn}/d" $FILE 2>/dev/null
-sed -i "/${noneprop}/d" $FILE 2>/dev/null
-fi
-}
-
 
 pd(){
 p "$1" "$2"; echo
@@ -538,7 +490,7 @@ rm -rf "$DLPATH" 2>/dev/null
 mkdir -p "$DLPATH" 2>/dev/null
 fi
 
-
+mkdir "$DLPATH/save"
 
 link(){ (
 agv1="$1"; agv2="$2"
@@ -1806,6 +1758,11 @@ mirror_git="https://gh.api.99988866.xyz/"
     [ -f "$DLPATH/app.apk" ] || wget -O "$DLPATH/app.tmp" "$mirror_git$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
     [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
     APKFILE="$DLPATH/app.apk"
+    ( rm -rf "$DLPATH/util_functions.sh"; unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$DLPATH" &>/dev/null
+      . "$DLPATH/util_functions.sh" || exit
+      [ -z "$MAGISK_VER" -o -z "$MAGISK_VER_CODE" ] && exit
+      cp -af "$DLPATH/app.apk" "$DLPATH/save/$MAGISK_VER($MAGISK_VER_CODE)"
+     )
     $install_command "$RAMDISK"
     )
 fi
@@ -1981,6 +1938,11 @@ case $build in
     APKFILE="$custom_magisk_apk"
     [ ! -f "$APKFILE" ] && abortc light_red "Magisk APK does not exist"
     ;;
+"z")
+    install_offline=true
+    list_apk
+    ;;
+
 *)
     install_magisk=false
     ;;
@@ -2083,7 +2045,7 @@ echo " ------- Partition Table -------"
 BLOCKDEVS="$(/system/bin/blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | awk 'NF')"
 #BLOCKDEVS="/dev/block/example"
 echo "$BLOCKDEVS" | nl -s "]. "
-echo "     ENTER 0 TO EXIT TABLE"
+echo "     0]. Exit table"
 IS_MOUNT=false
 while true; do
 echo -ne "+ $text_enter_part >>"
@@ -2107,7 +2069,7 @@ table_ramdisk(){
     echo "------- CHOICE RAMDISK -------:"
     LIST_OS="$(find "$OSROOT"  -mindepth 2 -maxdepth 2 -name "$chkFile" 2>/dev/null)"
     echo "$LIST_OS" | nl -s "]. "
-    echo "     ENTER 0 TO EXIT TABLE"
+    echo "     0]. Exit table"
     while true; do
     echo -ne "$text_enter_ramdisk >>"
     read -r c
@@ -2128,6 +2090,7 @@ table_ramdisk(){
     fi
     done
 }
+
 
 mount_fail_pick_again(){
 echo -e "${RED}! $text_cannot_mount_part${RC}"
@@ -2167,7 +2130,7 @@ if [ -z "$BLOCKDEV" ]; then
     table_blockdev
 else
     VAR_OSROOT="$BLOCKDEV"
-    echo -ne "Is the device block correct?: ${BPURPLE}${BLOCKDEV}${RC} ? <Y/n>"; read m
+    echo -ne "Mount this device block?: ${BPURPLE}${BLOCKDEV}${RC} ? <Y/n>"; read m
     if [ "$m" == "Y" -o "$m" == "y" ]; then
         mount_disk
         $IS_MOUNT || mount_fail_pick_again
@@ -2184,6 +2147,32 @@ if $IS_MOUNT; then
     table_ramdisk
 fi
 }
+
+list_apk(){ 
+while true; do
+clear
+pd light_cyan "$text_select_magisk_app"
+LIST_APK="$(cd "$DLPATH/save" && find * -prune -type f)"
+echo "$LIST_APK"  | nl -s "]. "
+echo "----------"
+echo "     0]. Exit here"
+echo "$text_guide_rm_magisk_app"
+echo -n "[$text_choice]: "
+read -r c
+if [ "$c" == 0 ]; then
+exit
+elif [ -f "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$c p" 2>/dev/null | cut -d : -f1)" ]; then
+APKFILE="$DLPATH/save/$(echo "$LIST_APK" | sed -n "$c p" 2>/dev/null | cut -d : -f1)"
+break
+elif [ "$(echo "$c" | awk '{ print $1 }')" == "rm" ]; then
+rm -rf "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$(echo -n "$c" | awk '{ print $2 }') p" 2>/dev/null | cut -d : -f1)"
+else
+echo -en "${RED}! $text_wrong_input ...${RC}"; read
+fi
+done
+
+}
+
 
 main(){
 clear
@@ -2226,6 +2215,9 @@ case "$AGV3" in
          ;;
      "ramdisk-patch")
          (patch_ramdisk "$AGV4")
+         ;;
+     "export-gxp")
+         ( build_gxp )
          ;;
      *)
          install_option_method
