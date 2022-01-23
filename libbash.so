@@ -714,11 +714,13 @@ esac
 
 LOAD_MODULES_POLICY="for module in \$(ls /data/adb/modules); do
               if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
-                  
-                  $MAGISKTMP/magiskpolicy --live --apply \"/data/adb/modules/\$module/sepolicy.rule\"
+                  echo \"## * module sepolicy: \$module\" >>\"\$MAGISKTMP/.magisk/sepolicy.rules\"
+                  cat  \"/data/adb/modules/\$module/sepolicy.rule\" >>\"\$MAGISKTMP/.magisk/sepolicy.rules\"
+                  echo \"\" >>\"\$MAGISKTMP/.magisk/sepolicy.rules\"
                   
               fi
-          done"
+          done
+\$MAGISKTMP/magiskpolicy --live --apply \"\$MAGISKTMP/.magisk/sepolicy.rules\""
 
 unset LOG_MAGISK
 unset FORCE_MAGISKHIDE
