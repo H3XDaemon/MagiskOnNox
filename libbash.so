@@ -1645,8 +1645,8 @@ cd /
   echo "********************************************"
   warn_reboot
   echo "********************************************"
-fi
 (sleep 8; /system/bin/reboot)&
+fi
 echo "- $text_done"
 
 }
