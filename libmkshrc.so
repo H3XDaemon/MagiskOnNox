@@ -55,7 +55,6 @@ p "$1" "$2"; echo
 DLPATH="$priv_dir/magisk"
 
 export OLDPATH="$PATH"
-export busybox="MYPATH/libbusybox.so"
 
 
 ( cd "$priv_dir"
@@ -79,18 +78,10 @@ link "liblegacy.so" "legacy.zip"
 link "libbash.so" "menu"
 link "libgxp.so" "gearlock_extension.zip"
 
-busybox_bin(){
-mkdir -p "$DLPATH/bin"
-"$busybox" busybox --install -s "$DLPATH/bin"
-}
-
-busybox_bin 2>/dev/null
-
  )
 
 export PATH="$DLPATH/bin:$DLPATH:$PATH"
 
-export MENU="$MYPATH/libbash.so"
 
 alias inmagisk='"$DLPATH/busybox" sh -o standalone "$DLPATH/menu" option "$@"'
 alias m='inmagisk "$@"'
