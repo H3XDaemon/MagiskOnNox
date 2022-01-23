@@ -1,0 +1,5 @@
+- Preset **Bluestacks Fix** script into `/data/adb/post-fs-data.d`
+- Allow to uninstall magisk while keeping Magisk modules
+- Try to apply multiple modules sepolicy.rule patch at same time, this can decrease time on delaying boot stage  if there are many modules `sepolicy.rule`
+- Save Magisk APK after downloading, allow to install Magisk from Downloaded Magisk APK
+- Unblock boot stage if magisk fails to launch rather than let it waits

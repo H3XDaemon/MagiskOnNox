@@ -1745,7 +1745,7 @@ if [ -e /system/bin/su -o -e /system/xbin/su ]; then
   mount -o rw,remount /system;
   rm -rf /system/bin/su /system/xbin/su;
 fi;
-
+umount -l /system
 echo "- $text_mount_ro_system"
 mount_ro_system
 }
