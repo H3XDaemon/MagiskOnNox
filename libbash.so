@@ -1669,6 +1669,10 @@ $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 
 mount --bind /system /system
 
+rm -rf "/system/.rw" 2>/dev/null
+touch "/system/.rw" 2>/dev/null  || { umount -l /system; abortc light_red "$text_system_not_writeable"; }
+rm -rf "/system/.rw" 2>/dev/null
+
 
 if [ -e /data/su ]; then
   ui_print "Removing phh's SuperUser...";
