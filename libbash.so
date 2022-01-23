@@ -5,8 +5,6 @@ RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;3
 
 test -z "$USER_ID" && USER_ID="$(id -u)"
 
-OVERLAYVER=10031
-
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
   if [ "$ABI" = "x86" ]; then
@@ -115,6 +113,8 @@ text_grant_inter_access_permission="Please grant app the permission to access In
 text_select_magisk_app="Select Magisk version you want to install"
 text_guide_rm_magisk_app="Type \"rm\" with a number to delete target version"
 text_ask_keep_modules="Do you want to preserve modules (Only remove Magisk)?"
+text_cannot_detect_target_ramdisk="Unable to detect target ramdisk"
+text_find_ramdisk_auto="Do you want to automatically find the target ramdisk?"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -305,7 +305,7 @@ text_system_not_writeable="Hệ thống không thể ghi! Không thể gỡ bỏ
 text_grant_inter_access_permission="Vui lòng cung cấp cho ứng dụng quyền truy cập Bộ nhớ trong"
 text_select_magisk_app="Lựa chọn phiên bản Magisk mà bạn muốn cài đặt"
 text_guide_rm_magisk_app="Gõ \"rm\" với 1 con số để xóa phiên bản tương ứng"
-
+text_find_ramdisk_auto="Bạn có muốn tìm ramdisk tự động không?"
 
 print_ramdisk_method(){
 pd "light_cyan" "Cài đặt Magisk vào đĩa ảnh ramdisk"
@@ -553,6 +553,10 @@ fi
 
 SDK="$(getprop ro.build.version.sdk)"
 
+function cmdline() { 
+	awk -F"${1}=" '{print $2}' < /proc/cmdline | cut -d' ' -f1 2> /dev/null
+}
+
 get_magisk_path(){
 
 MAGISK_TMP="$(magisk --path)"
@@ -797,7 +801,7 @@ clone(){ (
 FROM=\"\$1\"; TO=\"\$2\"; IFS=\$\"
 \"
 [ -d \"\$TO\" ] || exit 1;
-( cd \"\$FROM\" && find * ) | while read obj; do
+( cd \"\$FROM\" && find * -prune ) | while read obj; do
 ( if [ -d \"\$FROM/\$obj\" ]; then
 mnt_tmpfs \"\$TO/\$obj\"
 else
@@ -812,7 +816,7 @@ overlay(){ (
 FOLDER=\"\$1\";
 TMPFOLDER=\"/dev/vm-overlay\"
 #_____
-PAYDIR=\"\$TMPFOLDER_\${RANDOM}_\$(date | base64)\"
+PAYDIR=\"\${TMPFOLDER}_\${RANDOM}_\$(date | base64)\"
 mkdir -p \"\$PAYDIR\"
 mnt_tmpfs \"\$PAYDIR\"
 #_________
@@ -1162,7 +1166,7 @@ if [ -f "$TMPDIR/ramdisk/magisk/init.rc" ]; then
 # found init.rc backup!
 cat "$TMPDIR/ramdisk/magisk/init.rc" >"$TMPDIR/ramdisk/init.rc"
 else
-abortc light_red "$text_backup_not_exist"
+abortc light_red "$text_backup_not_exist" 2
 fi
 
 rm -rf "$TMPDIR/ramdisk/magisk"
@@ -1176,7 +1180,7 @@ else
 [ -f "${RAMDISK}.bak" ] || mv "${RAMDISK}" "${RAMDISK}.bak"
 NEWRAMDISK="$RAMDISK"
 fi
-( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abortc light_red "! $text_repack_ramdisk_fail"
+( cd "$TMPDIR/ramdisk" && find * | cpio -o -H newc | gzip >$NEWRAMDISK ) || abortc light_red "! $text_repack_ramdisk_fail" 2
 rm -rf /data/.magisk_binary 2>/dev/null
 clean_flash
 echo "- $text_done"
@@ -1802,7 +1806,18 @@ $nomethod || install_option_process
 
 }
 
-patch_ramdisk_directly(){
+ramdisk_direct_install(){
+CONTINUE=1
+echo -n "$text_find_ramdisk_auto ? <Y/n> "
+read autom
+if [ "$autom" == "Y" -o "$autom" == "y" ]; then
+( find_ramdisk_image
+patch_ramdisk "$RAMDISK" "true" )
+test "$?" == 0 && CONTINUE=0
+umount -l /dev/os_disk_*
+echo "Unmount all disks..."
+fi
+if [ "$CONTINUE" == "1" ]; then
 VAR_OSROOT="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
 RAMDISK="$VAR_RAMDISK"
@@ -1828,9 +1843,21 @@ table_list
 patch_ramdisk "$RAMDISK" "true"
 umount_disk
 fi
+fi
 }
 
-unpatch_ramdisk_directly(){
+ramdisk_direct_uninstall(){
+CONTINUE=1
+echo -n "$text_find_ramdisk_auto ? <Y/n> "
+read autom
+if [ "$autom" == "Y" -o "$autom" == "y" ]; then
+( find_ramdisk_image
+unpatch_ramdisk "$RAMDISK" "true" )
+test "$?" == 0 && CONTINUE=0
+umount -l /dev/os_disk_*
+echo "Unmount all disks..."
+fi
+if [ "$CONTINUE" == "1" ]; then
 VAR_OSROOT="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
 RAMDISK="$VAR_RAMDISK"
@@ -1856,6 +1883,7 @@ table_list
 unpatch_ramdisk "$RAMDISK" "true"
 umount_disk
 fi
+fi
 }
 
 
@@ -1866,7 +1894,7 @@ read c
 case "$c" in
     1)
         need_root_access
-        install_command="patch_ramdisk_directly"
+        install_command="ramdisk_direct_install"
         ;;
      2)
         echo "$text_enter_path_ramdisk"
@@ -1997,7 +2025,7 @@ print_unpatch_ramdisk
 read c
 case "$c" in
 1)
-      ( need_root_access; clear; unpatch_ramdisk_directly )
+      ( need_root_access; clear; ramdisk_direct_uninstall )
       ;;
 2)
        echo "$text_enter_path_ramdisk"
@@ -2012,11 +2040,11 @@ esac
 
 
 try_mount_it(){
-echo -e "Try mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}/dev/os_disk${RC}"
-mount -o ro "$VAR_OSROOT" "/dev/os_disk"
-mount -t ext4 "$VAR_OSROOT" "/dev/os_disk"
-mount -o rw,remount "/dev/os_disk" && IS_MOUNT=true
-mount.ntfs "$VAR_OSROOT" "/dev/os_disk" && IS_MOUNT=true
+echo -e "Mounting ${BGREEN}${VAR_OSROOT}${RC} to ${BPURPLE}${OSROOT}${RC}"
+mount -o ro "$VAR_OSROOT" "$OSROOT"
+mount -t ext4 "$VAR_OSROOT" "$OSROOT"
+mount -o rw,remount "$OSROOT" && IS_MOUNT=true
+mount.ntfs "$VAR_OSROOT" "$OSROOT" && IS_MOUNT=true
 $IS_MOUNT || echo -e "${BRED}$text_cannot_mount_part${RC}" 
 }
 
@@ -2034,10 +2062,10 @@ fi
 
 mount_disk(){
 IS_MOUNT=false
-OSROOT=/dev/os_disk
-umount -l /dev/os_disk
-rm -rf /dev/os_disk
-mkdir /dev/os_disk
+[ -z "$OSROOT" ] && OSROOT=/dev/os_disk
+umount -l "$OSROOT"
+rm -rf "$OSROOT"
+mkdir "$OSROOT"
 GEARROOT="$(mount | grep "^${VAR_OSROOT}" | awk '{ print $3 }')"
 try_mount_it
 if [ "$IS_MOUNT" == "false" ]; then
@@ -2062,6 +2090,7 @@ while true; do
 echo -ne "+ $text_enter_part >>"
 read -r c
 VAR_OSROOT="$(echo "$BLOCKDEVS" | sed -n "$c p" 2>/dev/null | cut -d : -f1)"
+OSROOT=/dev/os_disk
 if [ "$c" == "0" ]; then
 exit
 elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
@@ -2073,6 +2102,32 @@ else
 fi
 done
 }
+
+find_ramdisk_image(){
+RAMDISK=""
+BLOCKDEVS="$(blkid | grep -v loop | grep -v "/sr" | awk 'NF' | cut -d : -f1)"
+BIMGVAR="$(cmdline BOOT_IMAGE)"
+SRCVAR="$(cmdline SRC)"
+[ -z "$SRCVAR" ] && SRCVAR="$(dirname "$BIMGVAR")"
+[ -z "$SRCVAR" ] && pd light_red "$text_fail_cannot_detect_target_ramdisk"
+count=0
+RAMDISK="/gearlock/gearroot/$SRCVAR/ramdisk.img"
+if [ ! -f "$RAMDISK" ]; then
+for VAR_OSROOT in $BLOCKDEVS; do
+count="$(($count + 1))"
+OSROOT="/dev/os_disk_$count"
+mount_disk
+TARGET_ROOT="$OSROOT/$SRCVAR"
+if [ -d "$TARGET_ROOT" ] && [ -f "$TARGET_ROOT/findme" ] && [ -f "$TARGET_ROOT/initrd.img" ] && [ -f "$TARGET_ROOT/ramdisk.img" ] && file "$TARGET_ROOT/ramdisk.img" | grep -q " gzip "; then
+RAMDISK="$TARGET_ROOT/ramdisk.img"
+break;
+fi
+done
+fi
+[ -z "$RAMDISK" ] && pd light_red "$text_fail_cannot_detect_target_ramdisk"
+echo -e "- Target ramdisk: ${BGREEN}${RAMDISK}${RC}"
+}
+
 
 table_ramdisk(){
     test -f $DISKINFO/blockdev || rm -rf $DISKINFO/blockdev
@@ -2097,7 +2152,7 @@ table_ramdisk(){
         echo "- $text_saved_ramdisk_info ${BGREEN}/data/adb/diskinfo${RC}"
         break
     else
-        echo "${RED}! $text_unsupport_ramdisk_format${RC}"
+        echo -n "${RED}! $text_unsupport_ramdisk_format${RC}"
     fi
     done
 }
@@ -2222,7 +2277,7 @@ case "$AGV3" in
         (need_root_access; install_magisk)
         ;;
      "ramdisk")
-         (need_root_access; patch_ramdisk_directly)
+         (need_root_access; ramdisk_direct_install)
          ;;
      "ramdisk-patch")
          (patch_ramdisk "$AGV4")
