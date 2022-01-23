@@ -932,7 +932,7 @@ mount -o ro,remount /system_ext
 
 restorecon -R /data/adb/magisk
 
-( 
+( rm -rf /data/adb/post-fs-data.d/bluestacks_fix.sh
 echo \"
 MIRROR_SYSTEM=\\\"\$MAGISKTMP/.magisk/mirror/system\\\"
 test ! -d \\\"\\\$MIRROR_SYSTEM/android/system\\\" && exit
@@ -2172,7 +2172,7 @@ echo -n "[$text_choice]: "
 read -r capk
 if [ "$capk" == 0 ]; then
 exit
-elif [ -f "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$capk p" 2>/dev/null | cut -d : -f1)" ]; then
+elif [ ! -z "$capk" ] && [ -f "$DLPATH/save/$(echo "$LIST_APK" | sed -n "$capk p" 2>/dev/null | cut -d : -f1)" ]; then
 APKFILE="$DLPATH/save/$(echo "$LIST_APK" | sed -n "$capk p" 2>/dev/null | cut -d : -f1)"
 break
 elif [ "$(echo "$capk" | awk '{ print $1 }')" == "rm" ]; then
