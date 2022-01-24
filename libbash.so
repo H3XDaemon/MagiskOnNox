@@ -974,17 +974,17 @@ test ! \"\$(\$MAGISKTMP/magisk -v)\" && exit_magisk
 $FORCE_MAGISKHIDE
 # hide magisk modify init.rc
 sleep 3
-LIST="
+LIST=\"
 $magisk_postfsdata
 $magisk_service
 $magisk_daemon
 $magisk_boot_complete
 $magisk_loadpolicy
 $magisk_overlay
-"
-for service in $LIST; do
-$MAGISKTMP/magisk resetprop --delete init.svc.$service
-$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.$service
+\"
+for service in \$LIST; do
+\$MAGISKTMP/magisk resetprop --delete init.svc.$service
+\$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.$service
 done ) &
 
 "
