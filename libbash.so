@@ -783,13 +783,6 @@ overlay_loader="#!$MAGISKBASE/busybox sh
 
 export PATH=/sbin:/system/bin:/system/xbin
 
-rm -rf /data/local/tmp/magisk.log.bak
-mv -f /data/local/tmp/magisk.log /data/local/tmp/magisk.log.bak
-
-echo -n "" >/data/local/tmp/magisk.log
-
-chmod 664 /data/local/tmp/magisk.log
-
 
 mnt_tmpfs(){ (
 # MOUNT TMPFS ON A DIRECTORY
@@ -844,18 +837,11 @@ rm -rf \"\$PAYDIR\"
 #______________
 ) }
 
-true; write_log \"* Set up Magisk tmpfs directory\"
-
-# hide selinux permissive on emulator
-if [ \$(cat /sys/fs/selinux/enforce) == \"0\" ]; then
-chmod 640 /sys/fs/selinux/enforce
-chmod 440 /sys/fs/selinux/policy
-fi
 
 # umount previous /sbin tmpfs overlay
 
 count=0
-( /sbin/magisk --stop ) &
+( magisk --stop ) &
 
 umount -l /init.rc
 umount -l /system/etc/init/hw/init.rc
@@ -970,7 +956,7 @@ $LOAD_MODULES_POLICY
 touch /dev/.overlay_unblock
 UID_MYAPP=\$(ls -ld \"$priv_dir\" | awk '{ print \$3 }') || UID_MYAPP=root
 chown \$UID_MYAPP:\$UID_MYAPP /data/.magisk_binary
-
+rm -rf /dev/.overlay_unblock
 sleep 3
 exit_magisk(){
 echo -n >/dev/.magisk_unblock
@@ -984,17 +970,22 @@ test ! \"\$(\$MAGISKTMP/magisk -v)\" && exit_magisk
     sleep 1
   done
 
-echo \"--------- beginning of magisk daemon \" >>/data/local/tmp/magisk.log
-cat /cache/magisk.log >>/data/local/tmp/magisk.log
+
 $FORCE_MAGISKHIDE
 # hide magisk modify init.rc
 sleep 3
-$MAGISKTMP/resetprop --delete init.svc.$magisk_postfsdata
-$MAGISKTMP/resetprop --delete init.svc.$magisk_service
-$MAGISKTMP/resetprop --delete init.svc.$magisk_daemon
-$MAGISKTMP/resetprop --delete init.svc.$magisk_boot_complete
-$MAGISKTMP/resetprop --delete init.svc.$magisk_loadpolicy
-$MAGISKTMP/resetprop --delete init.svc.$magisk_overlay ) &
+LIST="
+$magisk_postfsdata
+$magisk_service
+$magisk_daemon
+$magisk_boot_complete
+$magisk_loadpolicy
+$magisk_overlay
+"
+for service in $LIST; do
+$MAGISKTMP/magisk resetprop --delete init.svc.$service
+$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.$service
+done ) &
 
 "
 
