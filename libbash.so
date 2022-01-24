@@ -983,8 +983,8 @@ $magisk_loadpolicy
 $magisk_overlay
 \"
 for service in \$LIST; do
-\$MAGISKTMP/magisk resetprop --delete init.svc.$service
-\$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.$service
+\$MAGISKTMP/magisk resetprop --delete init.svc.\$service
+\$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.\$service
 done ) &
 
 "
