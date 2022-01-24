@@ -114,7 +114,9 @@ text_select_magisk_app="Select Magisk version you want to install"
 text_guide_rm_magisk_app="Type \"rm\" with a number to delete target version"
 text_ask_keep_modules="Do you want to preserve modules (Only remove Magisk)?"
 text_cannot_detect_target_ramdisk="Unable to detect target ramdisk"
-text_find_ramdisk_auto="Do you want to automatically find the target ramdisk?"
+text_find_ramdisk_auto="It's difficult to detect target ramdisk correctly.
+Do you want to automatically find the target ramdisk?"
+text_enter_url="Custom link"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -225,6 +227,7 @@ echo "  1 - Canary `cre topjohnwu`"
 echo "  2 - Alpha `cre vvb2060`"
 echo "  3 - Canary v23001 `cre topjohnwu`"
 echo "  4 - Stable v23.0 `cre topjohnwu`"
+echo "  e - $text_enter_url"
 }
 
 
@@ -310,7 +313,9 @@ text_system_not_writeable="Hệ thống không thể ghi! Không thể gỡ bỏ
 text_grant_inter_access_permission="Vui lòng cung cấp cho ứng dụng quyền truy cập Bộ nhớ trong"
 text_select_magisk_app="Lựa chọn phiên bản Magisk mà bạn muốn cài đặt"
 text_guide_rm_magisk_app="Gõ \"rm\" với 1 con số để xóa phiên bản tương ứng"
-text_find_ramdisk_auto="Bạn có muốn tìm ramdisk tự động không?"
+text_find_ramdisk_auto="Rất khó để phát hiện ramdisk đích một cách chính xác.
+Bạn có muốn tìm ramdisk tự động không?"
+text_enter_url="Liên kết tùy chỉnh"
 
 print_ramdisk_method(){
 pd "light_cyan" "Cài đặt Magisk vào đĩa ảnh ramdisk"
@@ -552,6 +557,8 @@ if [ "$USER_ID" != "0" ]; then
             pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
             
         fi
+        exit 
+    elif ! [ "$ROOT" == "N" -o "$ROOT" == "n" ]; then
         exit
     fi
 fi
@@ -1851,6 +1858,8 @@ patch_ramdisk "$RAMDISK" "true" )
 test "$?" == 0 && CONTINUE=0
 umount -l /dev/os_disk_*
 echo "Unmount all disks..."
+elif ! [ "$autom" == "N" -o "$autom" == "n" ]; then
+        exit
 fi
 if [ "$CONTINUE" == "1" ]; then
 VAR_OSROOT="$(cat $DISKINFO/blockdev)"
@@ -1865,6 +1874,8 @@ mount_disk
 ERR_CODE=$?
 umount_disk
 exit $ERR_CODE 
+elif ! [ "$opt" == "N" -o "$opt" == "n" ]; then
+        exit
 else
 exit 1
 fi )
@@ -1891,6 +1902,8 @@ unpatch_ramdisk "$RAMDISK" "true" )
 test "$?" == 0 && CONTINUE=0
 umount -l /dev/os_disk_*
 echo "Unmount all disks..."
+elif ! [ "$autom" == "N" -o "$autom" == "n" ]; then
+        exit
 fi
 if [ "$CONTINUE" == "1" ]; then
 VAR_OSROOT="$(cat $DISKINFO/blockdev)"
@@ -1905,6 +1918,8 @@ mount_disk
 ERR_CODE=$?
 umount_disk
 exit $ERR_CODE
+elif ! [ "$opt" == "N" -o "$opt" == "n" ]; then
+        exit
 else
 exit 1
 fi )
@@ -1988,6 +2003,11 @@ case $build in
 4)
     build_name="Stable"
     URL="$stable_magisk_link"
+    ;;
+"e")
+    echo -n "[URL]: "
+    read URL
+    [ -z "$URL" ] && install_magisk=false
     ;;
 "a")
    build_name="Alpha"
@@ -2139,10 +2159,11 @@ BLOCKDEVS="$(blkid | grep -v loop | grep -v "/sr" | awk 'NF' | cut -d : -f1)"
 BIMGVAR="$(cmdline BOOT_IMAGE)"
 SRCVAR="$(cmdline SRC)"
 [ -z "$SRCVAR" ] && SRCVAR="$(dirname "$BIMGVAR")"
-[ -z "$SRCVAR" ] && pd light_red "$text_fail_cannot_detect_target_ramdisk"
+[ "$SRCVAR" == "." ] && SRCVAR="android"
 count=0
 RAMDISK="/gearlock/gearroot/$SRCVAR/ramdisk.img"
 if [ ! -f "$RAMDISK" ]; then
+unset RAMDISK
 for VAR_OSROOT in $BLOCKDEVS; do
 count="$(($count + 1))"
 OSROOT="/dev/os_disk_$count"
@@ -2154,17 +2175,19 @@ break;
 fi
 done
 fi
-[ -z "$RAMDISK" ] && pd light_red "$text_fail_cannot_detect_target_ramdisk"
+[ -z "$RAMDISK" ] && abortc light_red "$text_cannot_detect_target_ramdisk"
 echo -e "- Target ramdisk: ${BGREEN}${RAMDISK}${RC}"
 }
 
 
 table_ramdisk(){
+SELECTED_RAMDISK=false
     test -f $DISKINFO/blockdev || rm -rf $DISKINFO/blockdev
     echo -n "$VAR_OSROOT" >$DISKINFO/blockdev
     echo "------- CHOICE RAMDISK -------:"
     LIST_OS="$(find "$OSROOT"  -mindepth 2 -maxdepth 2 -name "$chkFile" 2>/dev/null)"
-    echo "$LIST_OS" | nl -s "]. "
+    [ -z "$LIST_OS" ] && pd light_red "     No ramdisk!" || echo "$LIST_OS" | nl -s "]. "
+    echo "     r]. Re-mount partition"
     echo "     0]. Exit table"
     while true; do
     echo -ne "$text_enter_ramdisk >>"
@@ -2172,6 +2195,8 @@ table_ramdisk(){
     VAR_RAMDISK=$(echo "$LIST_OS" | sed -n "$c p" 2>/dev/null | cut -d : -f1)
     if [ "$c" == "0" ]; then
         exit
+    elif [ "$c" == r ]; then
+        break
     elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
 			echo -e "${RED}! $text_wrong_input ...${RC}"
     elif file "$VAR_RAMDISK" | grep -q " gzip "; then
@@ -2179,7 +2204,8 @@ table_ramdisk(){
         test -f $DISKINFO/ramdisk || rm -rf $DISKINFO/ramdisk
         echo -n "$VAR_RAMDISK" >$DISKINFO/ramdisk
         RAMDISK="$VAR_RAMDISK"
-        echo "- $text_saved_ramdisk_info ${BGREEN}/data/adb/diskinfo${RC}"
+        echo -e "- $text_saved_ramdisk_info ${BGREEN}/data/adb/diskinfo${RC}"
+        SELECTED_RAMDISK=true
         break
     else
         echo -n "${RED}! $text_unsupport_ramdisk_format${RC}"
@@ -2219,6 +2245,8 @@ pd light_green "$text_added_bs_module"
 
 table_list(){
 RESET_DISKINFO="$1"
+while true; do
+clear
 mkdir -p "$DISKINFO"
 BLOCKDEV="$(cat $DISKINFO/blockdev)"
 VAR_RAMDISK="$(cat $DISKINFO/ramdisk)"
@@ -2242,6 +2270,8 @@ chkFile="ramdisk.img"
 if $IS_MOUNT; then
     table_ramdisk
 fi
+$SELECTED_RAMDISK && break
+done
 }
 
 list_apk(){ 
