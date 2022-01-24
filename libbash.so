@@ -209,6 +209,12 @@ pd gray "      Recommended for Android x86 project"
 echo "  4 - Update binary file into \"/data\""
 pd gray "      Update Magisk without having to modify system/ramdisk again"
 pd gray "      Magisk must be installed by this script"
+echo "----------"
+if [ ! -z "$MAGISK_VER_CODE" ] && [ "$MAGISK_VER_CODE" -lt "23010" ]; then
+echo "  m - Minimal Magisk mode: `p light_red "$MINIMAL_MAGISK"`"
+pd gray "      Only MagiskSU and MagiskHide"
+fi
+echo "  0 - Exit menu"
 pd light_red "* Note: Uninstall rusty-magisk to avoid conflicts"
 p none "[CHOICE]: "
 
@@ -219,7 +225,6 @@ echo "  1 - Canary `cre topjohnwu`"
 echo "  2 - Alpha `cre vvb2060`"
 echo "  3 - Canary v23001 `cre topjohnwu`"
 echo "  4 - Stable v23.0 `cre topjohnwu`"
-echo "  5 - Minimal Stable `cre topjohnwu`"
 }
 
 
@@ -396,6 +401,12 @@ pd gray "      Khuyên dùng cho Android x86 project"
 echo "  4 - Cập nhật nhị phân vào trong \"/data\""
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
 pd gray "      Magisk phải được cài đặt bởi script này"
+echo "----------"
+if [ ! -z "$MAGISK_VER_CODE" ] && [ "$MAGISK_VER_CODE" -lt "23010" ]; then
+echo "  m - Minimal Magisk mode: `p light_red "$MINIMAL_MAGISK"`"
+pd gray "      Chỉ có MagiskSU và MagiskHide"
+fi
+echo "  0 - Thoát khỏi menu"
 pd light_red "* Lưu ý: Gỡ bỏ rusty-magisk để tránh bị xung đột"
 p none "[CHỌN]: "
 
@@ -1754,15 +1765,10 @@ echo "- $text_mount_ro_system"
 mount_ro_system
 }
 
-install_option_process(){
-clear
-pd light_cyan "- Magisk build: $build_name"
-
-if [ "$install_offline" == "true" ]; then
+download_magisk_apk(){
+if [ "$install_offline" != "true" ]; then
     
-    ( $install_command "$RAMDISK") 2>/dev/null
-    else
-    ( 
+     
     echo "- Downloading Magisk APK..."
     rm -rf "$DLPATH/app.tmp"
     rm -rf "$DLPATH/app.apk"
@@ -1773,18 +1779,29 @@ mirror_git="https://gh.api.99988866.xyz/"
     [ -f "$DLPATH/app.apk" ] || wget -O "$DLPATH/app.tmp" "$mirror_git$URL" 2>/dev/null && mv -f "$DLPATH/app.tmp" "$DLPATH/app.apk" 2>/dev/null
     [ -f "$DLPATH/app.apk" ] || abortc none "! Cannot download Magisk APK"
     APKFILE="$DLPATH/app.apk"
-    ( rm -rf "$DLPATH/util_functions.sh"; unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$DLPATH" &>/dev/null
-      . "$DLPATH/util_functions.sh" || exit
-      [ -z "$MAGISK_VER" -o -z "$MAGISK_VER_CODE" ] && exit
-      cp -af "$DLPATH/app.apk" "$DLPATH/save/$MAGISK_VER($MAGISK_VER_CODE)"
-     )
-    $install_command "$RAMDISK"
-    )
 fi
+rm -rf "$DLPATH/util_functions.sh"; unzip -oj "$APKFILE" 'assets/util_functions.sh' -d "$DLPATH" &>/dev/null
+      MAGISK_VERINFO="$( . $DLPATH/util_functions.sh; echo "$MAGISK_VER $MAGISK_VER_CODE"; )"
+MAGISK_VER="$(echo "$MAGISK_VERINFO" | awk '{ print $1 }')"
+MAGISK_VER_CODE="$(echo "$MAGISK_VERINFO" | awk '{ print $2 }')"
+      [ -z "$MAGISK_VER" -o -z "$MAGISK_VER_CODE" ] && abortc light_red "This APK is not Magisk app"
+      cp -af "$APKFILE" "$DLPATH/save/$MAGISK_VER($MAGISK_VER_CODE)"
+}
+
+
+install_option_process(){
+clear
+
+( download_magisk_apk
+   install_option_method
+ )
 }
 
 install_option_method(){
+MINIMAL_MAGISK=false
+while true; do
 clear
+pd light_cyan "- Magisk build: $MAGISK_VER($MAGISK_VER_CODE)"
 nomethod=false
 print_method
 read method
@@ -1801,12 +1818,26 @@ case "$method" in
 4)
     install_command="update_magiskbin"
     ;;
+"m")
+    if [ "$MAGISK_VER_CODE" -lt "23010" ]; then
+       if $MINIMAL_MAGISK; then
+       MINIMAL_MAGISK=false
+       else
+       MINIMAL_MAGISK=true
+       fi
+    fi
+    nomethod=true
+    ;;
+0)
+    exit 0
+    ;;
 *)
     nomethod=true
     ;;
 esac
-    
-$nomethod || install_option_process
+$nomethod || break
+done
+$nomethod || { clear; $install_command "$RAMDISK"; }
 
 }
 
@@ -1958,11 +1989,6 @@ case $build in
     build_name="Stable"
     URL="$stable_magisk_link"
     ;;
-5)
-    build_name="Stable (Minimal)"
-    URL="$stable_magisk_link"
-    MINIMAL_MAGISK=true
-    ;;
 "a")
    build_name="Alpha"
     install_offline=true
@@ -1989,7 +2015,7 @@ esac
 
 if [ "$install_magisk" == "true" ]; then
     clear
-    install_option_method
+    install_option_process
 fi
 
     
@@ -2275,7 +2301,7 @@ $no_turn_back || turn_back
 }
 
 install_option_dd(){
-
+download_magisk_apk
 case "$AGV3" in
     "system")
         (need_root_access; install_magisk)
