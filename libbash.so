@@ -975,9 +975,10 @@ done
 if [ \\\"\\\$count\\\" == 4 ]; then
 mount --bind \\\"\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/data\\\" \\\"\$MAGISKTMP/.magisk/mirror/data\\\"
 fi )
-# rm -rf \\\"\\\$SCRIPT\\\"
+rm -rf \\\"\\\$SCRIPT\\\"
 \" >/data/adb/post-fs-data.d/fix_mirror_mount.sh
 echo \"
+SCRIPT=\\\"\\\$0\\\"
 while [ \\\"\\\$(\$MAGISKTMP/magisk resetprop sys.boot_completed)\\\" != \\\"1\\\" ]
   do
     sleep 1
@@ -995,10 +996,11 @@ for service in \\\$LIST; do
 \$MAGISKTMP/magisk resetprop --delete init.svc.\\\$service
 \$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.\\\$service
 done
-# rm -rf /data/adb/service.d/hide_modified_initrc.sh\" >/data/adb/service.d/hide_modified_initrc.sh
+rm -rf \\\"\\\$SCRIPT\\\"\" >/data/adb/service.d/hide_modified_initrc.sh
 echo \"
+SCRIPT=\\\"\\\$0\\\"
 test \\\"\\\$(ls \$MAGISKTMP/.magisk/modules 2>/dev/null)\\\" != \\\"\\\$(ls /data/adb/modules 2>/dev/null)\\\" && mount --bind \$MAGISKTMP/.magisk/mirror/data/adb/modules \$MAGISKTMP/.magisk/modules
-# rm -rf /data/adb/service.d/fix_modules_not_show.sh\" >/data/adb/service.d/fix_modules_not_show.sh
+rm -rf \\\"\\\$SCRIPT\\\"\" >/data/adb/service.d/fix_modules_not_show.sh
 chmod 755 /data/adb/service.d/hide_modified_initrc.sh
 chmod 755 /data/adb/service.d/fix_modules_not_show.sh
 chmod 755 /data/adb/post-fs-data.d/fix_mirror_mount.sh; )
@@ -1033,12 +1035,12 @@ $FORCE_MAGISKHIDE
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
 #stub"
-
+EXPORT_PATH="export PATH /sbin:/system/bin:/system/xbin:/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
 
 magiskloader="
 
          on early-init
-             export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin
+             $EXPORT_PATH
               
 
           on post-fs-data
@@ -1095,7 +1097,7 @@ $RM_RUSTY_MAGISK
 [ "$MINIMAL_MAGISK" == "true" ] && magiskloader="
 
          on early-init
-             export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin
+             $EXPORT_PATH
 
 
           on post-fs-data
