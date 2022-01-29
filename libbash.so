@@ -1,5 +1,11 @@
 #!/system/bin/sh
-AGVARR="$@"; SCRIPT="$0"; AGV1="$1"; AGV2="$2"; AGV3="$3"; AGV4="$4"; AGV5="$5"; exec 2>/dev/null; MYSCRIPT="$(realpath "$0")"; MYPATH="${MYSCRIPT%/*}"; busybox="$MYPATH/libbusybox.so"; PATH="$MYPATH:$PATH"; cmds="$SCRIPT $AGVARR"
+AGVARR="$@"; SCRIPT="$0"; AGV1="$1"; AGV2="$2"; AGV3="$3"; AGV4="$4"; AGV5="$5"; exec 2>/dev/null; MYSCRIPT="$(realpath "$0")"; MYPATH="${MYSCRIPT%/*}"; busybox="$MYPATH/libbusybox.so"; PATH="$MYPATH:$PATH:/sbin:/system/bin:/system/xbin"; cmds="$SCRIPT $AGVARR"
+
+
+if [ ! -f "$MYPATH/libbusybox.so" ]; then
+echo "Missing libbusybox.so"; exit 1
+fi
+chmod 775 "$MYPATH/"*
 
 RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
 
@@ -227,6 +233,7 @@ echo "  1 - Canary `cre topjohnwu`"
 echo "  2 - Alpha `cre vvb2060`"
 echo "  3 - Canary v23001 `cre topjohnwu`"
 echo "  4 - Stable v23.0 `cre topjohnwu`"
+echo "  5 - Canary `cre TheHitMan7`"
 echo "  e - $text_enter_url"
 }
 
@@ -239,7 +246,7 @@ pd gray "=============================================="
 pd light_cyan "ONLINE"
 print_magisk_builds
 pd light_cyan "OFFLINE"
-echo "  a - Alpha 23016"
+echo "  a - Stable v24.1"
 echo "  x - Choose and install from another Magisk APK"
 echo "  z - Select downloaded Magisk APK"
 pd green "* Please check my wiki page to select suitable Magisk build"
@@ -381,7 +388,7 @@ pd gray "=============================================="
 pd light_cyan "TRỰC TUYẾN"
 print_magisk_builds
 pd light_cyan "NGOẠI TUYẾN"
-echo "  a - Alpha 23016"
+echo "  a - Stable v24.1"
 echo "  x - Chọn và cài đặt từ Magisk APK khác"
 echo "  z - Chọn phiên bản Magisk APK đã tải"
 pd green "* Vui lòng kiểm tra trang wiki của tôi để chọn bản dựng Magisk phù hợp"
@@ -500,6 +507,7 @@ exit "$ERR_CODE"
 if [ "$AGV1" != "noexec" ]; then
 
 priv_dir=/data/data/io.github.huskydg.magiskonnox
+[ ! -d "$priv_dir" ] && { echo "Something wrong! Abort"; exit; }
 cd "$priv_dir"
 DLPATH="$priv_dir/magisk"
 
@@ -2043,6 +2051,10 @@ case $build in
 4)
     build_name="Stable"
     URL="$stable_magisk_link"
+    ;;
+5)
+    build_name="Canary"
+    URL="https://github.com/TheHitMan7/Magisk-Files/blob/master/channel/app-release.apk?raw=true"
     ;;
 "e")
     echo -n "[URL]: "
