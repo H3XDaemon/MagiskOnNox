@@ -1034,7 +1034,7 @@ rm -rf /dev/.overlay_unblock
 sleep 3
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
-test ! \"\$(pidof magiskd)\" && exit_magisk
+# test ! \"\$(pidof magiskd)\" && exit_magisk
 
 ( while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
   do
