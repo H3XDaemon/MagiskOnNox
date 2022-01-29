@@ -914,6 +914,34 @@ rm -rf \"\$PAYDIR\"
 #______________
 ) }
 
+exit_magisk(){
+echo -n >/dev/.magisk_unblock
+}
+
+
+API=\$(getprop ro.build.version.sdk)
+  ABI=\$(getprop ro.product.cpu.abi)
+  if [ \"\$ABI\" = \"x86\" ]; then
+    ARCH=x86
+    ABI32=x86
+    IS64BIT=false
+  elif [ \"\$ABI\" = \"arm64-v8a\" ]; then
+    ARCH=arm64
+    ABI32=armeabi-v7a
+    IS64BIT=true
+  elif [ \"\$ABI\" = \"x86_64\" ]; then
+    ARCH=x64
+    ABI32=x86
+    IS64BIT=true
+  else
+    ARCH=arm
+    ABI=armeabi-v7a
+    ABI32=armeabi-v7a
+    IS64BIT=false
+  fi
+
+magisk_name=\"magisk32\"
+[ \"\$IS64BIT\" == true ] && magisk_name=\"magisk64\"
 
 # umount previous /sbin tmpfs overlay
 
@@ -939,7 +967,10 @@ chcon u:r:rootfs:s0 /sbin
 [ -f \"/data/.magisk_binary/remove\" ] && rm -rf \"/data/.magisk_binary\"
 
 cd $MAGISKBASE
-$CDMAGISKUPDATE
+$CDMAGISKUPDATE 
+
+test ! -f \"./\$magisk_name\" && { echo -n >/dev/.overlay_unblock; exit_magisk; exit 0; }
+
 MAGISKTMP=$MAGISKTMP
 MAGISKBIN=/data/adb/magisk
 mkdir -p \$MAGISKBIN 2>/dev/null
@@ -947,7 +978,6 @@ for mdir in modules post-fs-data.d service.d; do
 test ! -d /data/adb/\$mdir && rm -rf /data/adb/\$mdir
 mkdir /data/adb/\$mdir 2>/dev/null
 done
-
 for file in magisk32 magisk64 magiskinit; do
   cp -af ./\$file \$MAGISKTMP/\$file 2>/dev/null
   chmod 755 \$MAGISKTMP/\$file
@@ -960,29 +990,6 @@ cp -af ./busybox \$MAGISKBIN/busybox
 cp -af ./loadpolicy.sh \$MAGISKTMP
 cp -af ./assets/* \$MAGISKBIN
 
-API=\$(getprop ro.build.version.sdk)
-  ABI=\$(getprop ro.product.cpu.abi)
-  if [ \"\$ABI\" = \"x86\" ]; then
-    ARCH=x86
-    ABI32=x86
-    IS64BIT=false
-  elif [ \"\$ABI\" = \"arm64-v8a\" ]; then
-    ARCH=arm64
-    ABI32=armeabi-v7a
-    IS64BIT=true
-  elif [ \"\$ABI\" = \"x86_64\" ]; then
-    ARCH=x64
-    ABI32=x86
-    IS64BIT=true
-  else
-    ARCH=arm
-    ABI=armeabi-v7a
-    ABI32=armeabi-v7a
-    IS64BIT=false
-  fi
-
-magisk_name=\"magisk32\"
-[ \"\$IS64BIT\" == true ] && magisk_name=\"magisk64\"
 
 
 ln -s ./\$magisk_name \$MAGISKTMP/magisk 2>/dev/null
@@ -1018,21 +1025,16 @@ mount -o ro,remount /system_ext
 restorecon -R /data/adb/magisk
 
 $ADDITIONAL_SCRIPT
-
 $LOAD_MODULES_POLICY
-
 
 touch /dev/.overlay_unblock
 UID_MYAPP=\$(ls -ld \"$priv_dir\" | awk '{ print \$3 }') || UID_MYAPP=root
 chown \$UID_MYAPP:\$UID_MYAPP /data/.magisk_binary
 rm -rf /dev/.overlay_unblock
 sleep 3
-exit_magisk(){
-echo -n >/dev/.magisk_unblock
-}
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
-test ! \"\$(\$MAGISKTMP/magisk -v)\" && exit_magisk
+test ! \"\$(pidof magiskd)\" && exit_magisk
 
 ( while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
   do
