@@ -39,7 +39,7 @@ Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android
-- [Magisk emulator.sh](https://github.com/topjohnwu/Magisk/blob/master/scripts/emulator.sh) : Magisk setup script without patching `boot.img`
+- [Magisk emulator.sh](https://github.com/topjohnwu/Magisk/blob/master/scripts/avd_magisk.sh) : Magisk setup script without patching `boot.img`
 - [MagiskOnWSA](https://github.com/LSPosed/MagiskOnWSA): For Magisk on WSA script, how to integrate Magisk on Emulator
 - [TermOnePlus](https://termoneplus.com/) - The best Terminal Emulator app for MagiskOnNox script 
 - [BSTweaker](https://bstweaker.tk/) - Tools for debugging Bluestacks emulator 
