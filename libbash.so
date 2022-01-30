@@ -254,10 +254,6 @@ p none "[CHOICE]: "
 
 }
 
-need_root_access(){
-
-[ "$(whoami)" == "root" ] || abortc light_red "! Cần quyền truy cập root để thực hiện hành động này"
-}
 
 
 
@@ -323,6 +319,12 @@ text_guide_rm_magisk_app="Gõ \"rm\" với 1 con số để xóa phiên bản t�
 text_find_ramdisk_auto="Rất khó để phát hiện ramdisk đích một cách chính xác.
 Bạn có muốn tìm ramdisk tự động không?"
 text_enter_url="Liên kết tùy chỉnh"
+
+need_root_access(){
+
+[ "$(whoami)" == "root" ] || abortc light_red "! Cần quyền truy cập root để thực hiện hành động này"
+}
+
 
 print_ramdisk_method(){
 pd "light_cyan" "Cài đặt Magisk vào đĩa ảnh ramdisk"
