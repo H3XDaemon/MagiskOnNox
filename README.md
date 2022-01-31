@@ -24,7 +24,7 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 - Android Emulator (NoxPlayer, MuMuGlobal Player, Bluestacks): [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
 - Supported Android version: Android 7.1+, Recommended Android 9+
 
-> It is NOT RECOMMENDED to install Magisk on Android 7.1 Emulator anymore as they has broken environment. Magisk v24+ might no longer be able to run on Android 7.1 Emulator. Install Magisk on Android 7.1 x86 project such as Phoenix OS will cause BOOTLOOP
+> It is NOT RECOMMENDED to install Magisk on Android 7.1 Emulator (exclude MEmu) anymore as they has broken environment. Magisk v24+ might no longer be able to run on Android 7.1 Emulator. Install Magisk on Android 7.1 x86 project such as Phoenix OS will cause BOOTLOOP
  
 
 ## Installation method
