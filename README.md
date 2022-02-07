@@ -11,12 +11,6 @@ Integrate Magisk root into Nox Player and other Android x86, emulators
 
 <img src="https://i.imgur.com/udNrMx2.jpg"/>
 
-## Features
-
-- Bring Magisk / Zygisk to Android x86
-- MagiskHide / MagiskDenyList for hiding root
-- Magisk / Zygisk modules work properly!
-
 Note: Some features might not work on some emulator, Please read [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly) to know which Magisk features doesn't work.
 
 ## Requirements
