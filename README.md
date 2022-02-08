@@ -16,14 +16,14 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 ## Requirements
 - Android x86 project such as BlissOS 11 (Android 9), BlissOS 14 (Android 11), PrimeOS (Android 11), ...
 - Android Emulator (NoxPlayer, MuMuGlobal Player, Bluestacks): [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
-- Supported Android version: Android 7.1+, Recommended Android 9+
+- Supported Android version: Recommended Android 9+ for better compatible
 
-> It is NOT RECOMMENDED to install Magisk on Android 7.1 Emulator (exclude MEmu) anymore as they has broken environment. Magisk v24+ might no longer be able to run on Android 7.1 Emulator. Install Magisk on Android 7.1 x86 project such as Phoenix OS will cause BOOTLOOP
- 
+> IT IS NOT RECOMMENDED TO INSTALL MAGISK ON ANDROID 7 EMULATOR AS THEY USUALLY HAVE BROKEN ENVIRONMENT
+
 
 ## Installation method
 - Install Magisk into `/system`
-- Install Magisk into ramdisk image (Android 9 and lower)
+- Install Magisk into ramdisk image (BlissOS Android 9)
 - Install Magisk by using GearLock extension
 
 
