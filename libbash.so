@@ -218,10 +218,6 @@ echo "  4 - Update binary file into \"/data\""
 pd gray "      Update Magisk without having to modify system/ramdisk again"
 pd gray "      Magisk must be installed by this script"
 echo "----------"
-if [ ! -z "$MAGISK_VER_CODE" ] && [ "$MAGISK_VER_CODE" -lt "23010" ]; then
-echo "  m - Minimal Magisk mode: `p light_red "$MINIMAL_MAGISK"`"
-pd gray "      Only MagiskSU and MagiskHide"
-fi
 echo "  0 - Exit menu"
 pd light_red "* Note: Uninstall rusty-magisk to avoid conflicts"
 p none "[CHOICE]: "
@@ -231,9 +227,7 @@ p none "[CHOICE]: "
 print_magisk_builds(){
 echo "  1 - Canary `cre topjohnwu`"
 echo "  2 - Alpha `cre vvb2060`"
-echo "  3 - Canary v23001 `cre topjohnwu`"
-echo "  4 - Stable v23.0 `cre topjohnwu`"
-echo "  5 - Canary `cre TheHitMan7`"
+echo "  3 - Canary `cre TheHitMan7`"
 echo "  e - $text_enter_url"
 }
 
@@ -416,10 +410,6 @@ echo "  4 - Cập nhật nhị phân vào trong \"/data\""
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
 pd gray "      Magisk phải được cài đặt bởi script này"
 echo "----------"
-if [ ! -z "$MAGISK_VER_CODE" ] && [ "$MAGISK_VER_CODE" -lt "23010" ]; then
-echo "  m - Minimal Magisk mode: `p light_red "$MINIMAL_MAGISK"`"
-pd gray "      Chỉ có MagiskSU và MagiskHide"
-fi
 echo "  0 - Thoát khỏi menu"
 pd light_red "* Lưu ý: Gỡ bỏ rusty-magisk để tránh bị xung đột"
 p none "[CHỌN]: "
@@ -1876,16 +1866,6 @@ case "$method" in
     ;;
 4)
     install_command="update_magiskbin"
-    ;;
-"m")
-    if [ "$MAGISK_VER_CODE" -lt "23010" ]; then
-       if $MINIMAL_MAGISK; then
-       MINIMAL_MAGISK=false
-       else
-       MINIMAL_MAGISK=true
-       fi
-    fi
-    nomethod=true
     ;;
 0)
     exit 0
