@@ -2244,7 +2244,7 @@ SELECTED_RAMDISK=false
         SELECTED_RAMDISK=true
         break
     else
-        echo -n "${RED}! $text_unsupport_ramdisk_format${RC}"
+        echo -e "${RED}! $text_unsupport_ramdisk_format${RC}"
     fi
     done
 }
