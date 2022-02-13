@@ -226,8 +226,7 @@ p none "[CHOICE]: "
 
 print_magisk_builds(){
 echo "  1 - Canary `cre topjohnwu`"
-echo "  2 - Alpha `cre vvb2060`"
-echo "  3 - Canary `cre TheHitMan7`"
+echo "  2 - Canary `cre TheHitMan7`"
 echo "  e - $text_enter_url"
 }
 
@@ -650,11 +649,8 @@ ISENCRYPTED=false
   grep ' /data ' /proc/mounts | grep -q 'dm-' && ISENCRYPTED=true
   [ "$(getprop ro.crypto.state)" = "encrypted" ] && ISENCRYPTED=true
 
-canary_v23001_magisk_link="https://github.com/topjohnwu/magisk-files/blob/4f737b70868eb3f8b71e48518f919819cbf5ad63/app-debug.apk?raw=true"
-stable_magisk_link="https://github.com/topjohnwu/Magisk/releases/download/v23.0/Magisk-v23.0.apk"
+stable_magisk_link="https://github.com/topjohnwu/Magisk/releases/download/v24.1/Magisk-v24.1.apk"
 canary_magisk_link="https://github.com/topjohnwu/magisk-files/blob/canary/app-debug.apk?raw=true"
-alpha_magisk_link="https://github.com/vvb2060/magisk_files/blob/alpha/app-release.apk?raw=true"
-lite_magisk_link="https://github.com/vvb2060/magisk_files/blob/master/app-release.apk?raw=true"
 
 
 clean_flash(){
@@ -2025,18 +2021,6 @@ case $build in
     URL="$canary_magisk_link"
     ;;
 2)
-    build_name="Alpha"
-    URL="$alpha_magisk_link"
-    ;;
-3)
-    build_name="Canary"
-    URL="$canary_v23001_magisk_link"
-    ;;
-4)
-    build_name="Stable"
-    URL="$stable_magisk_link"
-    ;;
-5)
     build_name="Canary"
     URL="https://github.com/TheHitMan7/Magisk-Files/blob/master/channel/app-release.apk?raw=true"
     ;;
@@ -2046,7 +2030,7 @@ case $build in
     [ -z "$URL" ] && install_magisk=false
     ;;
 "a")
-   build_name="Alpha"
+   build_name="Stable"
     install_offline=true
     ;;
 "x")
@@ -2235,7 +2219,7 @@ SELECTED_RAMDISK=false
         break
     elif [ -z "$c" ] || [ -z "$VAR_OSROOT" ]; then
 			echo -e "${RED}! $text_wrong_input ...${RC}"
-    elif file "$VAR_RAMDISK" | grep -q " gzip "; then
+    elif gzip -t "$VAR_RAMDISK"; then
         echo -e "- Target ramdisk: ${BGREEN}${VAR_RAMDISK}${RC}"
         test -f $DISKINFO/ramdisk || rm -rf $DISKINFO/ramdisk
         echo -n "$VAR_RAMDISK" >$DISKINFO/ramdisk
@@ -2399,11 +2383,6 @@ if [ "$AGV1" != "noexec" ]; then
                 install_option;
                 ;;
 
-            "install:alpha")
-    build_name="Alpha"
-    URL="$alpha_magisk_link"
-    install_option_dd
-    ;;
             "install:canary")
     build_name="Canary"
     URL="$canary_magisk_link"
@@ -2415,7 +2394,7 @@ if [ "$AGV1" != "noexec" ]; then
     install_option_dd
     ;;
             "install:offline")
-    build_name="Alpha"
+    build_name="Stable"
     install_offline=true
     install_option_dd
     ;;
@@ -2426,7 +2405,7 @@ if [ "$AGV1" != "noexec" ]; then
     install_option_dd
     ;;
             "install:"*)
-                echo "Invaild Magisk build. Available build: canary, alpha, stable"
+                echo "Invaild Magisk build. Available build: canary, stable"
             ;;
             "uninstall")
             uninstall_option
