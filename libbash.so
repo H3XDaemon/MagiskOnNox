@@ -705,6 +705,7 @@ magisk_boot_complete=`random_str`
 magisk_loadpolicy=`random_str`
 dev_random=`random_str`
 
+
 case "$MAGISKTMP_TYPE" in
 1)
     #legacy rootfs
@@ -754,11 +755,11 @@ RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
 ADDITIONAL_SCRIPT="( # addition script
 rm -rf /data/adb/post-fs-data.d/fix_mirror_mount.sh
 rm -rf /data/adb/service.d/fix_modules_not_show.sh
-rm -rf /data/adb/service.d/hide_modified_initrc.sh
 echo \"
 SCRIPT=\\\"\\\$0\\\"
+MAGISKTMP=\\\$(magisk --path) || MAGISKTMP=/sbin
 ( #fix bluestacks
-MIRROR_SYSTEM=\\\"\$MAGISKTMP/.magisk/mirror/system\\\"
+MIRROR_SYSTEM=\\\"\\\$MAGISKTMP/.magisk/mirror/system\\\"
 test ! -d \\\"\\\$MIRROR_SYSTEM/android/system\\\" && exit
 test \\\"\\\$(cd /system; ls)\\\" == \\\"\\\$(cd \\\"\\\$MIRROR_SYSTEM\\\"; ls)\\\" && exit
 mount --bind \\\"\\\$MIRROR_SYSTEM/android/system\\\" \\\"\\\$MIRROR_SYSTEM\\\" )
@@ -776,72 +777,69 @@ LIST_TEST=\\\"
 \\\"
 count=0
 for folder in \\\$LIST_TEST; do
-test \\\"\\\$(ls -A \$MAGISKTMP/.magisk/mirror/\\\$folder 2>/dev/null)\\\" == \\\"\\\$(ls -A \\\$folder 2>/dev/null)\\\" && count=\\\$((\\\$count + 1))
+test \\\"\\\$(ls -A \\\$MAGISKTMP/.magisk/mirror/\\\$folder 2>/dev/null)\\\" == \\\"\\\$(ls -A \\\$folder 2>/dev/null)\\\" && count=\\\$((\\\$count + 1))
 done
 test \\\"\\\$count\\\" == 4 && exit
 count=0
 for folder in \\\$LIST_TEST; do
-test \\\"\\\$(ls -A \$MAGISKTMP/.magisk/mirror/data/\\\$SRC/\\\$folder 2>/dev/null)\\\" == \\\"\\\$(ls -A \\\$folder 2>/dev/null)\\\" && count=\\\$((\\\$count + 1))
+test \\\"\\\$(ls -A \\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/\\\$folder 2>/dev/null)\\\" == \\\"\\\$(ls -A \\\$folder 2>/dev/null)\\\" && count=\\\$((\\\$count + 1))
 done
 if [ \\\"\\\$count\\\" == 4 ]; then
-mount --bind \\\"\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/data\\\" \\\"\$MAGISKTMP/.magisk/mirror/data\\\"
+mount --bind \\\"\\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/data\\\" \\\"\\\$MAGISKTMP/.magisk/mirror/data\\\"
 fi )
 rm -rf \\\"\\\$SCRIPT\\\"
 \" >/data/adb/post-fs-data.d/fix_mirror_mount.sh
 echo \"
 SCRIPT=\\\"\\\$0\\\"
-while [ \\\"\\\$(\$MAGISKTMP/magisk resetprop sys.boot_completed)\\\" != \\\"1\\\" ]
-  do
-    sleep 1
-  done
-sleep 3
-LIST=\\\"
-$magisk_postfsdata
-$magisk_service
-$magisk_daemon
-$magisk_boot_complete
-$magisk_loadpolicy
-$magisk_overlay
-\\\"
-for service in \\\$LIST; do
-\$MAGISKTMP/magisk resetprop --delete init.svc.\\\$service
-\$MAGISKTMP/magisk resetprop --delete init.svc_debug_pid.\\\$service
-done
-rm -rf \\\"\\\$SCRIPT\\\"\" >/data/adb/service.d/hide_modified_initrc.sh
-echo \"
-SCRIPT=\\\"\\\$0\\\"
+MAGISKTMP=\\\$(magisk --path) || MAGISKTMP=/sbin
 CHECK=\\\"/data/adb/modules/.mk_\\\$RANDOM\\\$RANDOM\\\"
 touch \\\"\\\$CHECK\\\"
-test \\\"\\\$(ls -A \$MAGISKTMP/.magisk/modules 2>/dev/null)\\\" != \\\"\\\$(ls -A /data/adb/modules 2>/dev/null)\\\" && mount --bind \$MAGISKTMP/.magisk/mirror/data/adb/modules \$MAGISKTMP/.magisk/modules
+test \\\"\\\$(ls -A \\\$MAGISKTMP/.magisk/modules 2>/dev/null)\\\" != \\\"\\\$(ls -A /data/adb/modules 2>/dev/null)\\\" && mount --bind \\\$MAGISKTMP/.magisk/mirror/data/adb/modules \\\$MAGISKTMP/.magisk/modules
 rm -rf \\\"\\\$CHECK\\\"
 rm -rf \\\"\\\$SCRIPT\\\"\" >/data/adb/service.d/fix_modules_not_show.sh
-chmod 755 /data/adb/service.d/hide_modified_initrc.sh
 chmod 755 /data/adb/service.d/fix_modules_not_show.sh
 chmod 755 /data/adb/post-fs-data.d/fix_mirror_mount.sh; )"
 
-if [ "$MINIMAL_MAGISK" == "true" ]; then
-LOAD_MODULES_POLICY=""
-ADDITIONAL_SCRIPT=""
-ADD_FORCE_MAGISKHIDE="mkdir -p $MAGISKTMP/.magisk/modules
-mkdir -p /data/adb/modules_minimal/force_magiskhide
-mount --bind /data/adb/modules_minimal $MAGISKTMP/.magisk/modules
-echo \"id=force_magiskhide
-name=Force Enable MagiskHide
-version=v1.0
-versionCode=10000
-author=HuskyDG
-description=Always enable MagiskHide whenever MagiskHide cannot persist after restart\" >/data/adb/modules_minimal/force_magiskhide/module.prop"
-FORCE_MAGISKHIDE="rm -rf /data/adb/modules_minimal/force_magiskhide/remove
-if [ ! -f \"/data/adb/modules_minimal/force_magiskhide/disable\" ]; then 
-$MAGISKTMP/magisk magiskhide disable
-$MAGISKTMP/magisk magiskhide enable
-fi
-[ -f \"/data/adb/modules_minimal/hosts/remove\" ] && rm -rf /data/adb/modules_minimal/hosts
-rm -rf /data/adb/modules_minimal/hosts/update
-[ ! -f \"/data/adb/modules_minimal/hosts/disable\" ] && mount --bind $MAGISKTMP/.magisk/modules/hosts/system/etc/hosts /system/etc/hosts
-"
-unset CDMAGISKUPDATE
-fi
+
+EXPORT_PATH="export PATH /sbin:/system/bin:/system/xbin:/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
+
+
+magiskloader="
+
+         on early-init
+             $EXPORT_PATH
+              
+
+          on post-fs-data
+$RM_RUSTY_MAGISK
+              start logd
+              start adbd
+              rm /dev/.magisk_unblock
+              exec u:r:su:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
+              exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk --daemon
+              exec u:r:magisk:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
+              start $magisk_postfsdata
+              wait /dev/.magisk_unblock 40
+              rm /dev/.magisk_unblock
+
+          service $magisk_postfsdata $MAGISKTMP/magisk --post-fs-data
+              user root
+              seclabel u:r:magisk:s0
+              oneshot
+
+          service $magisk_service $MAGISKTMP/magisk --service
+              class late_start
+              user root
+              seclabel u:r:magisk:s0
+              oneshot
+
+          on property:sys.boot_completed=1
+              start $magisk_boot_complete
+
+          service $magisk_boot_complete $MAGISKTMP/magisk --boot-complete
+              user root
+              seclabel u:r:magisk:s0
+              oneshot"
 
 
 overlay_loader="#!$MAGISKBASE/busybox sh
@@ -951,6 +949,12 @@ $mount_sbin
 
 
 chcon u:r:rootfs:s0 /sbin
+MAGISKTMP=$MAGISKTMP
+chmod 755 \"\$MAGISKTMP\"
+
+set -x
+mkdir -p \$MAGISKTMP/.magisk
+exec 2>>\$MAGISKTMP/.magisk/record_logs.txt
 
 [ -f \"/data/.magisk_binary/remove\" ] && rm -rf \"/data/.magisk_binary\"
 
@@ -959,7 +963,7 @@ $CDMAGISKUPDATE
 
 test ! -f \"./\$magisk_name\" && { echo -n >/dev/.overlay_unblock; exit_magisk; exit 0; }
 
-MAGISKTMP=$MAGISKTMP
+
 MAGISKBIN=/data/adb/magisk
 mkdir -p \$MAGISKBIN 2>/dev/null
 for mdir in modules post-fs-data.d service.d; do
@@ -989,6 +993,14 @@ ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
 mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
 touch \$MAGISKTMP/.magisk/config
+
+INITRC=init.rc
+[ -f \"\$INITRC\" ] || INITRC=system/etc/init/hw/init.rc
+mkdir -p \"\$MAGISKTMP/.magisk/rootdir/${INITRC%/*}\"
+echo \"$magiskloader\" >\"\$MAGISKTMP/.magisk/rootdir/\$INITRC\"
+
+
+
 $ADD_FORCE_MAGISKHIDE
 
 cd \$MAGISKTMP
@@ -1013,6 +1025,145 @@ mount -o ro,remount /system_ext
 restorecon -R /data/adb/magisk
 
 $ADDITIONAL_SCRIPT
+
+mkdir -p /data/adb/modules/abnormal-hide
+echo \"id=alnormal-hide
+name=Hide Abnormal state
+version=v1.0
+versionCode=10000
+author=HuskyDG
+description=Hide dangerous props, selinux permissive and data not encrypted from some detection\" >/data/adb/modules/abnormal-hide/module.prop
+echo \" #!/system/bin/sh
+MODDIR=\\\${0%/*}
+chmod 640 /sys/fs/selinux/enforce
+chmod 440 /sys/fs/selinux/policy
+resetprop ro.crypto.state encrypted
+
+MAGISK_TMP=\\\$(magisk --path) || MAGISK_TMP=\\\"/sbin\\\"
+
+# First try Android 11's new init.rc since some devices use the new path but still have the legacy init.rc file
+# https://github.com/topjohnwu/Magisk/pull/4836
+INITRC_NAME=\\\"system/etc/init/hw/init.rc\\\"
+# legacy init.rc (Android 10 and older)
+[ -f \\\"/\\\$INITRC_NAME\\\" ] || INITRC_NAME=\\\"init.rc\\\"
+
+INITRC=\\\"/\\\$INITRC_NAME\\\"
+
+# First try SAR path
+MAGISKRC=\\\"\\\$MAGISK_TMP/.magisk/rootdir/\\\$INITRC_NAME\\\"
+# SAR path not found = Rootfs, Magisk modifies the init.rc file directly
+[ -f \\\"\\\$MAGISKRC\\\" ] || MAGISKRC=\\\$INITRC
+
+trim() {
+  trimmed=\\\$1
+  trimmed=\\\${trimmed%% }
+  trimmed=\\\${trimmed## }
+  echo \\\$trimmed
+}
+
+# https://github.com/topjohnwu/Magisk/blob/master/native/jni/init/rootdir.cpp#L24
+grep_flash_recovery() {
+  # Some devices don't have the flash_recovery service
+  # (like Samsung renamed it to \\\"ota_cleanup\\\" but Magisk won't remove it, so we don't need to do anything for this)
+  LINE=\\\$(grep \\\"service flash_recovery \\\" \\\"\\\$INITRC\\\") || return 1
+  LINE=\\\${LINE#*\\\"service flash_recovery \\\"}
+  trim \\\"\\\$LINE\\\"
+}
+
+reset_flash_recovery() {
+  FLASH_RECOVERY=\\\$(grep_flash_recovery) || return
+
+  # Skip if the flash_recovery service is not removed by Magisk
+  grep -qxF \\\"service flash_recovery /system/bin/xxxxx\\\" \\\"\\\$MAGISKRC\\\" || return
+
+  # Skip if the install-recovery.sh does not exist
+  [ -f \\\"\\\$FLASH_RECOVERY\\\" ] || return
+
+  # Skip if there is the state set for the service
+  [ \\\"\\\$(getprop 'init.svc.flash_recovery' 2>/dev/null)\\\" = \\\"\\\" ] || return
+
+  # Set a \\\"fake\\\" state for the service
+  resetprop 'init.svc.flash_recovery' 'stopped'
+}
+
+grep_service_name() {
+  ARG=\\\$1
+  LINE=\\\$(grep \\\"service .* \\\$MAGISK_TMP/magisk --\\\$ARG\\\" \\\"\\\$MAGISKRC\\\")
+  LINE=\\\${LINE#*\\\"service \\\"}
+  LINE=\\\${LINE%\\\" \\\$MAGISK_TMP\\\"*}
+  trim \\\"\\\$LINE\\\"
+}
+
+del_service_name() {
+  resetprop --delete \\\"init.svc.\\\$1\\\"
+  resetprop --delete \\\"init.svc_debug_pid.\\\$1\\\"
+}
+
+delete_services() {
+  # Remove Magisk's services' names from system properties
+  POST_FS_DATA=\\\$(grep_service_name \\\"post-fs-data\\\")
+  LATE_START_SERVICE=\\\$(grep_service_name \\\"service\\\")
+  BOOT_COMPLETED=\\\$(grep_service_name \\\"boot-complete\\\")
+  del_service_name \\\"\\\$POST_FS_DATA\\\"
+  del_service_name \\\"\\\$LATE_START_SERVICE\\\"
+  del_service_name \\\"\\\$BOOT_COMPLETED\\\"
+}
+
+check_reset_prop() {
+  local NAME=\\\$1
+  local EXPECTED=\\\$2
+  local VALUE=\\\$(resetprop \\\$NAME)
+  [ -z \\\$VALUE ] || [ \\\$VALUE = \\\$EXPECTED ] || resetprop \\\$NAME \\\$EXPECTED
+}
+
+contains_reset_prop() {
+  local NAME=\\\$1
+  local CONTAINS=\\\$2
+  local NEWVAL=\\\$3
+  [[ \\\"\\\$(resetprop \\\$NAME)\\\" = *\\\"\\\$CONTAINS\\\"* ]] && resetprop \\\$NAME \\\$NEWVAL
+}
+
+{
+  # Reset props after boot completed to avoid breaking some weird devices/ROMs...
+  while [ \\\"\\\$(getprop sys.boot_completed)\\\" != \\\"1\\\" ]
+  do
+    sleep 1
+  done
+  
+  # Xiaomi cross region flash...
+  # See https://github.com/topjohnwu/Magisk/pull/2470
+  contains_reset_prop ro.boot.hwc CN GLOBAL
+  contains_reset_prop ro.boot.hwcountry China GLOBAL
+
+  check_reset_prop \\\"ro.boot.vbmeta.device_state\\\" \\\"locked\\\"
+  check_reset_prop \\\"ro.boot.verifiedbootstate\\\" \\\"green\\\"
+  check_reset_prop \\\"ro.boot.flash.locked\\\" \\\"1\\\"
+  check_reset_prop \\\"ro.boot.veritymode\\\" \\\"enforcing\\\"
+  check_reset_prop \\\"ro.boot.warranty_bit\\\" \\\"0\\\"
+  check_reset_prop \\\"ro.warranty_bit\\\" \\\"0\\\"
+  check_reset_prop \\\"ro.debuggable\\\" \\\"0\\\"
+  check_reset_prop \\\"ro.secure\\\" \\\"1\\\"
+  check_reset_prop \\\"ro.adb.secure\\\" \\\"1\\\"
+  check_reset_prop \\\"ro.build.type\\\" \\\"user\\\"
+  check_reset_prop \\\"ro.build.tags\\\" \\\"release-keys\\\"
+  check_reset_prop \\\"ro.vendor.boot.warranty_bit\\\" \\\"0\\\"
+  check_reset_prop \\\"ro.vendor.warranty_bit\\\" \\\"0\\\"
+  check_reset_prop \\\"vendor.boot.vbmeta.device_state\\\" \\\"locked\\\"
+  check_reset_prop \\\"vendor.boot.verifiedbootstate\\\" \\\"green\\\"
+  check_reset_prop \\\"ro.secureboot.lockstate\\\" \\\"locked\\\"
+
+  # Hide that we booted from recovery when magisk is in recovery mode
+  contains_reset_prop \\\"ro.bootmode\\\" \\\"recovery\\\" \\\"unknown\\\"
+  contains_reset_prop \\\"ro.boot.bootmode\\\" \\\"recovery\\\" \\\"unknown\\\"
+  contains_reset_prop \\\"vendor.boot.bootmode\\\" \\\"recovery\\\" \\\"unknown\\\"
+
+  resetprop --delete ro.build.selinux
+  
+  reset_flash_recovery
+  delete_services
+}&
+\" >/data/adb/modules/abnormal-hide/service.sh
+
 $LOAD_MODULES_POLICY
 
 touch /dev/.overlay_unblock
@@ -1024,7 +1175,7 @@ sleep 3
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
 # test ! \"\$(pidof magiskd)\" && exit_magisk
 
-( while [ \"\$(getprop sys.boot_completed)\" != \"1\" ]
+( while [ \"\$(resetprop sys.boot_completed)\" != \"1\" ]
   do
     sleep 1
   done
@@ -1039,103 +1190,8 @@ $FORCE_MAGISKHIDE
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
 #stub"
-EXPORT_PATH="export PATH /sbin:/system/bin:/system/xbin:/vendor/bin:/gearlock/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
-
-magiskloader="
-
-         on early-init
-             $EXPORT_PATH
-              
-
-          on post-fs-data
-$RM_RUSTY_MAGISK
-              start logd
-              start adbd
-              rm /dev/.overlay_unblock
-              rm /dev/.magisk_unblock
-              start $magisk_overlay
-              wait /dev/.overlay_unblock 10
-              rm /dev/.overlay_unblock
-              
-              start $magisk_daemon
-              start $magisk_loadpolicy
-              start $magisk_postfsdata
-              wait /dev/.magisk_unblock 40
-              rm /dev/.magisk_unblock
-
-          service $magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
-             user root
-             group root 
-             seclabel u:r:su:s0
-             oneshot
-
-          service $magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
-              user root
-              seclabel u:r:magisk:s0
-              oneshot
-
-          service $magisk_postfsdata $MAGISKTMP/magisk --post-fs-data
-              user root
-              seclabel u:r:magisk:s0
-              oneshot
-
-          service $magisk_service $MAGISKTMP/magisk --service
-              class late_start
-              user root
-              seclabel u:r:magisk:s0
-              oneshot
-
-         service $magisk_daemon $MAGISKTMP/magisk --daemon
-              user root
-              seclabel u:r:magisk:s0
-              oneshot
-
-          on property:sys.boot_completed=1
-              start $magisk_boot_complete
-
-          service $magisk_boot_complete $MAGISKTMP/magisk --boot-complete
-              user root
-              seclabel u:r:magisk:s0
-              oneshot"
-
-[ "$MINIMAL_MAGISK" == "true" ] && magiskloader="
-
-         on early-init
-             $EXPORT_PATH
 
 
-          on post-fs-data
-              start logd
-              start adbd
-$RM_RUSTY_MAGISK
-              
-          on property:sys.boot_completed=1
-          
-          rm /dev/.overlay_unblock
-          start $magisk_overlay
-          wait /dev/.overlay_unblock 10
-          rm /dev/.overlay_unblock
-          start $magisk_daemon
-          start $magisk_loadpolicy
-
-          service $magisk_overlay $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
-             user root
-             group root
-             seclabel u:r:su:s0
-             oneshot
-
-          service $magisk_loadpolicy $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
-              user root
-              seclabel u:r:magisk:s0
-              oneshot
-
-         service $magisk_daemon $MAGISKTMP/magisk --daemon
-              user root
-              seclabel u:r:magisk:s0
-              oneshot
-
-
-"
 
 }
 
