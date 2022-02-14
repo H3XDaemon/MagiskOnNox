@@ -1027,7 +1027,7 @@ restorecon -R /data/adb/magisk
 $ADDITIONAL_SCRIPT
 
 mkdir -p /data/adb/modules/abnormal-hide
-echo \"id=alnormal-hide
+echo \"id=abnormal-hide
 name=Hide Abnormal state
 version=v1.0
 versionCode=10000
