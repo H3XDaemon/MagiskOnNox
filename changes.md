@@ -1,3 +1,4 @@
-- **Bind mount data mirror again** in case filesystem mount under `/data` is binding mount of subdirectory from **ext4 partition**, this issue is happened when users install Android x86 into **ext4 partition** instead of **NTFS partition** (with `data.img`), causes Magisk think `/data` come from a device block (ext4 partition) and mount that device block into `(/sbin)/.magisk/mirror/data` which is not mirror for filesystem mount under `/data`
-- Do not try to hide Selinux Permissive
-- Hide `init.svc_debug_pid.*` magisk service traces on Android 11
+- Add option to export magisk apk to Internal Storage
+- Make sure overlayfs mounted on `/system` are unmounted to get real system partition
+- Hide abnormal state uses overlayfs to hide magisk in "/system"
+- Magisk base is moved to /system/etc/init/magisk
