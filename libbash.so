@@ -125,6 +125,7 @@ Do you want to automatically find the target ramdisk?"
 text_enter_url="Custom link"
 text_exported_apk="Exported Magisk apk into [Internal Storage]/Magisk"
 text_export_apk_fail="Cannot export Magisk apk. Did you grant me permission?"
+text_installation_ended="Installation ended. Press Enter to continue" 
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -317,6 +318,7 @@ Bạn có muốn tìm ramdisk tự động không?"
 text_enter_url="Liên kết tùy chỉnh"
 text_exported_apk="Đã xuất Magisk apk vào [Bộ nhớ trong]/Magisk"
 text_export_apk_fail="Không thể xuất Magisk apk. Bạn đã cấp quyền truy cập chưa?"
+text_installation_ended="Quá trình cài đặt đã kết thúc.  Nhấn Enter để tiếp tục"
 
 need_root_access(){
 
@@ -1198,7 +1200,7 @@ contains_reset_prop() {
   mkdir /dev/\\\$upper
   mk_nullchar_dev /dev/\\\$upper/magisk
   mk_nullchar_dev /dev/\\\$upper/magisk.rc
-  chcon u:object_r:system:s0 /dev/\\\$upper
+  chcon u:object_r:system_file:s0 /dev/\\\$upper
   chmod 755 /dev/\\\$upper
   mount -t overlay overlay -o lowerdir=/dev/\\\$upper:/system/etc/init /system/etc/init
   
@@ -1952,7 +1954,7 @@ e)
     nomethod=true
     ;;
 esac
-$nomethod || { clear; $install_command "$RAMDISK"; read; }
+$nomethod || { clear; $install_command "$RAMDISK"; pd yellow "$text_installation_ended" ; read; }
 done
 
 }
