@@ -123,6 +123,8 @@ text_cannot_detect_target_ramdisk="Unable to detect target ramdisk"
 text_find_ramdisk_auto="It's difficult to detect target ramdisk correctly.
 Do you want to automatically find the target ramdisk?"
 text_enter_url="Custom link"
+text_exported_apk="Exported Magisk apk into [Internal Storage]/Magisk"
+text_export_apk_fail="Cannot export Magisk apk. Did you grant me permission?"
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -218,6 +220,7 @@ echo "  4 - Update binary file into \"/data\""
 pd gray "      Update Magisk without having to modify system/ramdisk again"
 pd gray "      Magisk must be installed by this script"
 echo "----------"
+echo "  e - Export Magisk apk"
 echo "  0 - Exit menu"
 pd light_red "* Note: Uninstall rusty-magisk to avoid conflicts"
 p none "[CHOICE]: "
@@ -312,6 +315,8 @@ text_guide_rm_magisk_app="Gõ \"rm\" với 1 con số để xóa phiên bản t�
 text_find_ramdisk_auto="Rất khó để phát hiện ramdisk đích một cách chính xác.
 Bạn có muốn tìm ramdisk tự động không?"
 text_enter_url="Liên kết tùy chỉnh"
+text_exported_apk="Đã xuất Magisk apk vào [Bộ nhớ trong]/Magisk"
+text_export_apk_fail="Không thể xuất Magisk apk. Bạn đã cấp quyền truy cập chưa?"
 
 need_root_access(){
 
@@ -409,6 +414,7 @@ echo "  4 - Cập nhật nhị phân vào trong \"/data\""
 pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
 pd gray "      Magisk phải được cài đặt bởi script này"
 echo "----------"
+echo "  e - Xuất Magisk apk"
 echo "  0 - Thoát khỏi menu"
 pd light_red "* Lưu ý: Gỡ bỏ rusty-magisk để tránh bị xung đột"
 p none "[CHỌN]: "
@@ -524,7 +530,7 @@ link "libgxp.so" "gearlock_extension.zip"
 CACHEDIR="$priv_dir/cache/$$"
 DISKINFO="/data/adb/diskinfo"
 APKFILE="$JOBPWD/magisk.apk"
-MAGISKCORE="/system/etc/magisk"
+MAGISKCORE="/system/etc/init/magisk"
 
 busybox_bin(){
 mkdir -p "$DLPATH/bin"
@@ -574,28 +580,46 @@ function cmdline() {
 	awk -F"${1}=" '{print $2}' < /proc/cmdline | cut -d' ' -f1 2> /dev/null
 }
 
+
+umount_magic_mods(){
+while mount -t overlay | grep -q " /system "; do
+umount -l /system
+done
+
+
+local list_files="/system/etc
+/system/etc/*
+/system/addon.d
+/system/addon.d/*
+/system/etc/magisk
+/system/etc/init
+/system/etc/magisk/*
+/system/etc/init/* 
+/magisk
+/magisk/*"
+for file in $list_files; do
+  while true; do
+    umount $list_files || break;
+   done
+done
+}
+
+
 get_magisk_path(){
 
 MAGISK_TMP="$(magisk --path)"
 MAGISKDIR="$MAGISK_TMP/.magisk"
-[ "$MAGISK_TMP" ] && MAGISK_MIRROR="$MAGISKDIR/mirror"
+if [ "$MAGISK_TMP" ]; then
+MAGISK_MIRROR="$MAGISKDIR/mirror"
+PATH="$MAGISK_TMP:$PATH"
+fi
 # SYSTEMDIR="/system"
 # SYSTEMROOTDIR="/"
 # [ "$MAGISK_TMP" ] && SYSTEMROOTDIR="/system_root"
 
 # umount to make sure there are no magisk module mount on these folder
 
-( umount -l /system/etc
-umount -l /system/etc/*
-umount -l /system/addon.d
-umount -l /system/addon.d/*
-umount -l /system/etc/magisk
-umount -l /system/etc/init
-umount -l /system/etc/magisk/*
-umount -l /system/etc/init/* 
-umount -l /magisk
-umount -l /magisk/*
- ) &
+( umount_magic_mods ) &
 
 # no need to use Magisk's mirror anymore
 
@@ -1027,10 +1051,11 @@ restorecon -R /data/adb/magisk
 $ADDITIONAL_SCRIPT
 
 mkdir -p /data/adb/modules/abnormal-hide
+rm -rf /data/adb/modules/abnormal-hide/remove
 echo \"id=abnormal-hide
 name=Hide Abnormal state
-version=v1.0
-versionCode=10000
+version=v1.1
+versionCode=10001
 author=HuskyDG
 description=Hide dangerous props, selinux permissive and data not encrypted from some detection\" >/data/adb/modules/abnormal-hide/module.prop
 echo \" #!/system/bin/sh
@@ -1084,6 +1109,13 @@ reset_flash_recovery() {
 
   # Set a \\\"fake\\\" state for the service
   resetprop 'init.svc.flash_recovery' 'stopped'
+}
+
+mk_nullchar_dev(){
+TARGET=\\\"\\\$1\\\"
+rm -rf \\\"\\\$TARGET\\\"
+mkdir -p \\\"\\\${TARGET%/*}\\\"
+mknod \\\"\\\$TARGET\\\" c 0 0
 }
 
 grep_service_name() {
@@ -1161,7 +1193,17 @@ contains_reset_prop() {
   
   reset_flash_recovery
   delete_services
+
+  upper=upper.\\\$RANDOM
+  mkdir /dev/\\\$upper
+  mk_nullchar_dev /dev/\\\$upper/magisk
+  mk_nullchar_dev /dev/\\\$upper/magisk.rc
+  chcon u:object_r:system:s0 /dev/\\\$upper
+  chmod 755 /dev/\\\$upper
+  mount -t overlay overlay -o lowerdir=/dev/\\\$upper:/system/etc/init /system/etc/init
+  
 }&
+  
 \" >/data/adb/modules/abnormal-hide/service.sh
 
 $LOAD_MODULES_POLICY
@@ -1174,16 +1216,6 @@ sleep 3
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
 # test ! \"\$(pidof magiskd)\" && exit_magisk
-
-( while [ \"\$(resetprop sys.boot_completed)\" != \"1\" ]
-  do
-    sleep 1
-  done
-
-
-$FORCE_MAGISKHIDE
-# hide magisk modify init.rc
- ) &
 
 "
 
@@ -1549,14 +1581,14 @@ check_magisk_apk
 
 if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
 # legacy rootfs
-MAGISKBASE="/system/etc/magisk"
 SYSTEMTYPE=1
-elif [ -d "/sbin" ]; then
+else
 # SAR
-MAGISKBASE="/magisk"
-MAGISKCORE="/magisk"
 SYSTEMTYPE=3
 fi
+
+MAGISKBASE="/system/etc/init/magisk"
+
 
 if [ "$GEARLOCK" == "true" ]; then
 MAGISKBASE="$GEARHOME/.local/magisk"
@@ -1665,22 +1697,6 @@ echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
 mount_ro_system
 
-if [ ! "$build_name" == "Custom" ]; then
-STUB_MAGISK_APK="$(find /data/user_de/0/*/dyn/current.apk -type f 2>/dev/null)"
-echo "- $text_install_app..."
-if [ -z "$STUB_MAGISK_APK" ]; then
-    pm uninstall com.topjohnwu.magisk &>/dev/null
-    pm install "$APKFILE" &>/dev/null || echo "* $text_install_app_sug"
-else
-    echo "$STUB_MAGISK_APK" | while read magisk_dyn; do
-        cat "$APKFILE" >"$magisk_dyn"
-    done
-fi
-mkdir -p "/sdcard/Magisk"
-rm -rf "/sdcard/Magisk/Magisk.apk"
-cp "$APKFILE" "/sdcard/Magisk/Magisk.apk"
-echo "- $text_saved_magisk_apk_to /sdcard/Magisk/Magisk.apk"
-fi
 clean_flash
 echo "- $text_done"
 }
@@ -1710,6 +1726,7 @@ FILE_LIST2="
 /system/ghome/gearboot/overlay/magisk
 /system/ghome/.local/magisk
 /magisk
+/system/etc/init/magisk
 /system/etc/magisk
 "
 
@@ -1724,8 +1741,7 @@ echo "- $text_mount_rw_system"
 mount_rw_system
 $IS_SYSTEM_MOUNT || abortc "light_red" "! $text_failed_mount_system"
 
-MAGISKCOREDIR=/magisk
-[ ! -d "/magisk" ] && MAGISKCOREDIR=/system/etc/magisk
+MAGISKCOREDIR=/system/etc/init/magisk
 
 rm -rf "$MAGISKCOREDIR/.rw" 2>/dev/null
 touch "$MAGISKCOREDIR/.rw" 2>/dev/null  || abortc light_red "$text_system_not_writeable"
@@ -1738,6 +1754,8 @@ echo "- $text_uninstalling_magisk..."
 for fun in $FILE_LIST1 $FILE_LIST2 /system/etc/init/magisk.rc; do
 rm -rf "$fun"
 done
+
+
 
 if $REMOVE_MAGISK_DATA; then
 
@@ -1921,14 +1939,21 @@ case "$method" in
     ;;
 0)
     exit 0
+    break
+    ;;
+e)
+    [ ! -d "/sdcard/Magisk" ] && rm -rf /sdcard/Magisk
+    mkdir -p /sdcard/Magisk
+    cp "$APKFILE" "/sdcard/Magisk/Magisk-$MAGISK_VER($MAGISK_VER_CODE).apk" && pd light_green "$text_exported_apk" || pd light_red "$text_export_apk_fail"
+    nomethod=true
+    read
     ;;
 *)
     nomethod=true
     ;;
 esac
-$nomethod || break
+$nomethod || { clear; $install_command "$RAMDISK"; read; }
 done
-$nomethod || { clear; $install_command "$RAMDISK"; }
 
 }
 
