@@ -1053,19 +1053,17 @@ restorecon -R /data/adb/magisk
 $ADDITIONAL_SCRIPT
 
 mkdir -p /data/adb/modules/abnormal-hide
-rm -rf /data/adb/modules/abnormal-hide/remove
+for file in service.sh module.prop remove system post-fs-data.sh; do
+rm -rf /data/adb/modules/abnormal-hide/$file
+done
 echo \"id=abnormal-hide
 name=Hide Abnormal state
-version=v1.1
-versionCode=10001
+version=v1.2
+versionCode=10002
 author=HuskyDG
-description=Hide dangerous props, selinux permissive and data not encrypted from some detection\" >/data/adb/modules/abnormal-hide/module.prop
+description=Hide some traces such as dangerous props, selinux permissive, modified init.rc and data not encrypted from some detection\" >/data/adb/modules/abnormal-hide/module.prop
 echo \" #!/system/bin/sh
 MODDIR=\\\${0%/*}
-chmod 640 /sys/fs/selinux/enforce
-chmod 440 /sys/fs/selinux/policy
-resetprop ro.crypto.state encrypted
-
 MAGISK_TMP=\\\$(magisk --path) || MAGISK_TMP=\\\"/sbin\\\"
 
 # First try Android 11's new init.rc since some devices use the new path but still have the legacy init.rc file
@@ -1203,6 +1201,11 @@ contains_reset_prop() {
   chcon u:object_r:system_file:s0 /dev/\\\$upper
   chmod 755 /dev/\\\$upper
   mount -t overlay overlay -o lowerdir=/dev/\\\$upper:/system/etc/init /system/etc/init
+  sleep 1
+  chmod 640 /sys/fs/selinux/enforce
+  chmod 440 /sys/fs/selinux/policy
+  resetprop ro.crypto.state encrypted
+
   
 }&
   
