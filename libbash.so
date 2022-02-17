@@ -217,9 +217,6 @@ pd gray "      Do not support system-as-root"
 echo "  3 - Install Magisk by using GearLock (system/systemless)"
 pd gray "      Use GearLock to active Magisk"
 pd gray "      Recommended for Android x86 project"
-echo "  4 - Update binary file into \"/data\""
-pd gray "      Update Magisk without having to modify system/ramdisk again"
-pd gray "      Magisk must be installed by this script"
 echo "----------"
 echo "  e - Export Magisk apk"
 echo "  0 - Exit menu"
@@ -412,9 +409,6 @@ pd gray "      Không hỗ trợ system-as-root"
 echo "  3 - Cài đặt Magisk bằng GearLock (system/systemless)"
 pd gray "      Cần có GearLock, sử dụng GearLock để kích hoạt Magisk"
 pd gray "      Khuyên dùng cho Android x86 project"
-echo "  4 - Cập nhật nhị phân vào trong \"/data\""
-pd gray "      Cập nhật Magisk mà không cần phải sửa đổi lại hệ thống hoặc ramdisk.img"
-pd gray "      Magisk phải được cài đặt bởi script này"
 echo "----------"
 echo "  e - Xuất Magisk apk"
 echo "  0 - Thoát khỏi menu"
@@ -740,7 +734,8 @@ rm -rf /.backup_sbin
 mkdir /.backup_sbin
 ln /sbin/* /.backup_sbin
 mnt_tmpfs /sbin
-clone /.backup_sbin /sbin"
+clone /.backup_sbin /sbin
+chcon u:r:rootfs:s0 /sbin"
     remove_backup="
 rm -rf /.backup_sbin 
 mount -o ro,remount /"
@@ -771,8 +766,6 @@ for module in \$(ls /data/adb/modules); do
 unset LOG_MAGISK
 unset FORCE_MAGISKHIDE
 unset ADD_FORCE_MAGISKHIDE
-CDMAGISKUPDATE="[ -d \"/data/.magisk_binary\" ] && cd /data/.magisk_binary
-chcon u:object_r:app_data_file:s0 /data/.magisk_binary"
 RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
               exec u:r:su:s0 -- rm -rf /data/.rusty-magisk
               rm /data/.rusty-magisk/magisk.apk
@@ -982,33 +975,28 @@ done
 
 $mount_sbin
 
-
-chcon u:r:rootfs:s0 /sbin
 MAGISKTMP=$MAGISKTMP
 chmod 755 \"\$MAGISKTMP\"
 
 set -x
 mkdir -p \$MAGISKTMP/.magisk
-exec 2>>\$MAGISKTMP/.magisk/record_logs.txt
+mkdir -p \$MAGISKTMP/emu
+exec 2>>\$MAGISKTMP/emu/record_logs.txt
 
-[ -f \"/data/.magisk_binary/remove\" ] && rm -rf \"/data/.magisk_binary\"
-
-cd $MAGISKBASE
-$CDMAGISKUPDATE 
+cd $MAGISKBASE 
 
 test ! -f \"./\$magisk_name\" && { echo -n >/dev/.overlay_unblock; exit_magisk; exit 0; }
 
 
 MAGISKBIN=/data/adb/magisk
-mkdir -p \$MAGISKBIN 2>/dev/null
-for mdir in modules post-fs-data.d service.d; do
+mkdir /data/unencrypted
+for mdir in modules post-fs-data.d service.d magisk; do
 test ! -d /data/adb/\$mdir && rm -rf /data/adb/\$mdir
 mkdir /data/adb/\$mdir 2>/dev/null
 done
 for file in magisk32 magisk64 magiskinit; do
   cp -af ./\$file \$MAGISKTMP/\$file 2>/dev/null
   chmod 755 \$MAGISKTMP/\$file
-  TEXT_LOG=\"add \$MAGISKBIN/\$file\"
   cp -af ./\$file \$MAGISKBIN/\$file 2>/dev/null
   chmod 755 \$MAGISKBIN/\$file
 done
@@ -1027,7 +1015,6 @@ ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
 
 mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
-mkdir \$MAGISKTMP/emu-script
 
 touch \$MAGISKTMP/.magisk/config
 
@@ -1080,7 +1067,6 @@ shloadpolicy="#!$MAGISKBASE/busybox sh
 
 $LOAD_MODULES_POLICY
 "
-
 }
 
 extract_magisk_apk(){
@@ -1165,6 +1151,8 @@ echo "- $text_unpatch_ramdisk"
 if [ -f "$TMPDIR/ramdisk/magisk/init.rc" ]; then
 # found init.rc backup!
 cat "$TMPDIR/ramdisk/magisk/init.rc" >"$TMPDIR/ramdisk/init.rc"
+elif [ -f "$TMPDIR/ramdisk/scripts/999_magisk" ]; then
+rm -rf "$TMPDIR/ramdisk/scripts/999_magisk"
 else
 abortc light_red "$text_backup_not_exist" 2
 fi
@@ -1233,7 +1221,8 @@ mkdir -p "$TMPDIR/ramdisk"
 ( cd "$TMPDIR/ramdisk" && zcat "$RAMDISK" | cpio -iud ) || abortc light_red "! $text_unpack_ramdisk_fail"
 echo "- $text_patch_ramdisk"
 # ramdisk was unpack to $TMPDIR/ramdisk
-[ -d "$TMPDIR/ramdisk/sbin" ] || magisk_loader 3
+if [ -f "$TMPDIR/ramdisk/init.rc" ]; then
+magisk_loader 3
 
 if file "$TMPDIR/ramdisk/init" | grep "x86" | grep -q "32-bit"; then
     ARCH=x86
@@ -1269,6 +1258,51 @@ else
 # no backup init
 cp "$TMPDIR/ramdisk/init.rc" "$TMPDIR/ramdisk/magisk/init.rc"
 echo "$magiskloader" >>"$TMPDIR/ramdisk/init.rc"
+fi
+elif [ -d "$TMPDIR/ramdisk/scripts" ]; then
+# this maybe initrd.img
+MAGISKBASE=MAGISK_FILES_BASE
+magisk_loader 3
+    ARCH=x64
+    ABI32=x86
+    IS64BIT=true
+    ABI=x86_64
+mkdir "$TMPDIR/ramdisk/magisk"
+rm -rf "$TMPDIR/ramdisk/magisk/magisk.rc"
+echo "$magiskloader" >>"$TMPDIR/ramdisk/magisk/magisk.rc"
+rm -rf "$TMPDIR/ramdisk/scripts/999_magisk"
+echo "if mount -t tmpfs | grep -q \" /android \" || mount -t rootfs | grep -q \" /android \"; then
+# rootfs, hook into /init.rc directly
+mount -o rw,remount /android
+mkdir /android/magisk
+sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/overlay.sh
+sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/loadpolicy.sh
+sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/magisk.rc
+cp -a /magisk/* /android/magisk
+cat /magisk/magisk.rc >>/android/init.rc
+else
+sysblock=\"\$(mount | grep \" /android \" | tail -1 | awk '{ print \$1 }')\"
+mkdir /system_root
+mount \$sysblock /system_root
+mountpoint -q /android/oem && mount --move /android/oem /system_root/oem
+mount -t tmpfs tmpfs /android/oem
+chmod 750 /android/oem
+mkdir -p /android/oem/.overlay/oem
+mount --bind /system_root/oem /android/oem/.overlay/oem
+rm -rf /oem
+ln -fs /android/oem /oem
+ln -s /oem/* /android/oem
+mkdir /android/oem/.overlay/upper
+mkdir /android/oem/.overlay/work
+mount -t overlay tmpfs -o lowerdir=/android/system/etc/init,upperdir=/android/oem/.overlay/upper,workdir=/android/oem/.overlay/work /android/system/etc/init
+sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/overlay.sh
+sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/loadpolicy.sh
+sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/magisk.rc
+cp -a /magisk /android/oem/.overlay/upper
+cp /magisk/magisk.rc /android/oem/.overlay/upper/magisk.rc
+fi" >"$TMPDIR/ramdisk/scripts/999_magisk"
+else
+abortc light_red "! Unknown ramdisk structure"
 fi
 rm -rf "$TMPDIR/ramdisk/magisk/loadpolicy.sh" "$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "$shloadpolicy" >"$TMPDIR/ramdisk/magisk/loadpolicy.sh"
@@ -1435,14 +1469,6 @@ need_root_access
 
 check_magisk_apk
 
-if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
-# legacy rootfs
-SYSTEMTYPE=1
-else
-# SAR
-SYSTEMTYPE=3
-fi
-
 MAGISKBASE="/system/etc/init/magisk"
 
 
@@ -1451,13 +1477,8 @@ MAGISKBASE="$GEARHOME/.local/magisk"
 MAGISKCORE="$GEARHOME/.local/magisk"
 fi
 
-magisk_loader "$SYSTEMTYPE"
-
-if [ -e "/init" ] && [ -e "/init.real" ]; then
-pd light_red "$text_tell_remove_rusty_magisk"
-# /dev mode to not conflit with rusty-Magisk
 magisk_loader 3
-fi
+
 echo "- ${text_magisk_tmpfs_directory}: $MAGISKTMP"
 rm -rf "$MAGISKCORE"
 mkdir -p "$MAGISKCORE"
@@ -1790,9 +1811,6 @@ case "$method" in
 3)
     gearlock_method
     ;;
-4)
-    install_command="update_magiskbin"
-    ;;
 0)
     exit 0
     break
@@ -2118,7 +2136,7 @@ SRCVAR="$(cmdline SRC)"
 [ -z "$SRCVAR" ] && SRCVAR="$(dirname "$BIMGVAR")"
 [ "$SRCVAR" == "." ] && SRCVAR="android"
 count=0
-RAMDISK="/gearlock/gearroot/$SRCVAR/ramdisk.img"
+[ -f "/gearlock/gearroot/$SRCVAR/ramdisk.img" ] && RAMDISK="/gearlock/gearroot/$SRCVAR/ramdisk.img" || RAMDISK="/gearlock/gearroot/$SRCVAR/initrd.img"
 if [ ! -f "$RAMDISK" ]; then
 unset RAMDISK
 for VAR_OSROOT in $BLOCKDEVS; do
@@ -2128,6 +2146,13 @@ mount_disk
 TARGET_ROOT="$OSROOT/$SRCVAR"
 if [ -d "$TARGET_ROOT" ] && [ -f "$TARGET_ROOT/findme" ] && [ -f "$TARGET_ROOT/initrd.img" ] && [ -f "$TARGET_ROOT/ramdisk.img" ] && file "$TARGET_ROOT/ramdisk.img" | grep -q " gzip "; then
 RAMDISK="$TARGET_ROOT/ramdisk.img"
+break;
+fi
+done
+for VAR_OSROOT in /dev/os_disk_*; do
+TARGET_ROOT="$OSROOT/$SRCVAR"
+if [ -d "$TARGET_ROOT" ] && [ -f "$TARGET_ROOT/findme" ] && [ -f "$TARGET_ROOT/initrd.img" ] && [ -f "$TARGET_ROOT/ramdisk.img" ] && file "$TARGET_ROOT/initrd.img" | grep -q " gzip "; then
+RAMDISK="$TARGET_ROOT/initrd.img"
 break;
 fi
 done
@@ -2142,7 +2167,7 @@ SELECTED_RAMDISK=false
     test -f $DISKINFO/blockdev || rm -rf $DISKINFO/blockdev
     echo -n "$VAR_OSROOT" >$DISKINFO/blockdev
     echo "------- CHOICE RAMDISK -------:"
-    LIST_OS="$(find "$OSROOT"  -mindepth 2 -maxdepth 2 -name "$chkFile" 2>/dev/null)"
+    LIST_OS="$(find "$OSROOT"  -mindepth 2 -maxdepth 2 -name "ramdisk.img" 2>/dev/null; find "$OSROOT"  -mindepth 2 -maxdepth 2 -name "initrd.img" 2>/dev/null)"
     [ -z "$LIST_OS" ] && pd light_red "     No ramdisk!" || echo "$LIST_OS" | nl -s "]. "
     echo "     r]. Re-mount partition"
     echo "     0]. Exit table"
