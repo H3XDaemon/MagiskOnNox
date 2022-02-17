@@ -1076,9 +1076,10 @@ sleep 3
 
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
-#stub"
+#stub
 
 $LOAD_MODULES_POLICY
+"
 
 }
 
