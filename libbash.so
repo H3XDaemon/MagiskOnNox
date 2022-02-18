@@ -962,9 +962,6 @@ magisk_name=\"magisk32\"
 count=0
 ( magisk --stop ) &
 
-umount -l /init.rc
-umount -l /system/etc/init/hw/init.rc
-
 until ! mount | grep -q \" /sbin \"; do
 [ "$count" -gt "10" ] && break
 umount -l /sbin 2>/dev/null
@@ -1044,7 +1041,11 @@ $LOAD_MODULES_POLICY
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
 # test ! \"\$(pidof magiskd)\" && exit_magisk
+
 [ -d "/oem/.overlay" ] && umount -l /oem
+umount -l /system/etc/init
+umount -l /init.rc
+umount -l /system/etc/init/hw/init.rc
 "
 
 cd "$JOBPWD"
