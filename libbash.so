@@ -838,7 +838,7 @@ $RM_RUSTY_MAGISK
               rm /dev/.magisk_unblock
               exec u:r:su:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk --daemon
-              exec u:r:magisk:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/loadpolicy.sh
+              exec u:r:magisk:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/emu/loadpolicy.sh
               start $magisk_postfsdata
               wait /dev/.magisk_unblock 40
               rm /dev/.magisk_unblock
@@ -929,6 +929,7 @@ rm -rf \"\$PAYDIR\"
 ) }
 
 exit_magisk(){
+umount -l $MAGISKTMP
 echo -n >/dev/.magisk_unblock
 }
 
@@ -982,6 +983,7 @@ set -x
 mkdir -p \$MAGISKTMP/.magisk
 mkdir -p \$MAGISKTMP/emu
 exec 2>>\$MAGISKTMP/emu/record_logs.txt
+exec >>\$MAGISKTMP/emu/record_logs.txt
 
 cd $MAGISKBASE 
 
@@ -1002,7 +1004,7 @@ for file in magisk32 magisk64 magiskinit; do
 done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
-cp -af ./loadpolicy.sh \$MAGISKTMP
+cp -af ./loadpolicy.sh \$MAGISKTMP/emu
 cp -af ./assets/* \$MAGISKBIN
 
 
@@ -1048,11 +1050,7 @@ mount -o ro,remount /system_ext
 
 restorecon -R /data/adb/magisk
 
-$ADDITIONAL_SCRIPT
-
 touch /dev/.overlay_unblock
-UID_MYAPP=\$(ls -ld \"$priv_dir\" | awk '{ print \$3 }') || UID_MYAPP=root
-chown \$UID_MYAPP:\$UID_MYAPP /data/.magisk_binary
 rm -rf /dev/.overlay_unblock
 sleep 3
 
@@ -1062,11 +1060,10 @@ sleep 3
 
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
+MAGISKTMP=\"\$MAGISKTMP\"
 #stub
-( while [ -d "/oem/.overlay" ]; do
- umount -l /oem
- sleep 1
-done ) &
+[ -d "/oem/.overlay" ] && umount -l /oem
+$ADDITIONAL_SCRIPT
 $LOAD_MODULES_POLICY
 "
 }
