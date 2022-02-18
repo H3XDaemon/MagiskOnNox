@@ -838,7 +838,6 @@ $RM_RUSTY_MAGISK
               rm /dev/.magisk_unblock
               exec u:r:su:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk --daemon
-              exec u:r:magisk:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKTMP/emu/loadpolicy.sh
               start $magisk_postfsdata
               wait /dev/.magisk_unblock 40
               rm /dev/.magisk_unblock
@@ -1004,7 +1003,6 @@ for file in magisk32 magisk64 magiskinit; do
 done
 cp -af ./magiskboot \$MAGISKBIN/magiskboot
 cp -af ./busybox \$MAGISKBIN/busybox
-cp -af ./loadpolicy.sh \$MAGISKTMP/emu
 cp -af ./assets/* \$MAGISKBIN
 
 
@@ -1025,9 +1023,6 @@ INITRC=init.rc
 mkdir -p \"\$MAGISKTMP/.magisk/rootdir/${INITRC%/*}\"
 echo \"$magiskloader\" >\"\$MAGISKTMP/.magisk/rootdir/\$INITRC\"
 
-
-
-$ADD_FORCE_MAGISKHIDE
 
 cd \$MAGISKTMP
 # SELinux stuffs
@@ -1050,22 +1045,15 @@ mount -o ro,remount /system_ext
 
 restorecon -R /data/adb/magisk
 
-touch /dev/.overlay_unblock
-rm -rf /dev/.overlay_unblock
-sleep 3
+$ADDITIONAL_SCRIPT
+$LOAD_MODULES_POLICY
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
 # test ! \"\$(pidof magiskd)\" && exit_magisk
+[ -d "/oem/.overlay" ] && umount -l /oem
 "
 
 cd "$JOBPWD"
-shloadpolicy="#!$MAGISKBASE/busybox sh
-MAGISKTMP=\"\$MAGISKTMP\"
-#stub
-[ -d "/oem/.overlay" ] && umount -l /oem
-$ADDITIONAL_SCRIPT
-$LOAD_MODULES_POLICY
-"
 }
 
 extract_magisk_apk(){
@@ -1273,9 +1261,9 @@ echo "if mount -t tmpfs | grep -q \" /android \" || mount -t rootfs | grep -q \"
 mount -o rw,remount /android
 mkdir /android/magisk
 sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/overlay.sh
-sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/loadpolicy.sh
 sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/magisk.rc
 cp -a /magisk/* /android/magisk
+[ ! -f \"/magisk/init.rc\" ] && cp /init.rc /magisk/init.rc
 cat /magisk/magisk.rc >>/android/init.rc
 else
 sysblock=\"\$(mount | grep \" /android \" | tail -1 | awk '{ print \$1 }')\"
@@ -1293,7 +1281,6 @@ mkdir /android/oem/.overlay/upper
 mkdir /android/oem/.overlay/work
 mount -t overlay tmpfs -o lowerdir=/android/system/etc/init,upperdir=/android/oem/.overlay/upper,workdir=/android/oem/.overlay/work /android/system/etc/init
 sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/overlay.sh
-sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/loadpolicy.sh
 sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/magisk.rc
 cp -a /magisk /android/oem/.overlay/upper
 cp /magisk/magisk.rc /android/oem/.overlay/upper/magisk.rc
@@ -1316,8 +1303,7 @@ fi
 else
 abortc light_red "! Unknown ramdisk structure"
 fi
-rm -rf "$TMPDIR/ramdisk/magisk/loadpolicy.sh" "$TMPDIR/ramdisk/magisk/overlay.sh"
-echo "$shloadpolicy" >"$TMPDIR/ramdisk/magisk/loadpolicy.sh"
+rm -rf "$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "$overlay_loader" >"$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "( mount -o rw,remount /
 cat "/magisk/init.rc" >/init.rc
@@ -1470,8 +1456,6 @@ echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
 touch "$GEARBOOT/init.superuser.rc"
 cp "$INITRC" "$NEW_INITRC"
 echo "$magiskloader" >>"$NEW_INITRC"
-rm -rf "$MAGISKCORE/loadpolicy.sh"
-echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 clean_flash
 echo "- $text_done"
 }
@@ -1529,8 +1513,6 @@ rm -rf $MAGISKCORE/overlay.sh
 echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
 rm -rf "$TMPDIR/gxp/gearlock/magisk.rc"
 echo "$magiskloader" >"$TMPDIR/gxp/gearlock/magisk.rc"
-rm -rf "$MAGISKCORE/loadpolicy.sh"
-echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 extension_info > "$TMPDIR/gxp/!zygote.sh"
 extension_unins >"$TMPDIR/gxp/uninstall.sh"
 echo "- $text_building_gxp"
@@ -1581,8 +1563,6 @@ rm -rf $MAGISKCORE/overlay.sh
 echo "$overlay_loader" >"$MAGISKCORE/overlay.sh"
 rm -rf "/system/etc/init/magisk.rc"
 echo "$magiskloader" >"/system/etc/init/magisk.rc"
-rm -rf "$MAGISKCORE/loadpolicy.sh"
-echo "$shloadpolicy" >"$MAGISKCORE/loadpolicy.sh"
 echo "- $text_mount_ro_system"
 mount_ro_system
 
