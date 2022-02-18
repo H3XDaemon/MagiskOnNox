@@ -1263,7 +1263,8 @@ mkdir /android/magisk
 sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/overlay.sh
 sed -i \"s|MAGISK_FILES_BASE|/magisk|g\" /magisk/magisk.rc
 cp -a /magisk/* /android/magisk
-[ ! -f \"/magisk/init.rc\" ] && cp /init.rc /magisk/init.rc
+[ ! -f \"/magisk/init.rc\" ] && cat /init.rc >/magisk/init.rc
+[ -f \"/magisk/init.rc\" ] && cat /magisk/init.rc >/init.rc
 cat /magisk/magisk.rc >>/android/init.rc
 else
 sysblock=\"\$(mount | grep \" /android \" | tail -1 | awk '{ print \$1 }')\"
@@ -1306,7 +1307,6 @@ fi
 rm -rf "$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "$overlay_loader" >"$TMPDIR/ramdisk/magisk/overlay.sh"
 echo "( mount -o rw,remount /
-cat "/magisk/init.rc" >/init.rc
 rm -rf /magisk
 mount -o ro,remount / ) &" >>"$TMPDIR/ramdisk/magisk/overlay.sh"
 chmod 755 "$TMPDIR/ramdisk/init.rc"
