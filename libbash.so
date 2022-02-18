@@ -228,6 +228,7 @@ p none "[CHOICE]: "
 print_magisk_builds(){
 echo "  1 - Canary `cre topjohnwu`"
 echo "  2 - Canary `cre TheHitMan7`"
+echo "  3 - Stable `cre topjohnwu`"
 echo "  e - $text_enter_url"
 }
 
@@ -1966,6 +1967,11 @@ case $build in
     build_name="Canary"
     URL="https://github.com/TheHitMan7/Magisk-Files/blob/master/channel/app-release.apk?raw=true"
     ;;
+"3")
+    echo -n "Version (Example: 24.1) > "
+    read magiskversion
+    [ -z "$magiskversion" ] && install_magisk=false || URL="https://github.com/topjohnwu/magisk-files/blob/${magiskversion}/app-release.apk?raw=true"
+    ;;
 "e")
     echo -n "[URL]: "
     read URL
@@ -2337,11 +2343,6 @@ if [ "$AGV1" != "noexec" ]; then
     URL="$canary_magisk_link"
     install_option_dd
     ;;
-            "install:stable")
-    build_name="Stable"
-    URL="$stable_magisk_link"
-    install_option_dd
-    ;;
             "install:offline")
     build_name="Stable"
     install_offline=true
@@ -2354,8 +2355,10 @@ if [ "$AGV1" != "noexec" ]; then
     install_option_dd
     ;;
             "install:"*)
-                echo "Invaild Magisk build. Available build: canary, stable"
-            ;;
+    build_name="Stable"
+URL="https://github.com/topjohnwu/magisk-files/blob/${AGV2: 8}/app-release.apk?raw=true"
+    install_option_dd
+    ;;
             "uninstall")
             uninstall_option
             ;;
