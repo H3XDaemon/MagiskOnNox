@@ -1,4 +1,2 @@
-- Add option to export magisk apk to Internal Storage
-- Make sure overlayfs mounted on `/system` are unmounted to get real system partition
-- Hide abnormal state uses overlayfs to hide magisk in "/system"
-- Magisk base is moved to /system/etc/init/magisk
+- Add new way to install Magisk into `initrd.img` for Android 10+ x86
+- Magisk in initrd: Inject policy rules before boot into Android
