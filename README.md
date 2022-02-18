@@ -23,7 +23,7 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 
 ## Installation method
 - Install Magisk into `/system`
-- Install Magisk into ramdisk image (BlissOS Android 9)
+- Install Magisk into ramdisk image (`ramdisk.img` or `initrd.img`)
 - Install Magisk by using GearLock extension
 
 
