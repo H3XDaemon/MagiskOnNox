@@ -1058,13 +1058,15 @@ sleep 3
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
 # test ! \"\$(pidof magiskd)\" && exit_magisk
-
 "
 
 cd "$JOBPWD"
 shloadpolicy="#!$MAGISKBASE/busybox sh
 #stub
-
+( while [ -d "/oem/.overlay" ]; do
+ umount -l /oem
+ sleep 1
+done ) &
 $LOAD_MODULES_POLICY
 "
 }
@@ -1208,8 +1210,6 @@ mkdir -p "$TMPDIR"
 
 [ ! -f "$RAMDISK" ] && abortc light_red "! Ramdisk does not exist!"
 
-magisk_loader
-
 check_magisk_apk
 
 echo "- $text_unpack_ramdisk"
@@ -1291,7 +1291,7 @@ mkdir -p /android/oem/.overlay/oem
 mount --bind /system_root/oem /android/oem/.overlay/oem
 rm -rf /oem
 ln -fs /android/oem /oem
-ln -s /oem/* /android/oem
+ln -s /oem/.overlay/oem/* /oem
 mkdir /android/oem/.overlay/upper
 mkdir /android/oem/.overlay/work
 mount -t overlay tmpfs -o lowerdir=/android/system/etc/init,upperdir=/android/oem/.overlay/upper,workdir=/android/oem/.overlay/work /android/system/etc/init
@@ -1300,7 +1300,22 @@ sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/loadpolicy.sh
 sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/magisk.rc
 cp -a /magisk /android/oem/.overlay/upper
 cp /magisk/magisk.rc /android/oem/.overlay/upper/magisk.rc
-fi" >"$TMPDIR/ramdisk/scripts/999_magisk"
+fi
+ln -sf ./magiskinit /magisk/magiskpolicy
+
+bind_policy(){
+policy=\"\$1\"
+/magisk/magiskpolicy --load \"\$policy\" --save /android/oem/.overlay/policy --magisk \"allow * magisk_file lnk_file *\"
+mount --bind /android/oem/.overlay/policy \"\$policy\"
+}
+
+
+if [ -f /android/system/vendor/etc/selinux/precompiled_sepolicy ]; then
+  bind_policy /android/system/vendor/etc/selinux/precompiled_sepolicy
+elif [ -f /android/sepolicy ]; then
+  bind_policy /android/sepolicy
+fi
+" >"$TMPDIR/ramdisk/scripts/999_magisk"
 else
 abortc light_red "! Unknown ramdisk structure"
 fi
@@ -2149,15 +2164,15 @@ RAMDISK="$TARGET_ROOT/ramdisk.img"
 break;
 fi
 done
-for VAR_OSROOT in /dev/os_disk_*; do
+for OSROOT in /dev/os_disk_*; do
 TARGET_ROOT="$OSROOT/$SRCVAR"
-if [ -d "$TARGET_ROOT" ] && [ -f "$TARGET_ROOT/findme" ] && [ -f "$TARGET_ROOT/initrd.img" ] && [ -f "$TARGET_ROOT/ramdisk.img" ] && file "$TARGET_ROOT/initrd.img" | grep -q " gzip "; then
+if [ -d "$TARGET_ROOT" ] && [ -f "$TARGET_ROOT/findme" ] && [ -f "$TARGET_ROOT/initrd.img" ] && file "$TARGET_ROOT/initrd.img" | grep -q " gzip "; then
 RAMDISK="$TARGET_ROOT/initrd.img"
 break;
 fi
 done
 fi
-[ -z "$RAMDISK" ] && abortc light_red "$text_cannot_detect_target_ramdisk"
+[ -z "$RAMDISK" ] && { abortc light_red "$text_cannot_detect_target_ramdisk"; read; }
 echo -e "- Target ramdisk: ${BGREEN}${RAMDISK}${RC}"
 }
 
