@@ -1019,8 +1019,8 @@ mkdir \$MAGISKTMP/.magisk/block
 touch \$MAGISKTMP/.magisk/config
 
 INITRC=init.rc
-[ -f \"\$INITRC\" ] || INITRC=system/etc/init/hw/init.rc
-mkdir -p \"\$MAGISKTMP/.magisk/rootdir/${INITRC%/*}\"
+[ -f \"/\$INITRC\" ] || INITRC=system/etc/init/hw/init.rc
+mkdir -p \"\$MAGISKTMP/.magisk/rootdir/\${INITRC%/*}\"
 echo \"$magiskloader\" >\"\$MAGISKTMP/.magisk/rootdir/\$INITRC\"
 
 
