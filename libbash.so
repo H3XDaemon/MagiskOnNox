@@ -784,6 +784,8 @@ if [ -f \\\"/system/bin/magisk\\\" ]; then
     rm -rf /system/bin/su
     ln -fs ./magisk /system/bin/su
     mount -o ro,remount /system/bin
+    umount -l /system/bin/magisk
+    mount --bind \\\"\$MAGISKTMP/magisk\\\" /system/bin/magisk
 fi\" >\$MAGISKTMP/emu/magisksu_survival.sh
 
 echo \"
