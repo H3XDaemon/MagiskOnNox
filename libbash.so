@@ -501,7 +501,7 @@ exit "$ERR_CODE"
 if [ "$AGV1" != "noexec" ]; then
 
 priv_dir=/data/data/io.github.huskydg.magiskonnox
-[ ! -d "$priv_dir" ] && priv_dir=/data/data/com.termux
+[ ! -d "$priv_dir" ] && ! ls "$priv_dir" &>/dev/null && priv_dir=/data/data/com.termux
 [ ! -d "$priv_dir" ] && { echo "Something wrong! Abort"; exit; }
 cd "$priv_dir"
 DLPATH="$priv_dir/magisk"
