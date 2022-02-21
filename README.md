@@ -28,7 +28,14 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 
 
 ## Download
-Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
+
+- **Download Magisk installer script into Termux**, run this command:
+
+```
+git clone http://github.com/huskydg/magiskonemu
+```
+
+- **Terminal Emulator with Magisk installer script**: Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
 
 
 
