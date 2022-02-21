@@ -1,6 +1,6 @@
 #!/system/bin/sh
 AGVARR="$@"; SCRIPT="$0"; AGV1="$1"; AGV2="$2"; AGV3="$3"; AGV4="$4"; AGV5="$5"; exec 2>/dev/null; MYSCRIPT="$(realpath "$0")"; MYPATH="${MYSCRIPT%/*}"; busybox="$MYPATH/libbusybox.so"; PATH="$MYPATH:$PATH:/sbin:/system/bin:/system/xbin"; cmds="$SCRIPT $AGVARR"
-
+unset LD_PRELOAD
 
 if [ ! -f "$MYPATH/libbusybox.so" ]; then
 echo "Missing libbusybox.so"; exit 1
@@ -750,6 +750,7 @@ mount -o ro,remount /"
      MAGISKTMP="/dev/$dev_random"
      mount_sbin="mkdir -p \"$MAGISKTMP\"
 mnt_tmpfs \"$MAGISKTMP\""
+     umount_sbin="umount /sbin"
      ;;
 esac
 
@@ -866,6 +867,7 @@ $RM_RUSTY_MAGISK
               oneshot
 
           on property:sys.boot_completed=1
+              $umount_sbin
               start $magisk_boot_complete
 # remove magisk service traces
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk resetprop --delete init.svc.$magisk_postfsdata
