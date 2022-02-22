@@ -500,7 +500,7 @@ exit "$ERR_CODE"
 
 if [ "$AGV1" != "noexec" ]; then
 
-priv_dir=/data/data/io.github.huskydg.magiskonnox
+priv_dir=/data/data/magisk.term
 [ -d "$priv_dir" ] && ! ls "$priv_dir" &>/dev/null && priv_dir=/data/data/com.termux
 [ ! -d "$priv_dir" ] && priv_dir=/data/data/com.termux
 [ ! -d "$priv_dir" ] && { echo "Something wrong! Abort"; exit; }
@@ -751,7 +751,8 @@ mount -o ro,remount /"
      #system-as-root, /sbin is removal
      MAGISKTMP="/dev/$dev_random"
      mount_sbin="mkdir -p \"$MAGISKTMP\"
-mnt_tmpfs \"$MAGISKTMP\""
+mnt_tmpfs \"$MAGISKTMP\"
+chmod 755 \"$MAGISKTMP\""
      umount_sbin="umount /sbin"
      ;;
 esac
