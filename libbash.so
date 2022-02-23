@@ -39,8 +39,19 @@ DEVICE_ABI32="$ABI32"
 DEVICE_64BIT="$IS64BIT"
 
 
+BOOTMODE=false
+if pidof zygote &>/dev/null || [ "$USER_ID" != 0 ]; then
+BOOTMODE=true
+fi
+
 SYSTEM_AS_ROOT=true
-if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
+if $BOOTMODE; then
+ROOTDIR=/
+else
+ROOTDIR=/android
+fi
+
+if mount -t rootfs | grep -q " $ROOTDIR " || mount -t tmpfs | grep -q " $ROOTDIR "; then
 SYSTEM_AS_ROOT=false
 fi
 
@@ -159,7 +170,10 @@ pd none "You can press ${BGREEN}Alt+F1${RC} and type this command:"
 }
 
 print_info(){
-p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+if $BOOTMODE; then
+p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not found"
+else
+pd blue "  Recovery Mode"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" || pd light_green "$SDK"
 p none "   System-as-root: "; [ "$SYSTEM_AS_ROOT" == "true" ] && pd light_green "$SYSTEM_AS_ROOT" || pd light_red "$SYSTEM_AS_ROOT"
 }
@@ -185,8 +199,8 @@ need_root_access(){
 
 print_menu(){
 pd gray  "=============================================="
-echo "   Magisk on Nox - Installer Script"
-echo "   by HuskyDG"
+echo "   Magisk Installer Script for Android-x86 and Emulator"
+echo "   Written by HuskyDG - Free to use"
 # please don't change this or use "by HuskyDG + your name" for credits :((
 echo -e "$(print_info)"
 pd gray "=============================================="
@@ -194,7 +208,7 @@ echo "  1 - Install/Update Magisk"
 pd gray "      Integrate Magisk root into Android x86 emulator"
 echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
-echo "  3 - Install Magisk Modules Manager"
+echo "  3 - Install Fox's Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
 echo "  4 - Remove all other root methods"
 pd gray "      Only use if you cannot find Disable root option"
@@ -210,7 +224,7 @@ pd gray "=============================================="
 pd light_cyan "Install Magisk method"
 echo "  1 - Install Magisk into \"/system\""
 pd gray "      The system partition must be mounted as read-write"
-pd gray "      Recommended for Android Emulator such as NoxPlayer, MEmu, ..."
+pd gray "      Recommended for Android Emulator such as NoxPlayer, MuMu, ..."
 echo "  2 - Install Magisk into ramdisk.img/initrd.img (systemless)"
 pd gray "      Use this option if you can find ramdisk.img"
 pd gray "      Recommended for Android x86 project"
@@ -363,7 +377,7 @@ echo "  1 - Cài đặt hoặc cập nhật Magisk"
 pd gray "      Triển khai Magisk root vào Android-x86"
 echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
-echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
+echo "  3 - Cài đặt trình quản lí Magisk mô-đun của Fox2Code"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
 echo "  4 - Loại bỏ các phương pháp ROOT khác"
 pd gray "      Chỉ sử dụng khi bạn không tìm thấy tùy chọn để tắt Root"
@@ -403,7 +417,7 @@ pd gray "=============================================="
 pd light_cyan "Phương thức cài đặt Magisk"
 echo "  1 - Cài đặt Magisk vào \"/system\""
 pd gray "      Phân vùng hệ thống có thể gắn kết đọc ghi"
-pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MEmu, ..."
+pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MuMu, ..."
 echo "  2 - Cài đặt Magisk vào ramdisk.img hoặc initrd.img (systemless)"
 pd gray "      Sử dụng tùy chọn này nếu bạn tìm thấy Ramdisk"
 pd gray "      Khuyên dùng cho Android x86 project"
