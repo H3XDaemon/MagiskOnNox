@@ -176,6 +176,7 @@ else
 pd blue "  Recovery Mode"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" || pd light_green "$SDK"
 p none "   System-as-root: "; [ "$SYSTEM_AS_ROOT" == "true" ] && pd light_green "$SYSTEM_AS_ROOT" || pd light_red "$SYSTEM_AS_ROOT"
+fi
 }
 
 
