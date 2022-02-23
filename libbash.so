@@ -137,6 +137,8 @@ text_enter_url="Custom link"
 text_exported_apk="Exported Magisk apk into [Internal Storage]/Magisk"
 text_export_apk_fail="Cannot export Magisk apk. Did you grant me permission?"
 text_installation_ended="Installation ended. Press Enter to continue" 
+text_cannot_mm_recovery="Can't install app from Recovery Mode"
+
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -172,11 +174,11 @@ pd none "You can press ${BGREEN}Alt+F1${RC} and type this command:"
 print_info(){
 if $BOOTMODE; then
 p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not found"
-else
-pd blue "  Recovery Mode"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" || pd light_green "$SDK"
-p none "   System-as-root: "; [ "$SYSTEM_AS_ROOT" == "true" ] && pd light_green "$SYSTEM_AS_ROOT" || pd light_red "$SYSTEM_AS_ROOT"
+else
+pd light_blue "   Recovery Mode"
 fi
+p none "   System-as-root: "; [ "$SYSTEM_AS_ROOT" == "true" ] && pd light_green "$SYSTEM_AS_ROOT" || pd light_red "$SYSTEM_AS_ROOT"
 }
 
 
@@ -332,6 +334,7 @@ text_enter_url="Liên kết tùy chỉnh"
 text_exported_apk="Đã xuất Magisk apk vào [Bộ nhớ trong]/Magisk"
 text_export_apk_fail="Không thể xuất Magisk apk. Bạn đã cấp quyền truy cập chưa?"
 text_installation_ended="Quá trình cài đặt đã kết thúc.  Nhấn Enter để tiếp tục"
+text_cannot_mm_recovery="Không thể cài đặt ứng dụng từ chế độ Recovery"
 
 need_root_access(){
 
@@ -573,7 +576,7 @@ if [ "$USER_ID" != "0" ]; then
             
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
-            pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
+            pd light_cyan "/data/data/magisk.term/magisk/menu"
             
         fi
         exit 
@@ -2322,9 +2325,13 @@ case $option in
     uninstall_option
     ;;
 3)
+   if $BOOTMODE; then
    rm -rf "$DLPATH/fmm.apk"
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
+    else
+    pd green "$text_cannot_mm_recovery"
+    fi
     ;;
 4)
     (need_root_access; unsu)
