@@ -17,7 +17,7 @@ if [ "$MYSCRIPT" ]; then
 export MYPATH="${MYSCRIPT%/*}"
 cmds="$SCRIPT $AGVARR"
 fi
-priv_dir=/data/data/io.github.huskydg.magiskonnox
+priv_dir=/data/data/magisk.term
 
 
 p(){

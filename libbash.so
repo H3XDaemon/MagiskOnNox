@@ -9,7 +9,11 @@ chmod 775 "$MYPATH/"*
 
 RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
 
+# Get user id
+
 test -z "$USER_ID" && USER_ID="$(id -u)"
+
+# Get system information
 
 API=$(getprop ro.build.version.sdk)
   ABI=$(getprop ro.product.cpu.abi)
@@ -38,9 +42,27 @@ DEVICE_ARCH="$ARCH"
 DEVICE_ABI32="$ABI32"
 DEVICE_64BIT="$IS64BIT"
 
+# Detect if system is in live mode or not
+
+
+BOOTMODE=false
+if pidof zygote &>/dev/null || [ "$USER_ID" != 0 ]; then
+BOOTMODE=true
+fi
 
 SYSTEM_AS_ROOT=true
-if mount | grep rootfs | grep -q " / " || mount | grep tmpfs | grep -q " / "; then
+
+# If BOOTMODE=true that mean system is in live mode, root dir will be "/", overwise in recovery mode, root dir will be /android
+
+if $BOOTMODE; then
+ROOTDIR=/
+else
+ROOTDIR=/android
+fi
+
+# detect if system boot type is system-as-root or not
+
+if mount -t rootfs | grep -q " $ROOTDIR " || mount -t tmpfs | grep -q " $ROOTDIR "; then
 SYSTEM_AS_ROOT=false
 fi
 
@@ -61,6 +83,9 @@ cre(){
 echo -ne "${GRAY}@$1${RC}"
 }
 
+####################
+# ENGLISH 
+####################
 
 
 text_press_enter_menu="PRESS ENTER TO BACK TO MENU"
@@ -126,6 +151,8 @@ text_enter_url="Custom link"
 text_exported_apk="Exported Magisk apk into [Internal Storage]/Magisk"
 text_export_apk_fail="Cannot export Magisk apk. Did you grant me permission?"
 text_installation_ended="Installation ended. Press Enter to continue" 
+text_cannot_mm_recovery="Can't install app from Recovery Mode"
+
 
 print_ramdisk_method(){
 pd "light_cyan" "Install Magisk into ramdisk image"
@@ -159,8 +186,12 @@ pd none "You can press ${BGREEN}Alt+F1${RC} and type this command:"
 }
 
 print_info(){
-p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not installed"
+if $BOOTMODE; then
+p none "   Magisk: "; $hasMagisk && pd light_green "$(magisk -v) ($(magisk -V))" || pd light_red "Not found"
 p none "   Android Level: "; [ "$SDK" -lt "28" ] && pd light_red "$SDK" || pd light_green "$SDK"
+else
+pd light_blue "   Recovery Mode"
+fi
 p none "   System-as-root: "; [ "$SYSTEM_AS_ROOT" == "true" ] && pd light_green "$SYSTEM_AS_ROOT" || pd light_red "$SYSTEM_AS_ROOT"
 }
 
@@ -185,8 +216,8 @@ need_root_access(){
 
 print_menu(){
 pd gray  "=============================================="
-echo "   Magisk on Nox - Installer Script"
-echo "   by HuskyDG"
+echo "   Magisk Installer Script for Android-x86 and Emulator"
+echo "   Written by HuskyDG - Free to use"
 # please don't change this or use "by HuskyDG + your name" for credits :((
 echo -e "$(print_info)"
 pd gray "=============================================="
@@ -194,7 +225,7 @@ echo "  1 - Install/Update Magisk"
 pd gray "      Integrate Magisk root into Android x86 emulator"
 echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
-echo "  3 - Install Magisk Modules Manager"
+echo "  3 - Install Fox's Magisk Modules Manager"
 pd gray "      Module manager for Magisk"
 echo "  4 - Remove all other root methods"
 pd gray "      Only use if you cannot find Disable root option"
@@ -210,7 +241,7 @@ pd gray "=============================================="
 pd light_cyan "Install Magisk method"
 echo "  1 - Install Magisk into \"/system\""
 pd gray "      The system partition must be mounted as read-write"
-pd gray "      Recommended for Android Emulator such as NoxPlayer, MEmu, ..."
+pd gray "      Recommended for Android Emulator such as NoxPlayer, MuMu, ..."
 echo "  2 - Install Magisk into ramdisk.img/initrd.img (systemless)"
 pd gray "      Use this option if you can find ramdisk.img"
 pd gray "      Recommended for Android x86 project"
@@ -249,8 +280,9 @@ p none "[CHOICE]: "
 
 }
 
-
-
+####################
+# TIẾNG VIỆT 
+####################
 
 language_vn(){
 
@@ -317,6 +349,7 @@ text_enter_url="Liên kết tùy chỉnh"
 text_exported_apk="Đã xuất Magisk apk vào [Bộ nhớ trong]/Magisk"
 text_export_apk_fail="Không thể xuất Magisk apk. Bạn đã cấp quyền truy cập chưa?"
 text_installation_ended="Quá trình cài đặt đã kết thúc.  Nhấn Enter để tiếp tục"
+text_cannot_mm_recovery="Không thể cài đặt ứng dụng từ chế độ Recovery"
 
 need_root_access(){
 
@@ -363,7 +396,7 @@ echo "  1 - Cài đặt hoặc cập nhật Magisk"
 pd gray "      Triển khai Magisk root vào Android-x86"
 echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
-echo "  3 - Cài đặt trình quản lí Magisk mô-đun"
+echo "  3 - Cài đặt trình quản lí Magisk mô-đun của Fox2Code"
 pd gray "      Quản lí mô-đun thay thế cho Magisk"
 echo "  4 - Loại bỏ các phương pháp ROOT khác"
 pd gray "      Chỉ sử dụng khi bạn không tìm thấy tùy chọn để tắt Root"
@@ -403,7 +436,7 @@ pd gray "=============================================="
 pd light_cyan "Phương thức cài đặt Magisk"
 echo "  1 - Cài đặt Magisk vào \"/system\""
 pd gray "      Phân vùng hệ thống có thể gắn kết đọc ghi"
-pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MEmu, ..."
+pd gray "      Khuyên dùng cho các giả lập Android như NoxPlayer, MuMu, ..."
 echo "  2 - Cài đặt Magisk vào ramdisk.img hoặc initrd.img (systemless)"
 pd gray "      Sử dụng tùy chọn này nếu bạn tìm thấy Ramdisk"
 pd gray "      Khuyên dùng cho Android x86 project"
@@ -432,6 +465,10 @@ case "$LANGUAGE" in
 esac
 
 
+####################
+# defind remount function 
+####################
+
 
 
 mount_rw_system(){
@@ -456,7 +493,9 @@ mount -o ro,remount "/" && IS_SYSTEM_MOUNT=true
 fi
 }
 
-
+####################
+# defind print text with color function 
+####################
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -558,7 +597,7 @@ if [ "$USER_ID" != "0" ]; then
             
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
-            pd light_cyan "/data/data/io.github.huskydg.magiskonnox/magisk/menu"
+            pd light_cyan "$DLPATH/menu"
             
         fi
         exit 
@@ -581,9 +620,17 @@ function cmdline() {
 
 
 umount_magic_mods(){
+
+# make sure there are no overlay under /system
+# overwise we are write to virtual read-write system not real system partition
+
 while mount -t overlay | grep -q " /system "; do
 umount -l /system
 done
+
+# umount magic mount if some modules mount some files into these path
+# because add files into these directory is useless
+# if we don't umount it, we might write to magisk created tmpfs mountpoint or magisk module directory
 
 
 local list_files="/system/etc
@@ -605,6 +652,8 @@ done
 
 
 get_magisk_path(){
+
+# get some information from magisk
 
 MAGISK_TMP="$(magisk --path)"
 MAGISKDIR="$MAGISK_TMP/.magisk"
@@ -757,6 +806,8 @@ chmod 755 \"$MAGISKTMP\""
      ;;
 esac
 
+# apply multiple sepolicy at same time
+
 LOAD_MODULES_POLICY="rm -rf \"\$MAGISKTMP/.magisk/sepolicy.rules\"
 for module in \$(ls /data/adb/modules); do
               if ! [ -f \"/data/adb/modules/\$module/disable\" ] && [ -f \"/data/adb/modules/\$module/sepolicy.rule\" ]; then
@@ -771,8 +822,8 @@ for module in \$(ls /data/adb/modules); do
 unset LOG_MAGISK
 unset FORCE_MAGISKHIDE
 unset ADD_FORCE_MAGISKHIDE
-RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
-              exec u:r:su:s0 -- rm -rf /data/.rusty-magisk
+RM_RUSTY_MAGISK="#remove rusty-magisk gearlock module to make sure it is not conflicted with our magisk implement
+              rm /data/ghome/gearboot/overlay/rusty-magisk/init/init.superuser.rc
               rm /data/.rusty-magisk/magisk.apk
               rm /data/.rusty-magisk/magisk
               rm /data/ghome/.local/bin/rusty-magisk"
@@ -780,6 +831,10 @@ RM_RUSTY_MAGISK="#remove rusty-magisk to make sure it is not conflicted
 ADDITIONAL_SCRIPT="( # addition script
 rm -rf /data/adb/post-fs-data.d/fix_mirror_mount.sh
 rm -rf /data/adb/service.d/fix_modules_not_show.sh
+
+
+# additional script to deal with bullshit faulty design of emulator
+# that close built-in root will remove magisk's /system/bin/su
 
 echo \"
 export PATH=\\\"\$MAGISKTMP:\\\$PATH\\\"
@@ -791,6 +846,9 @@ if [ -f \\\"/system/bin/magisk\\\" ]; then
     umount -l /system/bin/magisk
     mount --bind \\\"\$MAGISKTMP/magisk\\\" /system/bin/magisk
 fi\" >\$MAGISKTMP/emu/magisksu_survival.sh
+
+# additional script to deal with bullshit faulty design of Bluestacks
+# that /system is a bind mountpoint
 
 echo \"
 SCRIPT=\\\"\\\$0\\\"
@@ -804,6 +862,11 @@ mount --bind \\\"\\\$MIRROR_SYSTEM/android/system\\\" \\\"\\\$MIRROR_SYSTEM\\\" 
 function cmdline() { 
 	awk -F\\\"\\\${1}=\\\" '{print \\\$2}' < /proc/cmdline | cut -d' ' -f1 2> /dev/null
 }
+
+# additional script to deal with bullshit faulty design of Android-x86
+# that data is a bind mount from $SRC/data on ext4 partition
+
+
 SRC=\\\"\\\$(cmdline SRC)\\\"
 test -z \\\"\\\$SRC\\\" && exit
 LIST_TEST=\\\"
@@ -855,6 +918,7 @@ $RM_RUSTY_MAGISK
               exec u:r:su:s0 root root -- $MAGISKBASE/busybox sh -o standalone $MAGISKBASE/overlay.sh
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk --daemon
               start $magisk_postfsdata
+              # wait all magisk post-fs-data jobs are completed or 40s  has passed
               wait /dev/.magisk_unblock 40
               rm /dev/.magisk_unblock
 
@@ -872,7 +936,8 @@ $RM_RUSTY_MAGISK
           on property:sys.boot_completed=1
               $umount_sbin
               start $magisk_boot_complete
-# remove magisk service traces
+# remove magisk service traces from some detection
+# although detect modified init.rc is not always correct
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk resetprop --delete init.svc.$magisk_postfsdata
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk resetprop --delete init.svc.$magisk_service
               exec u:r:magisk:s0 root root -- $MAGISKTMP/magisk resetprop --delete init.svc.$magisk_boot_complete
@@ -979,6 +1044,8 @@ magisk_name=\"magisk32\"
 count=0
 ( magisk --stop ) &
 
+# force umount /sbin tmpfs
+
 until ! mount | grep -q \" /sbin \"; do
 [ "$count" -gt "10" ] && break
 umount -l /sbin 2>/dev/null
@@ -987,11 +1054,12 @@ count=$(($count+1))
 test ! -d /sbin && break
 done
 
+# mount magisk tmpfs path
+
 $mount_sbin
 
 MAGISKTMP=$MAGISKTMP
 chmod 755 \"\$MAGISKTMP\"
-
 set -x
 mkdir -p \$MAGISKTMP/.magisk
 mkdir -p \$MAGISKTMP/emu
@@ -1022,7 +1090,7 @@ chmod 755 \$MAGISKTMP/busybox
 \$MAGISKTMP/busybox --install -s \$MAGISKTMP
 cp -af ./assets/* \$MAGISKBIN
 
-
+# create symlink / applet
 
 ln -s ./\$magisk_name \$MAGISKTMP/magisk 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/su 2>/dev/null
@@ -1046,7 +1114,8 @@ else
   ./magiskpolicy --live --magisk 2>&1
 fi
 
-#remount system read-only
+#remount system read-only to fix Magisk fail to mount mirror
+
 $remove_backup
 mount -o ro,remount /
 mount -o ro,remount /system
@@ -1609,7 +1678,6 @@ FILE_LIST2="
 /system/ghome/gearboot/overlay/rusty-magisk
 /system/ghome/gearboot/overlay/magisk
 /system/ghome/.local/magisk
-/magisk
 /system/etc/init/magisk
 /system/etc/magisk
 "
@@ -2307,9 +2375,13 @@ case $option in
     uninstall_option
     ;;
 3)
+   if $BOOTMODE; then
    rm -rf "$DLPATH/fmm.apk"
    cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
     pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
+    else
+    pd green "$text_cannot_mm_recovery"
+    fi
     ;;
 4)
     (need_root_access; unsu)

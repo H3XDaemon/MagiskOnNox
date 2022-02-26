@@ -1,7 +1,7 @@
 # Magisk On Emulator, Android x86 project
 
 ## About
-Integrate Magisk root into Nox Player and other Android x86, emulators
+A bash script that can integrate Magisk root into Nox Player and other Android x86, emulators
 
 **Magisk on NoxPlayer Android 9 emulator**
 
@@ -23,7 +23,7 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 
 ## Installation method
 - Install Magisk into `/system`
-- Install Magisk into ramdisk image (`ramdisk.img` or `initrd.img`)
+- Install Magisk into ramdisk image: `ramdisk.img` for rootfs, `initrd.img` for system-as-root if `ramdisk.img` doesn't exist
 - Install Magisk by using GearLock extension
 
 
@@ -43,8 +43,8 @@ git clone http://github.com/huskydg/magiskonemu
 
 - [Installation Guide](https://github.com/HuskyDG/MagiskOnNox/wiki/Installation) - Learn how to install Magisk on Emulator, Android x86 project
 
-- [MagiskOnNox Wiki](https://github.com/HuskyDG/MagiskOnNox/wiki)
-- [Magisk Documentation](https://topjohnwu.github.io/Magisk/)  
+- [Magisk on Emulator Wiki](https://github.com/HuskyDG/MagiskOnNox/wiki)
+- [Magisk Official Documentation](https://topjohnwu.github.io/Magisk/)  
 
 ## Credits
 - [Magisk](https://github.com/topjohnwu/Magisk): The most famous root solution on Android
