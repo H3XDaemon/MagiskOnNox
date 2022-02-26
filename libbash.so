@@ -597,7 +597,7 @@ if [ "$USER_ID" != "0" ]; then
             
             pd "light_red" "$text_obtain_root_failed"
             blissos_open_menu
-            pd light_cyan "/data/data/magisk.term/magisk/menu"
+            pd light_cyan "$DLPATH/menu"
             
         fi
         exit 
