@@ -103,7 +103,7 @@ text_install_app="Install Magisk app"
 text_install_app_sug="Please install Magisk app by yourself"
 text_install="Install"
 text_setup="Initialize Magisk Core"
-text_rm_magisk_files="Remove magisk additional files"
+text_rm_magisk_files="Cleaning trash files"
 text_extract_magisk_apk="Extract Magisk APK"
 text_failed_mount_system="Looks like the system partition is locked at read-only"
 text_enter_magisk_apk="Enter path to your Magisk APK"
@@ -138,7 +138,7 @@ text_use_current_ramdisk_info="Do you want to use the current ramdisk informatio
 text_install_gearlock="Please install GearLock first"
 text_building_gxp="Build GearLock extension"
 text_saved_magisk_gxp_to="Saved extension to"
-text_uninstalling_magisk="Uninstalling Magisk"
+text_uninstalling_magisk="Uninstall Magisk and its related files"
 text_system_not_writeable="System is not writeable! Cannot completely uninstall."
 text_grant_inter_access_permission="Please grant app the permission to access Internal Storage"
 text_select_magisk_app="Select Magisk version you want to install"
@@ -225,7 +225,9 @@ echo "  1 - Install/Update Magisk"
 pd gray "      Integrate Magisk root into Android x86 emulator"
 echo "  2 - Uninstall Magisk"
 pd gray "      Remove Magisk and its modules"
-echo "  3 - Remove all other root methods"
+echo "  3 - Install Fox's Magisk Modules Manager"
+pd gray "      Module manager for Magisk"
+echo "  4 - Remove all other root methods"
 pd gray "      Only use if you cannot find Disable root option"
 echo "----------"
 echo " 0 - Exit menu"
@@ -300,7 +302,7 @@ text_install_app="Cài đặt ứng dụng Magisk"
 text_install_app_sug="Vui lòng cài đặt ứng dụng Magisk thủ công"
 text_install="Cài đặt"
 text_setup="Thiết lập lõi Magisk"
-text_rm_magisk_files="Loại bỏ các tệp bổ sung của Magisk"
+text_rm_magisk_files="Dọn dẹp các tập tin rác"
 text_extract_magisk_apk="Giải nén Magisk APK"
 text_failed_mount_system="Gắn kết phân vùng system thất bại"
 text_enter_magisk_apk="Nhập đường dẫn tới tệp Magisk APK của bạn"
@@ -336,7 +338,7 @@ text_use_current_ramdisk_info="Bạn có muốn sử dụng thông tin ramdisk h
 text_install_gearlock="Hãy cài đặt GearLock trước đã"
 text_building_gxp="Xây dựng phần mở rộng GearLock"
 text_saved_magisk_gxp_to="Đã lưu phần mở rộng vào"
-text_uninstalling_magisk="Đang gỡ bỏ Magisk"
+text_uninstalling_magisk="Đang gỡ bỏ Magisk và các tệp liên quan"
 text_system_not_writeable="Hệ thống không thể ghi! Không thể gỡ bỏ hoàn toàn"
 text_grant_inter_access_permission="Vui lòng cung cấp cho ứng dụng quyền truy cập Bộ nhớ trong"
 text_select_magisk_app="Lựa chọn phiên bản Magisk mà bạn muốn cài đặt"
@@ -394,7 +396,9 @@ echo "  1 - Cài đặt hoặc cập nhật Magisk"
 pd gray "      Triển khai Magisk root vào Android-x86"
 echo "  2 - Gỡ cài đặt Magisk"
 pd gray "      Loại bỏ Magisk và các mô-đun của nó"
-echo "  3 - Loại bỏ các phương pháp ROOT khác"
+echo "  3 - Cài đặt trình quản lí Magisk mô-đun của Fox2Code"
+pd gray "      Quản lí mô-đun thay thế cho Magisk"
+echo "  4 - Loại bỏ các phương pháp ROOT khác"
 pd gray "      Chỉ sử dụng khi bạn không tìm thấy tùy chọn để tắt Root"
 echo "----------"
 echo " 0 - Thoát khỏi menu"
@@ -774,13 +778,33 @@ magisk_loadpolicy=`random_str`
 dev_random=`random_str`
 
 
-# always use "/dev/<random_string>" as magisk tmpfs
-
+case "$MAGISKTMP_TYPE" in
+1)
+    #legacy rootfs
+    mount_sbin="mount -o rw,remount /
+rm -rf /.backup_sbin
+mkdir /.backup_sbin
+ln /sbin/* /.backup_sbin
+mnt_tmpfs /sbin
+clone /.backup_sbin /sbin
+chcon u:r:rootfs:s0 /sbin"
+    remove_backup="
+rm -rf /.backup_sbin 
+mount -o ro,remount /"
+    ;;
+2)
+     #system-as-root
+     mount_sbin="overlay /sbin"
+     ;;
+3)
+     #system-as-root, /sbin is removal
      MAGISKTMP="/dev/$dev_random"
      mount_sbin="mkdir -p \"$MAGISKTMP\"
 mnt_tmpfs \"$MAGISKTMP\"
 chmod 755 \"$MAGISKTMP\""
      umount_sbin="umount /sbin"
+     ;;
+esac
 
 # apply multiple sepolicy at same time
 
@@ -956,6 +980,34 @@ mount --bind \"\$FROM\" \"\$TO\"
 fi
 ) }
 
+clone(){ (
+FROM=\"\$1\"; TO=\"\$2\"; IFS=\$\"
+\"
+[ -d \"\$TO\" ] || exit 1;
+( cd \"\$FROM\" && find * -prune ) | while read obj; do
+( if [ -d \"\$FROM/\$obj\" ]; then
+mnt_tmpfs \"\$TO/\$obj\"
+else
+mnt_bind \"\$FROM/\$obj\" \"\$TO/\$obj\" 2>/dev/null
+fi ) &
+sleep 0.05
+done
+) }
+
+overlay(){ (
+# RE-OVERLAY A DIRECTORY
+FOLDER=\"\$1\";
+TMPFOLDER=\"/dev/vm-overlay\"
+#_____
+PAYDIR=\"\${TMPFOLDER}_\${RANDOM}_\$(date | base64)\"
+mkdir -p \"\$PAYDIR\"
+mnt_tmpfs \"\$PAYDIR\"
+#_________
+clone \"\$FOLDER\" \"\$PAYDIR\"
+mount --move \"\$PAYDIR\" \"\$FOLDER\"
+rm -rf \"\$PAYDIR\"
+#______________
+) }
 
 exit_magisk(){
 umount -l $MAGISKTMP
@@ -1077,14 +1129,12 @@ $ADDITIONAL_SCRIPT
 $LOAD_MODULES_POLICY
 
 [ ! -f \"\$MAGISKTMP/magisk\" ] && exit_magisk
+# test ! \"\$(pidof magiskd)\" && exit_magisk
 
-# unmount patched files
-
+[ -d "/oem/.overlay" ] && umount -l /oem
 umount -l /system/etc/init
 umount -l /init.rc
 umount -l /system/etc/init/hw/init.rc
-umount -l /sepolicy
-umount -l /system/vendor/etc/selinux/precompiled_sepolicy
 "
 
 cd "$JOBPWD"
@@ -1304,24 +1354,28 @@ else
 sysblock=\"\$(mount | grep \" /android \" | tail -1 | awk '{ print \$1 }')\"
 mkdir /system_root
 mount \$sysblock /system_root
-# prepare for second stage
-inittmp=/android/dev
-mount -t tmpfs tmpfs \$inittmp
-chmod 750 \$inittmp
-mkdir -p \$inittmp/.overlay/upper
-mkdir -p \$inittmp/.overlay/work
-mount -t overlay tmpfs -o lowerdir=/android/system/etc/init,upperdir=\$inittmp/.overlay/upper,workdir=\$inittmp/.overlay/work /android/system/etc/init
+mountpoint -q /android/oem && mount --move /android/oem /system_root/oem
+mount -t tmpfs tmpfs /android/oem
+chmod 750 /android/oem
+mkdir -p /android/oem/.overlay/oem
+mount --bind /system_root/oem /android/oem/.overlay/oem
+rm -rf /oem
+ln -fs /android/oem /oem
+ln -s /oem/.overlay/oem/* /oem
+mkdir /android/oem/.overlay/upper
+mkdir /android/oem/.overlay/work
+mount -t overlay tmpfs -o lowerdir=/android/system/etc/init,upperdir=/android/oem/.overlay/upper,workdir=/android/oem/.overlay/work /android/system/etc/init
 sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/overlay.sh
 sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/magisk.rc
-cp -a /magisk \$inittmp/.overlay/upper
-cp /magisk/magisk.rc \$inittmp/.overlay/upper/magisk.rc
+cp -a /magisk /android/oem/.overlay/upper
+cp /magisk/magisk.rc /android/oem/.overlay/upper/magisk.rc
 fi
 ln -sf ./magiskinit /magisk/magiskpolicy
 
 bind_policy(){
 policy=\"\$1\"
-/magisk/magiskpolicy --load \"\$policy\" --save \$inittmp/.overlay/policy --magisk \"allow * magisk_file lnk_file *\"
-mount --bind \$inittmp/.overlay/policy \"\$policy\"
+/magisk/magiskpolicy --load \"\$policy\" --save /android/oem/.overlay/policy --magisk \"allow * magisk_file lnk_file *\"
+mount --bind /android/oem/.overlay/policy \"\$policy\"
 }
 
 
@@ -1330,7 +1384,6 @@ if [ -f /android/system/vendor/etc/selinux/precompiled_sepolicy ]; then
 elif [ -f /android/sepolicy ]; then
   bind_policy /android/sepolicy
 fi
-umount -l \$inittmp
 " >"$TMPDIR/ramdisk/scripts/999_magisk"
 else
 abortc light_red "! Unknown ramdisk structure"
@@ -2322,6 +2375,15 @@ case $option in
     uninstall_option
     ;;
 3)
+   if $BOOTMODE; then
+   rm -rf "$DLPATH/fmm.apk"
+   cp "$MYPATH/libmm.so" "$DLPATH/fmm.apk"
+    pm install "$DLPATH/fmm.apk" &>/dev/null && pd light_green "$text_success_mm" || pd light_red "$text_cannot_mm"
+    else
+    pd green "$text_cannot_mm_recovery"
+    fi
+    ;;
+4)
     (need_root_access; unsu)
     ;;
 0)
