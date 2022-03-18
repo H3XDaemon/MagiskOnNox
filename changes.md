@@ -1,5 +1,3 @@
-- Innstall magisk into /system will not install Magisk app. Just restart after installation and Magisk stub app will be installed
-- Add export Magisk apk to Internal Storage
-- Implement hide magisk service traces in magisk.rc
-- Add new way to install Magisk into `initrd.img` for Android 10+ x86
-- Magisk in initrd: Inject policy rules before boot into Android
+- [Magisk in initrd.img]: Use `/android/dev` instead of `/android/oem` for Magisk initialize
+- [General]: Remove unused function
+- [General]: Remove option to install [Fox's Magisk module manager](https://github.com/Fox2Code/FoxMagiskModuleManager) 
