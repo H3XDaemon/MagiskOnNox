@@ -1025,7 +1025,7 @@ for mdir in modules post-fs-data.d service.d magisk; do
 test ! -d /data/adb/\$mdir && rm -rf /data/adb/\$mdir
 mkdir /data/adb/\$mdir 2>/dev/null
 done
-for file in magisk32 magisk64 magiskinit; do
+for file in magisk32 magisk64 magiskinit magiskpolicy; do
   cp -af ./\$file \$MAGISKTMP/\$file 2>/dev/null
   chmod 755 \$MAGISKTMP/\$file
   cp -af ./\$file \$MAGISKBIN/\$file 2>/dev/null
@@ -1044,7 +1044,7 @@ ln -s ./\$magisk_name \$MAGISKTMP/magisk 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/su 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/resetprop 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/magiskhide 2>/dev/null
-ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
+[ ! -d \"\$MAGISKTMP/magiskpolicy\" ] && ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
 
 mkdir -p \$MAGISKTMP/.magisk/mirror
 mkdir \$MAGISKTMP/.magisk/block
@@ -1053,7 +1053,6 @@ touch \$MAGISKTMP/.magisk/config
 
 cd \$MAGISKTMP
 # SELinux stuffs
-ln -sf ./magiskinit magiskpolicy
 if [ -f /vendor/etc/selinux/precompiled_sepolicy ]; then
   ./magiskpolicy --load /vendor/etc/selinux/precompiled_sepolicy --live --magisk 2>&1
 elif [ -f /sepolicy ]; then
@@ -1316,7 +1315,7 @@ sed -i \"s|MAGISK_FILES_BASE|/system/etc/init/magisk|g\" /magisk/magisk.rc
 cp -a /magisk \$inittmp/.overlay/upper
 cp /magisk/magisk.rc \$inittmp/.overlay/upper/magisk.rc
 fi
-ln -sf ./magiskinit /magisk/magiskpolicy
+[ ! -d \"/magisk/magiskpolicy\" ] && ln -sf ./magiskinit /magisk/magiskpolicy
 
 bind_policy(){
 policy=\"\$1\"
