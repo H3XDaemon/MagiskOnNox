@@ -1044,7 +1044,7 @@ ln -s ./\$magisk_name \$MAGISKTMP/magisk 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/su 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/resetprop 2>/dev/null
 ln -s ./magisk \$MAGISKTMP/magiskhide 2>/dev/null
-[ ! -d \"\$MAGISKTMP/magiskpolicy\" ] && ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
+[ ! -f \"\$MAGISKTMP/magiskpolicy\" ] && ln -s ./magiskinit \$MAGISKTMP/magiskpolicy 2>/dev/null
 ln -s ./magiskpolicy \$MAGISKTMP/supolicy 2>/dev/null
 
 mkdir -p \$MAGISKTMP/.magisk/mirror
