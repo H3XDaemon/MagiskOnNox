@@ -839,28 +839,20 @@ function cmdline() {
 	awk -F\\\"\\\${1}=\\\" '{print \\\$2}' < /proc/cmdline | cut -d' ' -f1 2> /dev/null
 }
 
-# additional script to deal with bullshit faulty design of Android-x86
-# that data is a bind mount from $SRC/data on ext4 partition
-
-
 SRC=\\\"\\\$(cmdline SRC)\\\"
+BIPATH=\\\"\\\$(cmdline BOOT_IMAGE)\\\"
+DATA=\\\"\\\$(cmdline DATA)\\\"
+test -z \\\"\\\$SRC\\\" && SRC=\\\"\\\${BIPATH%/*}\\\"
 test -z \\\"\\\$SRC\\\" && exit
-LIST_TEST=\\\"
-/data
-/data/adb
-/data/adb/magisk
-/data/adb/modules
-\\\"
-count=0
-for folder in \\\$LIST_TEST; do
-test \\\"\\\$(ls -A \\\$MAGISKTMP/.magisk/mirror/\\\$folder 2>/dev/null)\\\" == \\\"\\\$(ls -A \\\$folder 2>/dev/null)\\\" && count=\\\$((\\\$count + 1))
-done
-test \\\"\\\$count\\\" == 4 && exit
-count=0
-for folder in \\\$LIST_TEST; do
-test \\\"\\\$(ls -A \\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/\\\$folder 2>/dev/null)\\\" == \\\"\\\$(ls -A \\\$folder 2>/dev/null)\\\" && count=\\\$((\\\$count + 1))
-done
-if [ \\\"\\\$count\\\" == 4 ]; then
+test -z \\\"\\\$DATA\\\" && DATA=data
+
+inode_data1=\\\$(ls -id \\\"\\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/\\\$DATA\\\" | awk '{ print \\\$1 }')
+inode_data2=\\\$(ls -id \\\"\\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/data\\\" | awk '{ print \\\$1 }')
+inode_data=\\\$(ls -id \\\"/data\\\" | awk '{ print \\\$1 }')
+
+if [ \\\"\\\$inode_data1\\\" == \\\"\\\$inode_data\\\" ]; then
+mount --bind \\\"\\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/\\\$DATA\\\" \\\"\\\$MAGISKTMP/.magisk/mirror/data\\\"
+elif [ \\\"\\\$inode_data2\\\" == \\\"\\\$inode_data\\\" ]; then
 mount --bind \\\"\\\$MAGISKTMP/.magisk/mirror/data/\\\$SRC/data\\\" \\\"\\\$MAGISKTMP/.magisk/mirror/data\\\"
 fi )
 rm -rf \\\"\\\$SCRIPT\\\"
@@ -868,10 +860,19 @@ rm -rf \\\"\\\$SCRIPT\\\"
 echo \"
 SCRIPT=\\\"\\\$0\\\"
 MAGISKTMP=\\\$(magisk --path) || MAGISKTMP=/sbin
-CHECK=\\\"/data/adb/modules/.mk_\\\$RANDOM\\\$RANDOM\\\"
-touch \\\"\\\$CHECK\\\"
-test \\\"\\\$(ls -A \\\$MAGISKTMP/.magisk/modules 2>/dev/null)\\\" != \\\"\\\$(ls -A /data/adb/modules 2>/dev/null)\\\" && mount --bind \\\$MAGISKTMP/.magisk/mirror/data/adb/modules \\\$MAGISKTMP/.magisk/modules
-rm -rf \\\"\\\$CHECK\\\"
+set -x
+exec 2>>\\\"\\\$MAGISKTMP/emu/record_logs.txt\\\"
+inode_data1=\\\$(ls -id \\\"\\\$MAGISKTMP/.magisk/mirror/data/adb/modules\\\" | awk '{ print \\\$1 }')
+inode_data2=\\\$(ls -id \\\"\\\$MAGISKTMP/.magisk/modules\\\" | awk '{ print \\\$1 }')
+inode_data=\\\$(ls -id \\\"/data/adb/modules\\\" | awk '{ print \\\$1 }')
+
+if [ \\\"\\\$inode_data2\\\" != \\\"\\\$inode_data\\\" ]; then
+  if [ \\\"\\\$inode_data1\\\" == \\\"\\\$inode_data\\\" ]; then
+    mount --bind \\\"\\\$MAGISKTMP/.magisk/mirror/data/adb/modules\\\" \\\"\\\$MAGISKTMP/.magisk/modules\\\"
+  fi
+fi
+
+
 rm -rf \\\"\\\$SCRIPT\\\"\" >/data/adb/service.d/fix_modules_not_show.sh
 chmod 755 /data/adb/service.d/fix_modules_not_show.sh
 chmod 755 /data/adb/post-fs-data.d/fix_mirror_mount.sh; )"
