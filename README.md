@@ -18,31 +18,10 @@ Note: Some features might not work on some emulator, Please read [Emulator that 
 - Android Emulator (NoxPlayer, MuMuGlobal Player, Bluestacks): [Emulator that Magisk can work properly](https://github.com/HuskyDG/MagiskOnNox/wiki/Emulator-that-Magisk-can-work-properly).
 - Supported Android version: Recommended Android 9+ for better compatible
 
-> IT IS NOT RECOMMENDED TO INSTALL MAGISK ON ANDROID 7 EMULATOR AS THEY USUALLY HAVE BROKEN ENVIRONMENT
-
-
-## Installation method
-- Install Magisk into `/system`
-- Install Magisk into ramdisk image: `ramdisk.img` for rootfs, `initrd.img` for system-as-root if `ramdisk.img` doesn't exist
-- Install Magisk by using GearLock extension
-
-
-## Download
-
-- **Download Magisk installer script into Termux**, run this command:
-
-```
-git clone http://github.com/huskydg/magiskonemu
-```
-
-- **Terminal Emulator with Magisk installer script**: Download from [**Releases** tag](https://github.com/HuskyDG/MagiskOnNox/releases/) 
-
-
 
 ## Useful link
 
 - [Installation Guide](https://github.com/HuskyDG/MagiskOnNox/wiki/Installation) - Learn how to install Magisk on Emulator, Android x86 project
-
 - [Magisk on Emulator Wiki](https://github.com/HuskyDG/MagiskOnNox/wiki)
 - [Magisk Official Documentation](https://topjohnwu.github.io/Magisk/)  
 
