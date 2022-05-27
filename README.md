@@ -1,5 +1,7 @@
 # Magisk On Emulator, Android x86 project
 
+> Due to trivial reason. Magisk on Emulator is discontinued. For Android-x86 users (BlissOS, PhoenixOS,...), please use [initrd-magisk](http://github.com/HuskyDG/initrd-magisk) instead.
+
 ## About
 A bash script that can integrate Magisk root into Nox Player and other Android x86, emulators
 
